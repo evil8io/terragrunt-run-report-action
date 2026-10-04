@@ -19,6 +19,7 @@ export type Inputs = {
   token: string | undefined
   skipEmpty: boolean
   expand: boolean
+  runUrl: string | undefined
 }
 
 function optional(name: string): string | undefined {
@@ -68,6 +69,10 @@ export function readInputs(): Inputs {
     token: optional("token"),
     skipEmpty: flag("skip-empty", false),
     expand: flag("expand", false),
+    runUrl: optional("run-url"),
+  }
+  if (inputs.runUrl !== undefined && !/^https?:\/\/\S+$/.test(inputs.runUrl)) {
+    throw new Error(`The input run-url must be an http or https URL: ${inputs.runUrl}`)
   }
   if (
     inputs.logFile === undefined &&
