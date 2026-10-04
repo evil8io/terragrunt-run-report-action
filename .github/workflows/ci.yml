@@ -21,7 +21,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - if: github.event_name == 'pull_request' && github.head_ref != 'release-please--branches--main'
+      - if: github.event_name == 'pull_request' && !startsWith(github.head_ref, 'release-please--branches--')
         run: git diff --quiet "origin/$GITHUB_BASE_REF" HEAD -- dist
 
       - id: mise

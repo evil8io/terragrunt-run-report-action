@@ -22,10 +22,18 @@ jobs:
           manifest-file: .release-please-manifest.json
 
       # Build dist/ and commit it to the release pull request. CLAUDE.md has the reason.
+      # A skipped step still gets its expressions evaluated, so the pull
+      # request JSON is read in a shell step, not with fromJSON.
+      - if: steps.release.outputs.prs_created == 'true'
+        id: pr
+        env:
+          PR: ${{ steps.release.outputs.pr }}
+        run: echo "branch=$(jq -r .headBranchName <<<"$PR")" >> "$GITHUB_OUTPUT"
+
       - if: steps.release.outputs.prs_created == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+          ref: ${{ steps.pr.outputs.branch }}
 
       - if: steps.release.outputs.prs_created == 'true'
         id: mise
@@ -45,7 +53,7 @@ jobs:
 
       - if: steps.release.outputs.prs_created == 'true'
         env:
-          BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+          BRANCH: ${{ steps.pr.outputs.branch }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
