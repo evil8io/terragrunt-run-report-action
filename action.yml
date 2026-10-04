@@ -71,6 +71,12 @@ inputs:
     description: Open every collapsed section of the report.
     required: false
     default: "false"
+  run-url:
+    description: >-
+      A link to the workflow run or job that produced the report. The pull request comment ends with this
+      link. Set an empty value for no link.
+    required: false
+    default: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 outputs:
   summary:
     description: One line with the kind of run, the unit counts, and the resource totals.

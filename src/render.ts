@@ -287,3 +287,9 @@ export function renderMarkdown(report: RunReport, options: RenderOptions): strin
   }
   return `${parts.join("\n\n")}\n`
 }
+
+/** The last line of a pull request comment, when the run has a link. */
+export function renderRunLink(markdown: string, runUrl: string | undefined): string {
+  if (runUrl === undefined) return markdown
+  return `${markdown.trimEnd()}\n\n[Workflow run](${runUrl})\n`
+}

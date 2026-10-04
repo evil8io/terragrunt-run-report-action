@@ -10,7 +10,7 @@ import {
   type Sources,
   type UnitReport,
 } from "../src/model.ts"
-import { markerLine, renderMarkdown, resultText, statusLine } from "../src/render.ts"
+import { markerLine, renderMarkdown, renderRunLink, resultText, statusLine } from "../src/render.ts"
 import { parseReport } from "../src/report.ts"
 
 const FIXTURES = fileURLToPath(new URL("./fixtures", import.meta.url))
@@ -348,5 +348,16 @@ describe("statusLine", () => {
     expect(statusLine(report)).toBe(
       "Plan: 0 units. 2 to import, 1 to add, 0 to change, 0 to destroy, 1 to forget.",
     )
+  })
+})
+
+describe("renderRunLink", () => {
+  it("ends the comment with the link to the run", () => {
+    const content = renderRunLink("## Plan\n\nbody\n", "https://example.test/runs/1")
+    expect(content.endsWith("\n\n[Workflow run](https://example.test/runs/1)\n")).toBe(true)
+  })
+
+  it("leaves the comment as it is without a link", () => {
+    expect(renderRunLink("## Plan\n", undefined)).toBe("## Plan\n")
   })
 })
