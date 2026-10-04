@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs"
+import { readFileSync, rmSync, writeFileSync } from "node:fs"
 import { describe, expect, it } from "vitest"
 import { parseLog, linesByUnit } from "../src/log.ts"
 import { buildReport, loadSources } from "../src/model.ts"
@@ -55,7 +55,6 @@ describe("a log with interleaved units", () => {
     const mixed = `${plan}/plan.interleaved.log`
     const extra = { planJsonDir: `${plan}/plans`, reportFile: `${plan}/report.json` }
     const expected = report(`${plan}/plan.log`, extra)
-    const { writeFileSync, rmSync } = require("node:fs") as typeof import("node:fs")
     writeFileSync(mixed, interleave(planLog))
     try {
       expect(report(mixed, extra)).toBe(expected)
@@ -68,7 +67,6 @@ describe("a log with interleaved units", () => {
     const mixed = `${apply}/apply.interleaved.log`
     const extra = { reportFile: `${apply}/report.json` }
     const expected = report(`${apply}/apply.log`, extra)
-    const { writeFileSync, rmSync } = require("node:fs") as typeof import("node:fs")
     writeFileSync(mixed, interleave(applyLog))
     try {
       expect(report(mixed, extra)).toBe(expected)
