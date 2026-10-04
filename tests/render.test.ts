@@ -6,6 +6,7 @@ import { applyUnitLabel } from "../src/apply.ts"
 import {
   buildReport,
   loadSources,
+  type Diagnostic,
   type RunReport,
   type Sources,
   type UnitReport,
@@ -508,7 +509,7 @@ describe("diagnostics", () => {
     )
     expect(md).toContain("<details><summary>⚠️ 4 warnings</summary>")
     expect(md).toContain(
-      "```\nWarning: Deprecated (2)\n  on a.tf:1\n  on a.tf:9 with x.y\n\nUse b.\n\nWarning: Deprecated\n\nWarning: Other\n  with p.q\n\nD.\n```",
+      "```\nWarning: Deprecated\n\nWarning: Deprecated (2)\n  on a.tf:1\n  on a.tf:9 with x.y\n\nUse b.\n\nWarning: Other\n  with p.q\n\nD.\n```",
     )
     checkStructure(md)
   })
@@ -588,12 +589,89 @@ describe("diagnostics", () => {
     const md = renderMarkdown(runReport([unitReport({ stderr: "a\n```\nb" })]), OPTIONS)
     expect(md).toContain("````\na\n```\nb\n````")
   })
+  function warn(summary: string, rest: Partial<Diagnostic> = {}): Diagnostic {
+    return { severity: "warning", summary, ...rest }
+  }
+
+  function renderWarnings(diagnostics: Diagnostic[]): string {
+    const md = renderMarkdown(runReport([unitReport({ diagnostics })]), OPTIONS)
+    checkStructure(md)
+    return md
+  }
+
+  it("orders the occurrences of a group by natural location, then address", () => {
+    const md = renderWarnings([
+      warn("W", { location: "b.tf:2" }),
+      warn("W", { location: "a.tf:10" }),
+      warn("W", { location: "a.tf:9", address: "x.y" }),
+      warn("W", { location: "a.tf:9" }),
+      warn("W", { address: "m.n" }),
+    ])
+    expect(md).toContain(
+      "```\nWarning: W (5)\n  with m.n\n  on a.tf:9\n  on a.tf:9 with x.y\n  on a.tf:10\n  on b.tf:2\n```",
+    )
+  })
+
+  it("orders the groups by summary, first location, and detail", () => {
+    const md = renderWarnings([
+      warn("Zeta"),
+      warn("Alpha", { location: "b.tf:1", detail: "D3" }),
+      warn("Alpha", { location: "a.tf:10", detail: "D2" }),
+      warn("Alpha", { location: "a.tf:10", detail: "D1" }),
+      warn("Alpha", { location: "a.tf:9", detail: "D4" }),
+    ])
+    expect(md).toContain(
+      "```\nWarning: Alpha\n  on a.tf:9\n\nD4\n\nWarning: Alpha\n  on a.tf:10\n\nD1\n\nWarning: Alpha\n  on a.tf:10\n\nD2\n\nWarning: Alpha\n  on b.tf:1\n\nD3\n\nWarning: Zeta\n```",
+    )
+  })
+
+  it("merges equal occurrences into one line with a count", () => {
+    const report = runReport([
+      unitReport({
+        diagnostics: [
+          warn("S", { location: "main.tf:30" }),
+          warn("S", { location: "main.tf:31" }),
+          warn("S", { location: "main.tf:30" }),
+        ],
+      }),
+    ])
+    const md = renderMarkdown(report, OPTIONS)
+    checkStructure(md)
+    expect(md).toContain("<details><summary>⚠️ 3 warnings</summary>")
+    expect(md).toContain("```\nWarning: S (3)\n  on main.tf:30 (2)\n  on main.tf:31\n```")
+    expect(statusLine(report).endsWith("⚠️ 3 warnings in 1 unit.")).toBe(true)
+  })
+
+  it("merges equal occurrences with an address", () => {
+    const md = renderWarnings([
+      warn("S", { location: "a.tf:9", address: "x.y" }),
+      warn("S", { location: "a.tf:9", address: "x.y" }),
+      warn("S", { location: "a.tf:9", address: "x.y" }),
+      warn("T", { address: "p.q" }),
+      warn("T", { address: "p.q" }),
+    ])
+    expect(md).toContain("Warning: S (3)\n  on a.tf:9 with x.y (3)\n")
+    expect(md).toContain("Warning: T (2)\n  with p.q (2)\n")
+  })
+
+  it("does not merge two occurrences whose place text is equal but whose location and address differ", () => {
+    const md = renderWarnings([
+      warn("S", { location: "p:1 with q:3" }),
+      warn("S", { location: "p:1", address: "q:3" }),
+    ])
+    expect(md).toContain("Warning: S (2)\n  on p:1 with q:3\n  on p:1 with q:3\n")
+  })
+
+  it("renders no occurrence line without location and address", () => {
+    const md = renderWarnings([warn("X"), warn("X")])
+    expect(md).toContain("```\nWarning: X (2)\n```")
+  })
 })
 
 describe("statusLine", () => {
   it("names the kind, the unit counts, and the totals", () => {
     expect(statusLine(buildReport(sources("failures", "apply")))).toBe(
-      "Apply: 6 units, 2 with changes, 1 unchanged, 2 failed, 1 early exit. 4 added, 0 changed, 5 destroyed.",
+      "Apply: 6 units, 2 with changes, 1 unchanged, 2 failed, 1 early exit. 4 added, 0 changed, 5 destroyed. ⚠️ 15 warnings in 5 units.",
     )
     expect(statusLine(buildReport(sources("changes", "plan")))).toBe(
       "Plan: 6 units, 4 with changes, 2 unchanged. 6 to add, 0 to change, 6 to destroy.",
@@ -612,6 +690,41 @@ describe("statusLine", () => {
     expect(statusLine(report)).toBe(
       "Plan: 0 units. 2 to import, 1 to add, 0 to change, 0 to destroy, 1 to forget.",
     )
+  })
+
+  it("names the warnings of the report in the status line", () => {
+    const report = runReport(
+      [
+        unitReport({
+          name: "a",
+          diagnostics: [
+            { severity: "warning", summary: "W" },
+            { severity: "warning", summary: "V" },
+          ],
+        }),
+        unitReport({ name: "b", diagnostics: [{ severity: "warning", summary: "W" }] }),
+      ],
+      "apply",
+    )
+    const tail = "0 added, 0 changed, 0 destroyed. ⚠️ 3 warnings in 2 units."
+    const md = renderMarkdown(report, OPTIONS)
+    checkStructure(md)
+    expect(md.split("\n")[3]).toBe(`**Apply: 2 units, 2 unchanged.** ${tail}`)
+    expect(statusLine(report)).toBe(`Apply: 2 units, 2 unchanged. ${tail}`)
+  })
+
+  it("uses the singular forms for one warning in one unit", () => {
+    const report = runReport([unitReport({ diagnostics: [{ severity: "warning", summary: "W" }] })])
+    expect(statusLine(report)).toBe(
+      "Plan: 1 unit, 1 unchanged. 0 to add, 0 to change, 0 to destroy. ⚠️ 1 warning in 1 unit.",
+    )
+  })
+
+  it("adds no warnings sentence at zero warnings", () => {
+    const report = runReport([unitReport({ diagnostics: [{ severity: "error", summary: "E" }] })])
+    const line = statusLine(report)
+    expect(line.endsWith("0 to destroy.")).toBe(true)
+    expect(line).not.toContain("⚠️")
   })
 })
 

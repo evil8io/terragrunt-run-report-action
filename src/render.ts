@@ -1,4 +1,5 @@
 import {
+  compare,
   hasChanges,
   hasCounts,
   type ChangeKind,
@@ -132,8 +133,25 @@ function totalsPhrase(report: RunReport): string {
   return `${parts.join(", ")}.`
 }
 
+function warningsPhrase(report: RunReport): string | undefined {
+  let warnings = 0
+  let units = 0
+  for (const unit of report.units) {
+    const count = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length
+    warnings += count
+    if (count > 0) units++
+  }
+  if (warnings === 0) return undefined
+  return `⚠️ ${plural(warnings, "warning")} in ${plural(units, "unit")}.`
+}
+
+function statusTail(report: RunReport): string {
+  const phrase = warningsPhrase(report)
+  return phrase === undefined ? totalsPhrase(report) : `${totalsPhrase(report)} ${phrase}`
+}
+
 export function statusLine(report: RunReport): string {
-  return `${unitsPhrase(report)} ${totalsPhrase(report)}`
+  return `${unitsPhrase(report)} ${statusTail(report)}`
 }
 
 export function resultText(unit: UnitReport): string {
@@ -280,15 +298,61 @@ function errorText(unit: UnitReport): string | undefined {
 
 type WarningGroup = [Diagnostic, ...Diagnostic[]]
 
+const LOCATION = /^(.*):(\d+)$/
+
+function compareOptional(a: string | undefined, b: string | undefined): number {
+  if (a === undefined || b === undefined) return a === b ? 0 : a === undefined ? -1 : 1
+  return compare(a, b)
+}
+
+function compareLocation(a: string | undefined, b: string | undefined): number {
+  if (a === undefined || b === undefined) return compareOptional(a, b)
+  const [, pathA = a, lineA] = LOCATION.exec(a) ?? []
+  const [, pathB = b, lineB] = LOCATION.exec(b) ?? []
+  const byPath = compare(pathA, pathB)
+  if (byPath !== 0) return byPath
+  if (lineA === undefined || lineB === undefined)
+    return lineA === lineB ? 0 : lineA === undefined ? -1 : 1
+  return Number(lineA) - Number(lineB)
+}
+
+function compareOccurrence(a: Diagnostic, b: Diagnostic): number {
+  return compareLocation(a.location, b.location) || compareOptional(a.address, b.address)
+}
+
+function compareGroup(a: WarningGroup, b: WarningGroup): number {
+  return (
+    compare(a[0].summary, b[0].summary) ||
+    compareOccurrence(a[0], b[0]) ||
+    compareOptional(a[0].detail, b[0].detail)
+  )
+}
+
+function placeOf(warning: Diagnostic): string {
+  return [
+    warning.location ? `on ${warning.location}` : undefined,
+    warning.address ? `with ${warning.address}` : undefined,
+  ]
+    .filter((part) => part !== undefined)
+    .join(" ")
+}
+
+function samePlace(a: Diagnostic, b: Diagnostic): boolean {
+  return a.location === b.location && a.address === b.address
+}
+
 function warningGroup(group: WarningGroup): string {
   const [first] = group
   const lines = [`Warning: ${first.summary}${group.length > 1 ? ` (${group.length})` : ""}`]
-  for (const warning of group) {
-    const place = [
-      warning.location ? `on ${warning.location}` : undefined,
-      warning.address ? `with ${warning.address}` : undefined,
-    ].filter((part) => part !== undefined)
-    if (place.length > 0) lines.push(`  ${place.join(" ")}`)
+  let index = 0
+  while (index < group.length) {
+    const head = group[index]!
+    const place = placeOf(head)
+    let end = index + 1
+    while (end < group.length && samePlace(head, group[end]!)) end++
+    const count = end - index
+    if (place !== "") lines.push(`  ${place}${count > 1 ? ` (${count})` : ""}`)
+    index = end
   }
   if (first.detail) lines.push("", first.detail)
   return lines.join("\n")
@@ -302,7 +366,10 @@ function warningsText(warnings: readonly Diagnostic[]): string {
     if (group) group.push(warning)
     else groups.set(key, [warning])
   }
-  return [...groups.values()].map(warningGroup).join("\n\n")
+  const sorted = [...groups.values()].map((group): WarningGroup => {
+    return [...group].sort(compareOccurrence) as WarningGroup
+  })
+  return sorted.sort(compareGroup).map(warningGroup).join("\n\n")
 }
 
 function warningsBlock(unit: UnitReport, expand: boolean): string | undefined {
@@ -359,7 +426,7 @@ function section(unit: UnitReport, { id, expand, collapse }: SectionOptions): st
 export function renderMarkdown(report: RunReport, options: RenderOptions): string {
   const parts = [
     `${markerLine(options.header)}\n## ${options.header}`,
-    `**${unitsPhrase(report)}** ${totalsPhrase(report)}`,
+    `**${unitsPhrase(report)}** ${statusTail(report)}`,
   ]
   if (report.runError !== undefined && report.failedUnits === 0) {
     parts.push("❌ Run failed", fence(report.runError))
