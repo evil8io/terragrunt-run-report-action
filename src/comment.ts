@@ -144,3 +144,38 @@ export async function deleteComments(target: CommentTarget): Promise<number> {
   }
   return existing.length
 }
+
+/** "warn" writes a warning for a failed comment request, and "fail" throws the error. */
+export type CommentFailure = "fail" | "warn"
+
+export type Logger = {
+  info: (message: string) => void
+  warning: (message: string) => void
+}
+
+/** Without content, the function deletes the comments of the report. */
+export async function postComment(
+  target: CommentTarget,
+  content: string | undefined,
+  failure: CommentFailure,
+  logger: Logger,
+): Promise<void> {
+  try {
+    if (content === undefined) {
+      const deleted = await deleteComments(target)
+      logger.info(
+        `The run has no changes, no failed unit, and no early exit. The action deleted ${deleted} comments.`,
+      )
+      return
+    }
+    const result = await createOrUpdateComment({ ...target, content })
+    logger.info(
+      `The report has ${result.chunks} comments. The action updated ${result.updated}, created ${result.created}, and deleted ${result.deleted} comments.`,
+    )
+  } catch (error) {
+    if (failure === "fail") throw error
+    logger.warning(
+      `The comment request failed: ${error instanceof Error ? error.message : String(error)}`,
+    )
+  }
+}

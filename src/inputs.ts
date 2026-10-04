@@ -1,6 +1,7 @@
 import * as core from "@actions/core"
 import * as glob from "@actions/glob"
 import { applyUnitLabel, type ApplyFile } from "./apply.ts"
+import type { CommentFailure } from "./comment.ts"
 
 export type Inputs = {
   logFile: string | undefined
@@ -13,6 +14,7 @@ export type Inputs = {
   summary: boolean
   rawLog: boolean
   comment: boolean
+  commentFailure: CommentFailure
   owner: string | undefined
   repo: string | undefined
   prNumber: number | undefined
@@ -49,6 +51,10 @@ export function readInputs(): Inputs {
       throw new Error(`The input pr-number must be a positive integer: ${prText}`)
     }
   }
+  const commentFailure = optional("comment-failure") ?? "fail"
+  if (commentFailure !== "fail" && commentFailure !== "warn") {
+    throw new Error(`The input comment-failure must be fail or warn: ${commentFailure}`)
+  }
   const inputs: Inputs = {
     logFile: optional("log-file"),
     planJsonDir: optional("plan-json-dir"),
@@ -63,6 +69,7 @@ export function readInputs(): Inputs {
     summary: flag("summary", true),
     rawLog: flag("raw-log", true),
     comment: flag("comment", false),
+    commentFailure,
     owner,
     repo,
     prNumber,

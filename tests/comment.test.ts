@@ -3,6 +3,7 @@ import {
   chunkComment,
   createOrUpdateComment,
   deleteComments,
+  postComment,
   type Octokit,
 } from "../src/comment.ts"
 import type { RunReport, UnitReport } from "../src/model.ts"
@@ -205,5 +206,67 @@ describe("deleteComments", () => {
     ])
     expect(await deleteComments({ ...target, octokit: fake.octokit })).toBe(2)
     expect(fake.comments).toEqual([{ id: 2, body: "unrelated" }])
+  })
+})
+
+/** A token without write permission can list the comments, but not change them. */
+function readOnlyOctokit(initial: FakeComment[]): Octokit {
+  const { octokit } = fakeOctokit(initial)
+  const issues = (octokit as unknown as { rest: { issues: Record<string, unknown> } }).rest.issues
+  const forbidden = async () => {
+    throw new Error("Resource not accessible by integration")
+  }
+  issues.createComment = forbidden
+  issues.updateComment = forbidden
+  issues.deleteComment = forbidden
+  return octokit
+}
+
+function recorder() {
+  const messages = { info: [] as string[], warning: [] as string[] }
+  const logger = {
+    info: (message: string) => {
+      messages.info.push(message)
+    },
+    warning: (message: string) => {
+      messages.warning.push(message)
+    },
+  }
+  return { messages, logger }
+}
+
+describe("postComment", () => {
+  it.each([
+    ["a create", [], `${MARKER}\n## Report`],
+    ["an update", [{ id: 1, body: `${MARKER}\n## Report` }], `${MARKER}\n## Report\n\nnew`],
+    ["a delete", [{ id: 1, body: `${MARKER}\n## Report` }], undefined],
+  ])("writes a warning for a failed %s with warn", async (_, initial, content) => {
+    const { messages, logger } = recorder()
+    const octokit = readOnlyOctokit(initial)
+    await expect(postComment({ ...target, octokit }, content, "warn", logger)).resolves.toBe(
+      undefined,
+    )
+    expect(messages.warning).toEqual([
+      "The comment request failed: Resource not accessible by integration",
+    ])
+  })
+
+  it("throws the request error with fail", async () => {
+    const { messages, logger } = recorder()
+    const octokit = readOnlyOctokit([])
+    await expect(
+      postComment({ ...target, octokit }, `${MARKER}\n## Report`, "fail", logger),
+    ).rejects.toThrow("Resource not accessible by integration")
+    expect(messages.warning).toEqual([])
+  })
+
+  it("writes the comment counts after a successful request", async () => {
+    const { messages, logger } = recorder()
+    const fake = fakeOctokit([])
+    await postComment({ ...target, octokit: fake.octokit }, `${MARKER}\n## Report`, "warn", logger)
+    expect(messages).toEqual({
+      info: ["The report has 1 comments. The action updated 0, created 1, and deleted 0 comments."],
+      warning: [],
+    })
   })
 })

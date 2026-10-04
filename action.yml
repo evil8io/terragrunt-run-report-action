@@ -50,6 +50,12 @@ inputs:
     description: Post the report as a sticky pull request comment.
     required: false
     default: "false"
+  comment-failure:
+    description: >-
+      What the action does when it cannot post the comment, for example on a pull request from a fork:
+      `fail` fails the step, and `warn` writes a warning and continues.
+    required: false
+    default: fail
   repository:
     description: The `owner/name` of the repository of the pull request.
     required: false

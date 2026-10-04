@@ -96,7 +96,7 @@ jobs:
 
 The plan step writes three files. `tee` writes the log to `plan.log`, and each log line has the name of its unit. With `--json-out-dir`, terragrunt writes the plan of each unit as JSON. With `--report-file`, terragrunt writes the result of each unit. The `exit` command returns the exit code of terragrunt, so the step fails when a unit fails. The action still runs, because of `if: always()`.
 
-The token of a pull request from a fork has no write permission, so the example posts a comment only for a branch of the repository.
+The token of a pull request from a fork has no write permission, so the example posts a comment only for a branch of the repository. A workflow that always sets `comment: true` can set `comment-failure: warn` instead, so that the step writes a warning and does not fail.
 
 ### Apply on a push to main
 
@@ -182,6 +182,7 @@ Each file adds a part of the report. The action needs at least one of them. The 
 | `summary`           | no       | `true`                                                                                | Write the report to the job summary.                                                                                                                                                            |
 | `raw-log`           | no       | `true`                                                                                | Add the log file to the job summary in a collapsed section.                                                                                                                                     |
 | `comment`           | no       | `false`                                                                               | Post the report as a sticky pull request comment.                                                                                                                                               |
+| `comment-failure`   | no       | `fail`                                                                                | What the action does when it cannot post the comment, for example on a pull request from a fork: `fail` fails the step, and `warn` writes a warning and continues.                              |
 | `repository`        | no       | `${{ github.repository }}`                                                            | The `owner/name` of the repository of the pull request.                                                                                                                                         |
 | `pr-number`         | no       |                                                                                       | The number of the pull request. This input is required when `comment` is `true`.                                                                                                                |
 | `token`             | no       | `${{ github.token }}`                                                                 | The token for the comment requests. It needs `pull-requests: write`.                                                                                                                            |
