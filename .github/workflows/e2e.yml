@@ -96,9 +96,6 @@ jobs:
           comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - name: Remove the -json-into files of phase 2
-        run: find .terragrunt-stack -name apply.json -path '*/.terragrunt-cache/*' -delete
-
       - name: Phase 3, plan
         env:
           E2E_PHASE: 3
