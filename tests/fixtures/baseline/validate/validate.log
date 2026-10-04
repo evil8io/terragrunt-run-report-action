@@ -1,0 +1,103 @@
+00:00:00.000 INFO   Terragrunt Cache server is listening on 127.0.0.1:38335
+00:00:00.000 INFO   Start Terragrunt Cache server
+00:00:00.000 INFO   Generating unit zeta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit gamma from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit alpha from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit beta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit delta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit epsilon from ./terragrunt.stack.hcl
+00:00:00.000 INFO   The following units will be run, starting with dependencies and then their dependents:
+.
+├── .terragrunt-stack/gamma
+├── .terragrunt-stack/zeta
+├── .terragrunt-stack/alpha
+│   ╰── .terragrunt-stack/beta
+╰── .terragrunt-stack/delta
+    ╰── .terragrunt-stack/epsilon
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Warning: Redundant ignore_changes element
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   on main.tf line 38, in resource "terraform_data" "main":
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   38: resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Adding an attribute name to ignore_changes tells OpenTofu to ignore future
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: changes to the argument in configuration after the object has been created,
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: retaining the value originally configured.
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: The attribute id is decided by the provider alone and therefore there can be
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: no configured value to compare with. Including this attribute in
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: ignore_changes has no effect. Remove the attribute from ignore_changes to
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: quiet this warning.
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: (and 2 more similar warnings elsewhere)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Success! The configuration is valid, but there were some validation warnings
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: as shown above.
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Warning: Redundant ignore_changes element
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   on main.tf line 38, in resource "terraform_data" "main":
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   38: resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Adding an attribute name to ignore_changes tells OpenTofu to ignore future
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: changes to the argument in configuration after the object has been created,
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: retaining the value originally configured.
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: The attribute id is decided by the provider alone and therefore there can be
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: no configured value to compare with. Including this attribute in
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: ignore_changes has no effect. Remove the attribute from ignore_changes to
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: quiet this warning.
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: (and 2 more similar warnings elsewhere)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Success! The configuration is valid, but there were some validation warnings
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: as shown above.
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: Warning: Redundant ignore_changes element
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   on main.tf line 38, in resource "terraform_data" "main":
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   38: resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: Adding an attribute name to ignore_changes tells OpenTofu to ignore future
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: changes to the argument in configuration after the object has been created,
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: retaining the value originally configured.
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: The attribute id is decided by the provider alone and therefore there can be
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: no configured value to compare with. Including this attribute in
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: ignore_changes has no effect. Remove the attribute from ignore_changes to
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: quiet this warning.
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: (and 2 more similar warnings elsewhere)
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: Success! The configuration is valid, but there were some validation warnings
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: as shown above.
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: Warning: Redundant ignore_changes element
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   on main.tf line 38, in resource "terraform_data" "main":
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   38: resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: Adding an attribute name to ignore_changes tells OpenTofu to ignore future
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: changes to the argument in configuration after the object has been created,
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: retaining the value originally configured.
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: The attribute id is decided by the provider alone and therefore there can be
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: no configured value to compare with. Including this attribute in
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: ignore_changes has no effect. Remove the attribute from ignore_changes to
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: quiet this warning.
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: (and 2 more similar warnings elsewhere)
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: Success! The configuration is valid, but there were some validation warnings
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: as shown above.
+00:00:00.000 WARN   [.terragrunt-stack/beta] Config /repo/tests/e2e/stack/.terragrunt-stack/alpha/terragrunt.hcl is a dependency of /repo/tests/e2e/stack/.terragrunt-stack/beta/terragrunt.hcl that has no outputs, but mock outputs provided and returning those in dependency output.
+00:00:00.000 WARN   [.terragrunt-stack/epsilon] Config /repo/tests/e2e/stack/.terragrunt-stack/delta/terragrunt.hcl is a dependency of /repo/tests/e2e/stack/.terragrunt-stack/epsilon/terragrunt.hcl that has no outputs, but mock outputs provided and returning those in dependency output.
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: Warning: Redundant ignore_changes element
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   on main.tf line 38, in resource "terraform_data" "main":
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   38: resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: Adding an attribute name to ignore_changes tells OpenTofu to ignore future
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: changes to the argument in configuration after the object has been created,
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: retaining the value originally configured.
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: The attribute id is decided by the provider alone and therefore there can be
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: no configured value to compare with. Including this attribute in
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: ignore_changes has no effect. Remove the attribute from ignore_changes to
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: quiet this warning.
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: (and 2 more similar warnings elsewhere)
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: Success! The configuration is valid, but there were some validation warnings
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: as shown above.
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Warning: Redundant ignore_changes element
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   on main.tf line 38, in resource "terraform_data" "main":
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   38: resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Adding an attribute name to ignore_changes tells OpenTofu to ignore future
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: changes to the argument in configuration after the object has been created,
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: retaining the value originally configured.
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: The attribute id is decided by the provider alone and therefore there can be
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: no configured value to compare with. Including this attribute in
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: ignore_changes has no effect. Remove the attribute from ignore_changes to
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: quiet this warning.
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: (and 2 more similar warnings elsewhere)
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Success! The configuration is valid, but there were some validation warnings
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: as shown above.
+
+❯❯ Run Summary  6 units  0ms
+   ────────────────────────────
+   Succeeded    6
+
+00:00:00.000 INFO   Shutting down Terragrunt Cache server...
+00:00:00.000 INFO   Terragrunt Cache server stopped

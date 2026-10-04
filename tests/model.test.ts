@@ -29,10 +29,16 @@ function applyFiles(dir: string, name: string) {
 }
 
 function sources(
-  scenario: "changes" | "failures" | "destroy",
-  kind: "plan" | "apply" | "destroy",
+  scenario: "changes" | "failures" | "destroy" | "baseline",
+  kind: "plan" | "apply" | "destroy" | "init" | "validate",
 ): Sources {
   const dir = path.join(FIXTURES, scenario, kind)
+  if (kind === "init" || kind === "validate") {
+    return loadSources({
+      logFile: path.join(dir, `${kind}.log`),
+      reportFile: path.join(dir, "report.json"),
+    })
+  }
   if (kind === "plan") {
     return loadSources({
       logFile: path.join(dir, "plan.log"),
@@ -80,7 +86,7 @@ describe("buildReport for changes/plan", () => {
     ])
     const replace = unit(report, "alpha").changes[2]
     expect(replace?.diff).toBe(
-      '! id               = "8ecce4d8-5014-09f3-fdaf-bb93a9df3581" -> (known after apply)\n! triggers_replace = "phase-1" -> "phase-2"',
+      '! id               = "0fb34389-cd0c-c715-696c-760d85aa5b8f" -> (known after apply)\n! triggers_replace = "phase-1" -> "phase-2"',
     )
     expect(replace?.reason).toBeUndefined()
     expect(replace?.outcome).toBeUndefined()
@@ -370,6 +376,78 @@ describe("buildReport with one source", () => {
       ].join("\n"),
     )
     expect(buildReport({ log })).toMatchObject({ empty: true, failed: false, unchangedUnits: 2 })
+  })
+})
+
+describe("buildReport for a run of another command", () => {
+  it.each(["init", "validate"] as const)("reports the baseline %s as an empty run", (cmd) => {
+    const report = buildReport(sources("baseline", cmd))
+    expect(report).toMatchObject({
+      kind: "other",
+      cmd,
+      failed: false,
+      empty: true,
+      changedUnits: 0,
+      totals: { add: 0, change: 0, remove: 0, import: 0, forget: 0 },
+    })
+    expect(report.units).toHaveLength(6)
+    expect(report.units.every((u) => u.result === "succeeded" && u.counts === undefined)).toBe(true)
+  })
+
+  it("reports a failed init", () => {
+    const stderr = (line: string) => `21:49:42.263 STDERR [.terragrunt-stack/alpha] tofu: ${line}`
+    const stdout = (name: string, line: string) =>
+      `21:49:41.000 STDOUT [.terragrunt-stack/${name}] tofu: ${line}`
+    const names = ["beta", "gamma", "delta", "epsilon", "zeta"]
+    const log = parseLog(
+      [
+        stderr("Error: Failed to query available provider packages"),
+        stderr("Could not retrieve the list of available versions for provider"),
+        stderr("hashicorp/does-not-exist-anywhere: provider"),
+        stderr("registry.opentofu.org/hashicorp/does-not-exist-anywhere was not found in any"),
+        stderr("of the search locations"),
+        ...names.flatMap((name) => [
+          stdout(name, "Initializing the backend..."),
+          stdout(name, "OpenTofu has been successfully initialized!"),
+        ]),
+        "21:49:42.356 ERROR  Run failed: 2 errors occurred:",
+        '  * Failed to execute "tofu init -no-color -no-color -input=false" in ./.terragrunt-stack/alpha/.terragrunt-cache/x/y',
+        "  Error: Failed to query available provider packages",
+        "  exit status 1",
+        "  * Unit '.../.terragrunt-stack/beta' did not run due to a failure in '.../.terragrunt-stack/alpha'",
+      ].join("\n"),
+    )
+    const entry = (name: string, fields: object) => ({
+      Name: `.terragrunt-stack/${name}`,
+      Cmd: "init",
+      ...fields,
+    })
+    const report = parseReport(
+      JSON.stringify([
+        entry("alpha", { Result: "failed", Reason: "run error", Cause: "error occurred" }),
+        entry("beta", { Result: "early exit", Reason: "ancestor error", Cause: "alpha" }),
+        ...["gamma", "delta", "epsilon", "zeta"].map((name) =>
+          entry(name, { Result: "succeeded" }),
+        ),
+      ]),
+    )
+    const built = buildReport({ log, report })
+    expect(built).toMatchObject({ kind: "other", cmd: "init", failed: true, empty: false })
+    expect(unit(built, "alpha").result).toBe("failed")
+    expect(unit(built, "alpha").stderr).toContain("Error: Failed to query available provider")
+    expect(unit(built, "beta").result).toBe("early exit")
+  })
+
+  it("takes the kind and the command from a report file alone", () => {
+    const entries = parseReport(JSON.stringify([{ Name: "a", Result: "succeeded", Cmd: "output" }]))
+    expect(buildReport({ report: entries })).toMatchObject({ kind: "other", cmd: "output" })
+  })
+
+  it("keeps the kind run for a report file without a command", () => {
+    const entries = parseReport(JSON.stringify([{ Name: "a", Result: "succeeded" }]))
+    const report = buildReport({ report: entries })
+    expect(report.kind).toBe("run")
+    expect(report.cmd).toBeUndefined()
   })
 })
 

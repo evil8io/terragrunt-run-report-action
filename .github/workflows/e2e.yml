@@ -49,6 +49,42 @@ jobs:
       - name: Generate the stack
         run: terragrunt stack generate
 
+      - name: Phase 1, init
+        env:
+          E2E_PHASE: 1
+        run: |
+          terragrunt run --all --report-file report-init-1.json --report-format json -- init -no-color 2>&1 | tee init-1.log; exit ${PIPESTATUS[0]}
+
+      - name: Phase 1, init report
+        id: init-1
+        if: always()
+        uses: ./
+        with:
+          header: "Init"
+          log-file: tests/e2e/stack/init-1.log
+          report-file: tests/e2e/stack/report-init-1.json
+          working-directory: tests/e2e/stack
+          comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - name: Phase 1, validate
+        env:
+          E2E_PHASE: 1
+        run: |
+          terragrunt run --all --report-file report-validate-1.json --report-format json -- validate -no-color 2>&1 | tee validate-1.log; exit ${PIPESTATUS[0]}
+
+      - name: Phase 1, validate report
+        id: validate-1
+        if: always()
+        uses: ./
+        with:
+          header: "Validate"
+          log-file: tests/e2e/stack/validate-1.log
+          report-file: tests/e2e/stack/report-validate-1.json
+          working-directory: tests/e2e/stack
+          comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
+          pr-number: ${{ github.event.pull_request.number }}
+
       - name: Phase 1, baseline apply
         env:
           E2E_PHASE: 1
@@ -185,6 +221,12 @@ jobs:
 
       - name: Check the outputs
         env:
+          INIT_1_FAILED: ${{ steps.init-1.outputs.failed }}
+          INIT_1_EMPTY: ${{ steps.init-1.outputs.empty }}
+          INIT_1_SUMMARY: ${{ steps.init-1.outputs.summary }}
+          VALIDATE_1_FAILED: ${{ steps.validate-1.outputs.failed }}
+          VALIDATE_1_EMPTY: ${{ steps.validate-1.outputs.empty }}
+          VALIDATE_1_SUMMARY: ${{ steps.validate-1.outputs.summary }}
           PLAN_2_FAILED: ${{ steps.plan-2.outputs.failed }}
           PLAN_2_EMPTY: ${{ steps.plan-2.outputs.empty }}
           APPLY_2_FAILED: ${{ steps.apply-2.outputs.failed }}
@@ -202,6 +244,12 @@ jobs:
           EXPECTED_WARNINGS: ${{ matrix.tf == 'opentofu' && '18' || '0' }}
           PLAN_2_MARKDOWN_FILE: ${{ steps.plan-2.outputs.markdown-file }}
         run: |
+          test "$INIT_1_FAILED" = false
+          test "$INIT_1_EMPTY" = true
+          test "$INIT_1_SUMMARY" = "Init: 6 units, 6 succeeded."
+          test "$VALIDATE_1_FAILED" = false
+          test "$VALIDATE_1_EMPTY" = true
+          test "$VALIDATE_1_SUMMARY" = "Validate: 6 units, 6 succeeded."
           test "$PLAN_2_FAILED" = false
           test "$APPLY_2_FAILED" = false
           test "$PLAN_3_FAILED" = true
