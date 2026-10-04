@@ -1,0 +1,7 @@
+dist/
+node_modules/
+pnpm-lock.yaml
+tests/fixtures/
+tests/e2e/
+CHANGELOG.md
+.claude/

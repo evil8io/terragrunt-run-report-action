@@ -1,0 +1,590 @@
+{
+  "format_version": "1.2",
+  "terraform_version": "1.13.1",
+  "variables": {
+    "content": {
+      "value": "alpha phase 2"
+    },
+    "extra_file": {
+      "value": "true"
+    },
+    "fail_apply": {
+      "value": false
+    },
+    "fail_plan": {
+      "value": false
+    },
+    "name": {
+      "value": "alpha"
+    },
+    "replace_trigger": {
+      "value": "phase-2"
+    }
+  },
+  "planned_values": {
+    "outputs": {
+      "content": {
+        "sensitive": false,
+        "type": "string",
+        "value": "alpha phase 2"
+      },
+      "name": {
+        "sensitive": false,
+        "type": "string",
+        "value": "alpha"
+      },
+      "replace_id": {
+        "sensitive": false
+      }
+    },
+    "root_module": {
+      "resources": [
+        {
+          "address": "local_file.extra[0]",
+          "mode": "managed",
+          "type": "local_file",
+          "name": "extra",
+          "index": 0,
+          "provider_name": "registry.opentofu.org/hashicorp/local",
+          "schema_version": 0,
+          "values": {
+            "content": "extra file of alpha\n",
+            "content_base64": null,
+            "directory_permission": "0777",
+            "file_permission": "0777",
+            "filename": "./.out/alpha-extra.txt",
+            "sensitive_content": null,
+            "source": null
+          },
+          "sensitive_values": {
+            "sensitive_content": true
+          }
+        },
+        {
+          "address": "local_file.main",
+          "mode": "managed",
+          "type": "local_file",
+          "name": "main",
+          "provider_name": "registry.opentofu.org/hashicorp/local",
+          "schema_version": 0,
+          "values": {
+            "content_base64": null,
+            "directory_permission": "0777",
+            "file_permission": "0777",
+            "filename": "./.out/alpha.txt",
+            "sensitive_content": null,
+            "source": null
+          },
+          "sensitive_values": {}
+        },
+        {
+          "address": "terraform_data.main",
+          "mode": "managed",
+          "type": "terraform_data",
+          "name": "main",
+          "provider_name": "terraform.io/builtin/terraform",
+          "schema_version": 0,
+          "values": {
+            "id": "d67d2547-c4f2-cc25-179b-4e2c2b6d2d63",
+            "input": "alpha",
+            "output": "alpha",
+            "triggers_replace": null
+          },
+          "sensitive_values": {}
+        },
+        {
+          "address": "terraform_data.replace",
+          "mode": "managed",
+          "type": "terraform_data",
+          "name": "replace",
+          "provider_name": "terraform.io/builtin/terraform",
+          "schema_version": 0,
+          "values": {
+            "input": null,
+            "output": null,
+            "triggers_replace": "phase-2"
+          },
+          "sensitive_values": {}
+        }
+      ]
+    }
+  },
+  "resource_changes": [
+    {
+      "address": "local_file.extra[0]",
+      "mode": "managed",
+      "type": "local_file",
+      "name": "extra",
+      "index": 0,
+      "provider_name": "registry.opentofu.org/hashicorp/local",
+      "change": {
+        "actions": [
+          "create"
+        ],
+        "before": null,
+        "after": {
+          "content": "extra file of alpha\n",
+          "content_base64": null,
+          "directory_permission": "0777",
+          "file_permission": "0777",
+          "filename": "./.out/alpha-extra.txt",
+          "sensitive_content": null,
+          "source": null
+        },
+        "after_unknown": {
+          "content_base64sha256": true,
+          "content_base64sha512": true,
+          "content_md5": true,
+          "content_sha1": true,
+          "content_sha256": true,
+          "content_sha512": true,
+          "id": true
+        },
+        "before_sensitive": false,
+        "after_sensitive": {
+          "sensitive_content": true
+        }
+      }
+    },
+    {
+      "address": "local_file.main",
+      "mode": "managed",
+      "type": "local_file",
+      "name": "main",
+      "provider_name": "registry.opentofu.org/hashicorp/local",
+      "change": {
+        "actions": [
+          "delete",
+          "create"
+        ],
+        "before": {
+          "content": "alpha phase 1\nreplace=25bebadf-87d5-5ca0-4682-b2264c71b4b1\n",
+          "content_base64": null,
+          "content_base64sha256": "0SrcZhSDocEOUfHesnituFiDIdTIdF58025EgTGmZ3E=",
+          "content_base64sha512": "U6UDwzI3G1xeW+bf3XHX9oWaDjkaaIGqAVgY4EkF6Ts0cutJcNPD2fNcDEjRQ+RhmtRdMZrHjhttFfkfjJe5kQ==",
+          "content_md5": "102469622445f1694fa91ed2ddb0d014",
+          "content_sha1": "19158362e52924954ca4dcbef63d6ac29fb1b99d",
+          "content_sha256": "d12adc661483a1c10e51f1deb278adb8588321d4c8745e7cd36e448131a66771",
+          "content_sha512": "53a503c332371b5c5e5be6dfdd71d7f6859a0e391a6881aa015818e04905e93b3472eb4970d3c3d9f35c0c48d143e4619ad45d319ac78e1b6d15f91f8c97b991",
+          "directory_permission": "0777",
+          "file_permission": "0777",
+          "filename": "./.out/alpha.txt",
+          "id": "19158362e52924954ca4dcbef63d6ac29fb1b99d",
+          "sensitive_content": null,
+          "source": null
+        },
+        "after": {
+          "content_base64": null,
+          "directory_permission": "0777",
+          "file_permission": "0777",
+          "filename": "./.out/alpha.txt",
+          "sensitive_content": null,
+          "source": null
+        },
+        "after_unknown": {
+          "content": true,
+          "content_base64sha256": true,
+          "content_base64sha512": true,
+          "content_md5": true,
+          "content_sha1": true,
+          "content_sha256": true,
+          "content_sha512": true,
+          "id": true
+        },
+        "before_sensitive": {
+          "sensitive_content": true
+        },
+        "after_sensitive": {
+          "sensitive_content": true
+        },
+        "replace_paths": [
+          [
+            "content"
+          ]
+        ]
+      },
+      "action_reason": "replace_because_cannot_update"
+    },
+    {
+      "address": "terraform_data.main",
+      "mode": "managed",
+      "type": "terraform_data",
+      "name": "main",
+      "provider_name": "terraform.io/builtin/terraform",
+      "change": {
+        "actions": [
+          "no-op"
+        ],
+        "before": {
+          "id": "d67d2547-c4f2-cc25-179b-4e2c2b6d2d63",
+          "input": "alpha",
+          "output": "alpha",
+          "triggers_replace": null
+        },
+        "after": {
+          "id": "d67d2547-c4f2-cc25-179b-4e2c2b6d2d63",
+          "input": "alpha",
+          "output": "alpha",
+          "triggers_replace": null
+        },
+        "after_unknown": {},
+        "before_sensitive": {},
+        "after_sensitive": {}
+      }
+    },
+    {
+      "address": "terraform_data.replace",
+      "mode": "managed",
+      "type": "terraform_data",
+      "name": "replace",
+      "provider_name": "terraform.io/builtin/terraform",
+      "change": {
+        "actions": [
+          "delete",
+          "create"
+        ],
+        "before": {
+          "id": "25bebadf-87d5-5ca0-4682-b2264c71b4b1",
+          "input": null,
+          "output": null,
+          "triggers_replace": "phase-1"
+        },
+        "after": {
+          "input": null,
+          "output": null,
+          "triggers_replace": "phase-2"
+        },
+        "after_unknown": {
+          "id": true
+        },
+        "before_sensitive": {},
+        "after_sensitive": {},
+        "replace_paths": [
+          [
+            "triggers_replace"
+          ]
+        ]
+      },
+      "action_reason": "replace_because_cannot_update"
+    }
+  ],
+  "output_changes": {
+    "content": {
+      "actions": [
+        "update"
+      ],
+      "before": "alpha phase 1",
+      "after": "alpha phase 2",
+      "after_unknown": false,
+      "before_sensitive": false,
+      "after_sensitive": false
+    },
+    "name": {
+      "actions": [
+        "no-op"
+      ],
+      "before": "alpha",
+      "after": "alpha",
+      "after_unknown": false,
+      "before_sensitive": false,
+      "after_sensitive": false
+    },
+    "replace_id": {
+      "actions": [
+        "update"
+      ],
+      "before": "25bebadf-87d5-5ca0-4682-b2264c71b4b1",
+      "after_unknown": true,
+      "before_sensitive": false,
+      "after_sensitive": false
+    }
+  },
+  "prior_state": {
+    "format_version": "1.0",
+    "terraform_version": "1.13.1",
+    "values": {
+      "outputs": {
+        "content": {
+          "sensitive": false,
+          "value": "alpha phase 2",
+          "type": "string"
+        },
+        "name": {
+          "sensitive": false,
+          "value": "alpha",
+          "type": "string"
+        },
+        "replace_id": {
+          "sensitive": false,
+          "value": "25bebadf-87d5-5ca0-4682-b2264c71b4b1",
+          "type": "string"
+        }
+      },
+      "root_module": {
+        "resources": [
+          {
+            "address": "local_file.main",
+            "mode": "managed",
+            "type": "local_file",
+            "name": "main",
+            "provider_name": "registry.opentofu.org/hashicorp/local",
+            "schema_version": 0,
+            "values": {
+              "content": "alpha phase 1\nreplace=25bebadf-87d5-5ca0-4682-b2264c71b4b1\n",
+              "content_base64": null,
+              "content_base64sha256": "0SrcZhSDocEOUfHesnituFiDIdTIdF58025EgTGmZ3E=",
+              "content_base64sha512": "U6UDwzI3G1xeW+bf3XHX9oWaDjkaaIGqAVgY4EkF6Ts0cutJcNPD2fNcDEjRQ+RhmtRdMZrHjhttFfkfjJe5kQ==",
+              "content_md5": "102469622445f1694fa91ed2ddb0d014",
+              "content_sha1": "19158362e52924954ca4dcbef63d6ac29fb1b99d",
+              "content_sha256": "d12adc661483a1c10e51f1deb278adb8588321d4c8745e7cd36e448131a66771",
+              "content_sha512": "53a503c332371b5c5e5be6dfdd71d7f6859a0e391a6881aa015818e04905e93b3472eb4970d3c3d9f35c0c48d143e4619ad45d319ac78e1b6d15f91f8c97b991",
+              "directory_permission": "0777",
+              "file_permission": "0777",
+              "filename": "./.out/alpha.txt",
+              "id": "19158362e52924954ca4dcbef63d6ac29fb1b99d",
+              "sensitive_content": null,
+              "source": null
+            },
+            "sensitive_values": {
+              "sensitive_content": true
+            },
+            "depends_on": [
+              "terraform_data.replace"
+            ]
+          },
+          {
+            "address": "terraform_data.main",
+            "mode": "managed",
+            "type": "terraform_data",
+            "name": "main",
+            "provider_name": "terraform.io/builtin/terraform",
+            "schema_version": 0,
+            "values": {
+              "id": "d67d2547-c4f2-cc25-179b-4e2c2b6d2d63",
+              "input": "alpha",
+              "output": "alpha",
+              "triggers_replace": null
+            },
+            "sensitive_values": {}
+          },
+          {
+            "address": "terraform_data.replace",
+            "mode": "managed",
+            "type": "terraform_data",
+            "name": "replace",
+            "provider_name": "terraform.io/builtin/terraform",
+            "schema_version": 0,
+            "values": {
+              "id": "25bebadf-87d5-5ca0-4682-b2264c71b4b1",
+              "input": null,
+              "output": null,
+              "triggers_replace": "phase-1"
+            },
+            "sensitive_values": {}
+          }
+        ]
+      }
+    }
+  },
+  "configuration": {
+    "provider_config": {
+      "local": {
+        "name": "local",
+        "full_name": "registry.opentofu.org/hashicorp/local",
+        "version_constraint": "~> 2.5"
+      },
+      "terraform": {
+        "name": "terraform",
+        "full_name": "terraform.io/builtin/terraform"
+      }
+    },
+    "root_module": {
+      "outputs": {
+        "content": {
+          "expression": {
+            "references": [
+              "var.content"
+            ]
+          }
+        },
+        "name": {
+          "expression": {
+            "references": [
+              "var.name"
+            ]
+          }
+        },
+        "replace_id": {
+          "expression": {
+            "references": [
+              "terraform_data.replace.id",
+              "terraform_data.replace"
+            ]
+          }
+        }
+      },
+      "resources": [
+        {
+          "address": "local_file.extra",
+          "mode": "managed",
+          "type": "local_file",
+          "name": "extra",
+          "provider_config_key": "local",
+          "expressions": {
+            "content": {
+              "references": [
+                "var.name"
+              ]
+            },
+            "filename": {
+              "references": [
+                "path.module",
+                "var.name"
+              ]
+            }
+          },
+          "schema_version": 0,
+          "count_expression": {
+            "references": [
+              "var.extra_file"
+            ]
+          }
+        },
+        {
+          "address": "local_file.main",
+          "mode": "managed",
+          "type": "local_file",
+          "name": "main",
+          "provider_config_key": "local",
+          "expressions": {
+            "content": {
+              "references": [
+                "var.content",
+                "terraform_data.replace.id",
+                "terraform_data.replace"
+              ]
+            },
+            "filename": {
+              "references": [
+                "path.module",
+                "var.name"
+              ]
+            }
+          },
+          "schema_version": 0
+        },
+        {
+          "address": "terraform_data.fail",
+          "mode": "managed",
+          "type": "terraform_data",
+          "name": "fail",
+          "provider_config_key": "terraform",
+          "provisioners": [
+            {
+              "type": "local-exec"
+            }
+          ],
+          "expressions": {
+            "input": {
+              "references": [
+                "var.content"
+              ]
+            }
+          },
+          "schema_version": 0,
+          "count_expression": {
+            "references": [
+              "var.fail_apply"
+            ]
+          }
+        },
+        {
+          "address": "terraform_data.main",
+          "mode": "managed",
+          "type": "terraform_data",
+          "name": "main",
+          "provider_config_key": "terraform",
+          "expressions": {
+            "input": {
+              "references": [
+                "var.name"
+              ]
+            }
+          },
+          "schema_version": 0
+        },
+        {
+          "address": "terraform_data.replace",
+          "mode": "managed",
+          "type": "terraform_data",
+          "name": "replace",
+          "provider_config_key": "terraform",
+          "expressions": {
+            "triggers_replace": {
+              "references": [
+                "var.replace_trigger"
+              ]
+            }
+          },
+          "schema_version": 0
+        }
+      ],
+      "variables": {
+        "content": {
+          "type": "string",
+          "required": true
+        },
+        "extra_file": {
+          "type": "bool",
+          "default": false
+        },
+        "fail_apply": {
+          "type": "bool",
+          "default": false
+        },
+        "fail_plan": {
+          "type": "bool",
+          "default": false
+        },
+        "name": {
+          "type": "string",
+          "required": true
+        },
+        "replace_trigger": {
+          "type": "string",
+          "default": "static"
+        }
+      }
+    }
+  },
+  "relevant_attributes": [
+    {
+      "resource": "terraform_data.replace",
+      "attribute": [
+        "id"
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "address": {
+        "kind": "resource",
+        "mode": "managed",
+        "name": "main",
+        "to_display": "terraform_data.main",
+        "type": "terraform_data"
+      },
+      "status": "pass",
+      "instances": [
+        {
+          "address": {
+            "to_display": "terraform_data.main"
+          },
+          "status": "pass"
+        }
+      ]
+    }
+  ],
+  "timestamp": "2026-01-01T00:00:00Z",
+  "errored": false
+}

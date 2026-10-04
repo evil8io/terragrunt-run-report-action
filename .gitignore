@@ -1,0 +1,15 @@
+node_modules/
+coverage/
+*.tsbuildinfo
+
+tests/e2e/.state/
+tests/e2e/.out/
+tests/e2e/stack/.terragrunt-stack/
+tests/e2e/modules/*/.out/
+**/.terragrunt-cache/
+!tests/fixtures/**/.terragrunt-cache/
+**/.terraform/
+**/.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+dist/
