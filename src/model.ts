@@ -582,6 +582,17 @@ export function unifyNames(ranked: readonly Iterable<string>[]): Map<string, str
   return mapping
 }
 
+export function countWarnings(report: RunReport): { warnings: number; units: number } {
+  let warnings = 0
+  let units = 0
+  for (const unit of report.units) {
+    const count = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length
+    warnings += count
+    if (count > 0) units++
+  }
+  return { warnings, units }
+}
+
 export function buildReport(sources: Sources): RunReport {
   const logOutputs = sources.log ? linesByUnit(sources.log) : new Map<string, UnitOutput>()
   const mapping = unifyNames([

@@ -197,6 +197,9 @@ jobs:
           PLAN_3_JSON_EMPTY: ${{ steps.plan-3-json.outputs.empty }}
           DESTROY_4_FAILED: ${{ steps.destroy-4.outputs.failed }}
           DESTROY_4_EMPTY: ${{ steps.destroy-4.outputs.empty }}
+          APPLY_2_WARNINGS: ${{ steps.apply-2.outputs.warnings }}
+          PLAN_2_WARNINGS: ${{ steps.plan-2.outputs.warnings }}
+          EXPECTED_WARNINGS: ${{ matrix.tf == 'opentofu' && '18' || '0' }}
           PLAN_2_MARKDOWN_FILE: ${{ steps.plan-2.outputs.markdown-file }}
         run: |
           test "$PLAN_2_FAILED" = false
@@ -211,5 +214,7 @@ jobs:
           test "$APPLY_3_EMPTY" = false
           test "$PLAN_3_JSON_EMPTY" = false
           test "$DESTROY_4_EMPTY" = false
+          test "$APPLY_2_WARNINGS" = "$EXPECTED_WARNINGS"
+          test "$PLAN_2_WARNINGS" = "$EXPECTED_WARNINGS"
           test -s "$PLAN_2_MARKDOWN_FILE"
           grep -q '^## Plan (changes)$' "$PLAN_2_MARKDOWN_FILE"

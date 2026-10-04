@@ -22,6 +22,7 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 - Review each `expected.md` change by hand, because the snapshot is the specification of the report.
 - When the action reads a new or changed file format, update the invocations in the Usage section of `README.md`. Consumers copy these invocations.
 - Read no event payload in the action. Take the repository, the pull request number, and the token from inputs. A `push` or `issue_comment` event has no pull request in its payload.
+- Set the output `warnings` to the count of the status line, because a workflow can fail a step or send a message on the count without a parse of the `summary` text.
 - Put the `run-url` link in the comment only, because the job summary is on the run page.
 - Do not fail the step for a failed unit. Set the output `failed`, because the workflow decides what a failed unit means for the job.
 - Write the markdown file in every mode, also with `summary: false` and `comment: false`, because a later step can need the file alone. Put it in a new directory under `RUNNER_TEMP`, so that two reports of one job do not overwrite one file.
