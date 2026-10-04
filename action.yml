@@ -9,9 +9,9 @@ branding:
 inputs:
   log-file:
     description: >-
-      The log of the run: stdout and stderr of `terragrunt run --all`, captured with `tee` as in the Usage
-      examples, in the default log format or with `--log-format=json`. The diff of each resource comes
-      from this file.
+      The stdout and stderr of `terragrunt run --all`, in the default log format or with
+      `--log-format=json`. The Usage examples write it with `tee`. The diff of each resource comes from
+      this file.
     required: false
   plan-json-dir:
     description: >-
@@ -30,7 +30,7 @@ inputs:
     required: false
   working-directory:
     description: >-
-      The directory where `terragrunt run --all` ran. The action takes the unit name of each `-json-into`
+      The directory where `terragrunt run --all` ran. The action reads the unit name of each `-json-into`
       file from its path relative to this directory.
     required: false
     default: .
