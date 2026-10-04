@@ -14,6 +14,7 @@ describe("readReportFile", () => {
       reason: "ancestor error",
       cause: "delta",
       cmd: "apply",
+      startedAt: Date.parse("2026-01-01T00:00:00Z"),
       durationSeconds: 1,
     })
   })

@@ -8,6 +8,8 @@ export type ReportEntry = {
   reason?: string
   cause?: string
   cmd?: string
+  /** The Started time, in epoch milliseconds. */
+  startedAt?: number
   durationSeconds?: number
 }
 
@@ -25,10 +27,10 @@ const ReportSchema = z.array(
 
 const RESULTS: ReadonlySet<string> = new Set(["succeeded", "failed", "early exit", "excluded"])
 
-function duration(started: string | null | undefined, ended: string | null | undefined) {
-  if (!started || !ended) return undefined
-  const seconds = (Date.parse(ended) - Date.parse(started)) / 1000
-  return Number.isFinite(seconds) ? seconds : undefined
+/** Returns an RFC 3339 time in epoch milliseconds. */
+export function parseTime(value: unknown): number | undefined {
+  const time = typeof value === "string" ? Date.parse(value) : Number.NaN
+  return Number.isFinite(time) ? time : undefined
 }
 
 export function parseReport(text: string, source = "report"): ReportEntry[] {
@@ -55,8 +57,11 @@ export function parseReport(text: string, source = "report"): ReportEntry[] {
     if (raw.Reason) entry.reason = raw.Reason
     if (raw.Cause) entry.cause = raw.Cause
     if (raw.Cmd) entry.cmd = raw.Cmd
-    const seconds = duration(raw.Started, raw.Ended)
-    if (seconds !== undefined) entry.durationSeconds = seconds
+    const started = parseTime(raw.Started)
+    const ended = parseTime(raw.Ended)
+    if (started !== undefined) entry.startedAt = started
+    if (started !== undefined && ended !== undefined)
+      entry.durationSeconds = (ended - started) / 1000
     return entry
   })
 }

@@ -115,6 +115,25 @@ function readInput(input: string, file: string): string {
 }
 
 /**
+ * A unit that does not run keeps the -json-into file of an earlier run. A file
+ * is stale when its first timestamp is earlier than the first start of a unit
+ * in the report file.
+ */
+export function freshApplies<T extends UnitApply>(
+  applies: readonly T[],
+  report: readonly ReportEntry[] | undefined,
+): { fresh: T[]; stale: T[] } {
+  const starts = (report ?? []).flatMap((entry) => entry.startedAt ?? [])
+  const runStart = starts.length > 0 ? Math.min(...starts) : undefined
+  const isStale = (apply: T) =>
+    runStart !== undefined && apply.startedAt !== undefined && apply.startedAt < runStart
+  return {
+    fresh: applies.filter((apply) => !isStale(apply)),
+    stale: applies.filter(isStale),
+  }
+}
+
+/**
  * A run that fails before the first unit writes no plan directory and no
  * -json-into file, so a missing directory and an empty file list are warnings.
  */
@@ -122,6 +141,9 @@ export function loadSources(files: SourceFiles): Sources {
   const warnings: string[] = []
   const sources: Sources = { warnings }
   if (files.logFile !== undefined) sources.log = parseLog(readInput("log-file", files.logFile))
+  if (files.reportFile !== undefined) {
+    sources.report = parseReport(readInput("report-file", files.reportFile), files.reportFile)
+  }
   const { planJsonDir, applyJsonFiles } = files
   if (planJsonDir !== undefined && existsSync(planJsonDir)) {
     sources.plans = readPlanDir(planJsonDir)
@@ -129,12 +151,15 @@ export function loadSources(files: SourceFiles): Sources {
     warnings.push(`The directory of the input plan-json-dir does not exist: ${planJsonDir}`)
   }
   if (applyJsonFiles !== undefined && applyJsonFiles.length > 0) {
-    sources.applies = readApplyFiles(applyJsonFiles)
+    const { fresh, stale } = freshApplies(readApplyFiles(applyJsonFiles), sources.report)
+    sources.applies = fresh
+    for (const apply of stale) {
+      warnings.push(
+        `The -json-into file of the unit ${apply.unit} is from an earlier run, so the action ignored it: ${apply.path}`,
+      )
+    }
   } else if (applyJsonFiles !== undefined) {
     warnings.push("The patterns of the input apply-json-files match no file.")
-  }
-  if (files.reportFile !== undefined) {
-    sources.report = parseReport(readInput("report-file", files.reportFile), files.reportFile)
   }
   return sources
 }
@@ -174,6 +199,8 @@ const TERMINAL_RESULTS: ReadonlySet<UnitResult> = new Set(["failed", "early exit
 const SKIPPED_RESULTS: ReadonlySet<UnitResult> = new Set(["early exit", "excluded"])
 
 const RUN_ERROR = /^(?:Run failed|error occurred)/
+
+const DEPOSED_ADDRESS = /^(.+) \(deposed object [0-9a-f]+\)$/
 
 type Draft = {
   address: string
@@ -296,6 +323,38 @@ function changeBlocks(stdout: readonly string[], known: Iterable<string>): Map<s
   return blocks
 }
 
+function liveAddress(address: string): string {
+  return DEPOSED_ADDRESS.exec(address)?.[1] ?? address
+}
+
+/**
+ * A -json-into file uses the live address for a deposed object. The live diff
+ * block gets the first draft of its address and its kind, and each deposed diff
+ * block gets the next draft.
+ */
+function assignDeposed(drafts: readonly Draft[], blocks: ReadonlyMap<string, DiffBlock>): Draft[] {
+  const result = [...drafts]
+  const taken = new Set<number>()
+  const take = (address: string, kind: ChangeKind | undefined) => {
+    const index = result.findIndex(
+      (draft, i) => !taken.has(i) && draft.address === address && draft.kind === kind,
+    )
+    if (index !== -1) taken.add(index)
+    return index
+  }
+  for (const [address, block] of blocks) {
+    if (!DEPOSED_ADDRESS.test(address)) take(address, phraseKind(block.phrase))
+  }
+  for (const [address, block] of blocks) {
+    if (!DEPOSED_ADDRESS.test(address) || result.some((draft) => draft.address === address))
+      continue
+    const index = take(liveAddress(address), phraseKind(block.phrase))
+    const draft = result[index]
+    if (draft) result[index] = { ...draft, address }
+  }
+  return result
+}
+
 function applyOutcome(kind: ChangeKind, hook: HookOutcome | undefined, apply: UnitApply) {
   if (hook?.outcome === "complete" || hook?.outcome === "errored") return hook.outcome
   return HOOKLESS_KINDS.has(kind) && apply.applyCounts !== undefined ? "complete" : "pending"
@@ -316,7 +375,7 @@ function toChange(draft: Draft, block: DiffBlock | undefined, apply: UnitApply |
     if (diff.length > 0) change.diff = diff.join("\n")
   }
   if (apply) {
-    const hook = apply.outcomes.get(draft.address)
+    const hook = apply.outcomes.get(liveAddress(draft.address))
     const outcome = applyOutcome(draft.kind, hook, apply)
     change.outcome = outcome
     if (outcome !== "pending" && hook?.elapsedSeconds !== undefined) {
@@ -344,8 +403,9 @@ function buildUnit(name: string, kind: RunKind, given: UnitSources): UnitReport 
       : given
   const stdout = sources.output?.stdout ?? []
   const stderr = stderrText(sources.output?.stderr ?? [])
-  const drafts = jsonChanges(kind, sources)
-  const blocks = changeBlocks(stdout, drafts?.map((draft) => draft.address) ?? [])
+  const found = jsonChanges(kind, sources)
+  const blocks = changeBlocks(stdout, found?.map((draft) => draft.address) ?? [])
+  const drafts = found && assignDeposed(found, blocks)
   const changes = (
     drafts ??
     [...blocks.values()].map((block): Draft => ({

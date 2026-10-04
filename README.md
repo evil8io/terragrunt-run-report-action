@@ -96,7 +96,7 @@ jobs:
 
 The plan step writes three files. `tee` writes the log to `plan.log`, and each log line has the name of its unit. With `--json-out-dir`, terragrunt writes the plan of each unit as JSON. With `--report-file`, terragrunt writes the result of each unit. The `exit` command returns the exit code of terragrunt, so the step fails when a unit fails. The action still runs, because of `if: always()`.
 
-The token of a pull request from a fork has no write permission, so the example posts a comment only for a branch of the repository.
+The token of a pull request from a fork has no write permission, so the example posts a comment only for a branch of the repository. A workflow that always sets `comment: true` can set `comment-failure: warn` instead, so that the step writes a warning and does not fail.
 
 ### Apply on a push to main
 
@@ -146,7 +146,7 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 - Units can run in parallel. Each log line has the name of its unit, and the action groups the lines by unit before it reads them.
 - `--log-level=error` is permitted. Terragrunt still writes the lines from tofu to the log.
 - Do not apply from a saved plan file. A saved plan contains the mock outputs of the dependencies, so the apply writes the mock values.
-- Delete the `-json-into` files of an earlier run before an apply. The action reads an old file of a unit that did not run as a result of this run.
+- With `report-file`, the action ignores a `-json-into` file that is older than the run, and it writes a warning. Without `report-file`, delete the `-json-into` files of an earlier run before an apply. If you do not delete them, the action reads the old file of a unit that did not run as a result of this run.
 - Give each report on a pull request its own `header`. The action finds its comment by the header. Jobs with different headers can post to one pull request at the same time.
 - Set `pr-number` from the event. Use `${{ github.event.pull_request.number }}` on a `pull_request` event, and `${{ github.event.issue.number }}` on an `issue_comment` event.
 
@@ -182,6 +182,7 @@ Each file adds a part of the report. The action needs at least one of them. The 
 | `summary`           | no       | `true`                                                                                | Write the report to the job summary.                                                                                                                                                            |
 | `raw-log`           | no       | `true`                                                                                | Add the log file to the job summary in a collapsed section.                                                                                                                                     |
 | `comment`           | no       | `false`                                                                               | Post the report as a sticky pull request comment.                                                                                                                                               |
+| `comment-failure`   | no       | `fail`                                                                                | What the action does when it cannot post the comment, for example on a pull request from a fork: `fail` fails the step, and `warn` writes a warning and continues.                              |
 | `repository`        | no       | `${{ github.repository }}`                                                            | The `owner/name` of the repository of the pull request.                                                                                                                                         |
 | `pr-number`         | no       |                                                                                       | The number of the pull request. This input is required when `comment` is `true`.                                                                                                                |
 | `token`             | no       | `${{ github.token }}`                                                                 | The token for the comment requests. It needs `pull-requests: write`.                                                                                                                            |

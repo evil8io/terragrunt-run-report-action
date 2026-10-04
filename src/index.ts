@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs"
 import * as core from "@actions/core"
 import * as github from "@actions/github"
-import { createOrUpdateComment, deleteComments } from "./comment.ts"
+import { postComment } from "./comment.ts"
 import { readInputs, resolveApplyFiles } from "./inputs.ts"
 import { buildReport, loadSources } from "./model.ts"
 import { markerLine, renderMarkdown, renderRunLink, statusLine } from "./render.ts"
@@ -47,18 +47,9 @@ async function run(): Promise<void> {
       prNumber: inputs.prNumber,
       marker: markerLine(inputs.header),
     }
-    if (inputs.skipEmpty && report.empty) {
-      const deleted = await deleteComments(target)
-      core.info(
-        `The run has no changes, no failed unit, and no early exit. The action deleted ${deleted} comments.`,
-      )
-    } else {
-      const content = renderRunLink(markdown, inputs.runUrl)
-      const result = await createOrUpdateComment({ ...target, content })
-      core.info(
-        `The report has ${result.chunks} comments. The action updated ${result.updated}, created ${result.created}, and deleted ${result.deleted} comments.`,
-      )
-    }
+    const content =
+      inputs.skipEmpty && report.empty ? undefined : renderRunLink(markdown, inputs.runUrl)
+    await postComment(target, content, inputs.commentFailure, core)
   }
 }
 
