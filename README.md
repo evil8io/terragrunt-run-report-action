@@ -148,7 +148,7 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 - `--log-level=error` is fine. The lines from tofu stay in the log.
 - Do not apply from a saved plan file. A saved plan contains the mock outputs of the dependencies, so the apply writes the mock values.
 - Delete the `-json-into` files of an earlier run before an apply. An old file of a unit that did not run counts as a result.
-- Give each report on a pull request its own `header`. The action finds its comment by the header.
+- Give each report on a pull request its own `header`. The action finds its comment by the header. Jobs with different headers can post to one pull request at the same time.
 - Set `pr-number` from the event. Use `${{ github.event.pull_request.number }}` on a `pull_request` event, and `${{ github.event.issue.number }}` on an `issue_comment` event.
 
 ## Limits

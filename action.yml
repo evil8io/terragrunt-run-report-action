@@ -9,9 +9,9 @@ branding:
 inputs:
   log-file:
     description: >-
-      The log of the run: stdout and stderr of `terragrunt run --all`, captured with `2>&1                
-      | tee plan.log`, in the default log format or with `--log-format=json`. The diff of each resource
-      comes from this file.
+      The log of the run: stdout and stderr of `terragrunt run --all`, captured with `tee` as in the Usage
+      examples, in the default log format or with `--log-format=json`. The diff of each resource comes
+      from this file.
     required: false
   plan-json-dir:
     description: >-
