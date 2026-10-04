@@ -36,6 +36,7 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 - A unit gets a section only with changes, diagnostics, or a failure. A section has the result line (when not succeeded), the diagnostics, the tofu summary line, the groups in this order: create, update, replace, destroy, read, import, forget, move, ephemeral, and then the changes to outputs.
 - In an apply report, each resource has its outcome: `✅` with the duration, `❌ failed`, or `⏳ not applied`.
 - The unit name of a `-json-into` file is its path relative to `working-directory`, cut before `/.terragrunt-cache/`. The unit name of a `tfplan.json` file is its directory relative to `plan-json-dir`. The unit name in the log is the terragrunt prefix. The three must be equal for one unit, so the README tells the user to pass the directory of the run as `working-directory`.
+- Match a unit name by its path suffix across the sources. Terragrunt gives a longer path in some runs, for example `live/unit2` and `unit2`, see [terragrunt issue 6602](https://github.com/gruntwork-io/terragrunt/issues/6602). The rank is the log, the report file, the plan files, and the `-json-into` files. A name takes the one matching name of a higher rank.
 - `empty` is `false` when the counts of a unit are unknown, for example with a report file alone, because a deleted comment must not hide a change.
 
 ## Releases

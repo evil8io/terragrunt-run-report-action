@@ -154,7 +154,7 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 
 - The action puts at most 65,000 characters in one comment. It splits a longer report into more comments.
 - GitHub limits a job summary to 1 MB. Above that limit, the action removes lines from the middle of the log first, and then from the end of the report.
-- The plan JSON directories can have other names than the units in the log. This happens with a `--filter` on a git range and a `--working-dir` in a subdirectory, see [terragrunt issue 6602](https://github.com/gruntwork-io/terragrunt/issues/6602). The report then contains such a unit twice.
+- A unit can have a longer path in one file than in the log, for example `live/unit2` and `unit2`. This happens with a `--filter` on a git range and a `--working-dir` in a subdirectory, see [terragrunt issue 6602](https://github.com/gruntwork-io/terragrunt/issues/6602). The action then uses the name from the log. When more than one unit matches, the report contains the unit twice.
 
 ## Inputs
 
