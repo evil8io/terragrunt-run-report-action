@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.0](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.5.0...v0.6.0) (2026-10-04)
+
+
+### Features
+
+* add the output warnings ([#39](https://github.com/evil8io/terragrunt-run-report-action/issues/39)) ([550c15d](https://github.com/evil8io/terragrunt-run-report-action/commit/550c15d675476a5c3d198fe125c5d4712772b183))
+* read the warnings of a plan from the -json-into files ([#37](https://github.com/evil8io/terragrunt-run-report-action/issues/37)) ([fb3a8de](https://github.com/evil8io/terragrunt-run-report-action/commit/fb3a8de70aa196b5bd4344a4d5b5e17694f57b60))
+* render one header for each warning summary ([#40](https://github.com/evil8io/terragrunt-run-report-action/issues/40)) ([780b2a4](https://github.com/evil8io/terragrunt-run-report-action/commit/780b2a4a9bd82424e37932b3d36afd13c7c9e442))
+* report an init or a validate with its command as the kind ([#41](https://github.com/evil8io/terragrunt-run-report-action/issues/41)) ([c5189d0](https://github.com/evil8io/terragrunt-run-report-action/commit/c5189d01cdbf620c5d01cc67791a5827a0a33a9e))
+
+
+### Bug Fixes
+
+* stale files after a configuration error and warnings without a location ([#42](https://github.com/evil8io/terragrunt-run-report-action/issues/42)) ([aa0071e](https://github.com/evil8io/terragrunt-run-report-action/commit/aa0071e35b08d811695f3e7d1e3415abdff14c8e))
+
 ## [0.5.0](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.4.0...v0.5.0) (2026-10-04)
 
 
