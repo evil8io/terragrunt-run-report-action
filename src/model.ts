@@ -115,6 +115,25 @@ function readInput(input: string, file: string): string {
 }
 
 /**
+ * A unit that does not run keeps the -json-into file of an earlier run. A file
+ * is stale when its first timestamp is earlier than the first start of a unit
+ * in the report file.
+ */
+export function freshApplies<T extends UnitApply>(
+  applies: readonly T[],
+  report: readonly ReportEntry[] | undefined,
+): { fresh: T[]; stale: T[] } {
+  const starts = (report ?? []).flatMap((entry) => entry.startedAt ?? [])
+  const runStart = starts.length > 0 ? Math.min(...starts) : undefined
+  const isStale = (apply: T) =>
+    runStart !== undefined && apply.startedAt !== undefined && apply.startedAt < runStart
+  return {
+    fresh: applies.filter((apply) => !isStale(apply)),
+    stale: applies.filter(isStale),
+  }
+}
+
+/**
  * A run that fails before the first unit writes no plan directory and no
  * -json-into file, so a missing directory and an empty file list are warnings.
  */
@@ -122,6 +141,9 @@ export function loadSources(files: SourceFiles): Sources {
   const warnings: string[] = []
   const sources: Sources = { warnings }
   if (files.logFile !== undefined) sources.log = parseLog(readInput("log-file", files.logFile))
+  if (files.reportFile !== undefined) {
+    sources.report = parseReport(readInput("report-file", files.reportFile), files.reportFile)
+  }
   const { planJsonDir, applyJsonFiles } = files
   if (planJsonDir !== undefined && existsSync(planJsonDir)) {
     sources.plans = readPlanDir(planJsonDir)
@@ -129,12 +151,15 @@ export function loadSources(files: SourceFiles): Sources {
     warnings.push(`The directory of the input plan-json-dir does not exist: ${planJsonDir}`)
   }
   if (applyJsonFiles !== undefined && applyJsonFiles.length > 0) {
-    sources.applies = readApplyFiles(applyJsonFiles)
+    const { fresh, stale } = freshApplies(readApplyFiles(applyJsonFiles), sources.report)
+    sources.applies = fresh
+    for (const apply of stale) {
+      warnings.push(
+        `The -json-into file of the unit ${apply.unit} is from an earlier run, so the action ignored it: ${apply.path}`,
+      )
+    }
   } else if (applyJsonFiles !== undefined) {
     warnings.push("The patterns of the input apply-json-files match no file.")
-  }
-  if (files.reportFile !== undefined) {
-    sources.report = parseReport(readInput("report-file", files.reportFile), files.reportFile)
   }
   return sources
 }

@@ -56,6 +56,7 @@ These facts were verified on terragrunt 1.1.6 and OpenTofu 1.13.1. The code or t
 - With `--log-level=error`, the log still contains the STDOUT and STDERR lines of tofu.
 - A failed plan writes no `tfplan.json` file.
 - An early-exit unit writes no `-json-into` file.
+- The first message of a `-json-into` file is `version`, and its `@timestamp` is later than the `Started` time of the unit in the report file. A unit that does not run keeps the file of an earlier run.
 - A `-json-into` file has no `apply_start` or `apply_complete` hook for an import or a forget.
 - For a `removed` block, the `planned_change` action is `remove`, and the `tfplan.json` file has the actions `["forget"]`. The resource line of the diff block has the marker `.`.
 - After a failed unit, terragrunt logs a top-level `ERROR` entry that starts with `Run failed`, and a last one that starts with `error occurred`.

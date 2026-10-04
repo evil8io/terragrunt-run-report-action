@@ -1,11 +1,18 @@
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs"
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 import { applyUnitLabel, parseApply } from "../src/apply.ts"
 import { parseLog } from "../src/log.ts"
-import { buildReport, loadSources, unifyNames, type RunReport, type Sources } from "../src/model.ts"
+import {
+  buildReport,
+  freshApplies,
+  loadSources,
+  unifyNames,
+  type RunReport,
+  type Sources,
+} from "../src/model.ts"
 import { parsePlan } from "../src/plan.ts"
 import { parseReport } from "../src/report.ts"
 
@@ -419,6 +426,39 @@ describe("buildReport for a unit that tofu did not run", () => {
   })
 })
 
+const created = (addr: string, timestamp?: string) =>
+  ndjson(
+    { type: "version", tofu: "1.13.1", ...(timestamp ? { "@timestamp": timestamp } : {}) },
+    { type: "planned_change", change: { resource: { addr }, action: "create" } },
+    { type: "change_summary", changes: { add: 1, change: 0, remove: 0, operation: "plan" } },
+  )
+
+describe("freshApplies", () => {
+  const stale = parseApply(created("a.b", "2026-01-01T00:00:00Z"), "stale")
+  const fresh = parseApply(created("a.b", "2026-01-01T02:05:00.5+02:00"), "fresh")
+  const untimed = parseApply(created("a.b"), "untimed")
+  const applies = [stale, fresh, untimed]
+  const units = (list: readonly { unit: string }[]) => list.map((apply) => apply.unit)
+
+  it("drops a file whose first timestamp is earlier than the first start of the run", () => {
+    const report = parseReport(
+      JSON.stringify([
+        { Name: "fresh", Result: "succeeded", Started: "2026-01-01T00:06:00Z" },
+        { Name: "stale", Result: "failed", Started: "2026-01-01T00:05:00.123456789Z" },
+      ]),
+    )
+    const result = freshApplies(applies, report)
+    expect(units(result.fresh)).toEqual(["fresh", "untimed"])
+    expect(units(result.stale)).toEqual(["stale"])
+  })
+
+  it("keeps every file without a report file or without a start time", () => {
+    const report = parseReport(JSON.stringify([{ Name: "stale", Result: "failed" }]))
+    expect(units(freshApplies(applies, undefined).fresh)).toEqual(["stale", "fresh", "untimed"])
+    expect(units(freshApplies(applies, report).fresh)).toEqual(["stale", "fresh", "untimed"])
+  })
+})
+
 describe("buildReport without counts", () => {
   it("counts a unit of a report file alone as a unit without counts", () => {
     const report = buildReport({
@@ -542,6 +582,40 @@ describe("loadSources", () => {
         empty: false,
         runError: "a/terragrunt.hcl:11,11-18: Argument definition required",
       })
+    } finally {
+      rmSync(dir, { recursive: true })
+    }
+  })
+
+  it("warns about a -json-into file of an earlier run and ignores its changes", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "sources-"))
+    try {
+      const write = (unit: string, addr: string, timestamp: string) => {
+        const cache = path.join(dir, unit, ".terragrunt-cache", "x", "y")
+        mkdirSync(cache, { recursive: true })
+        writeFileSync(path.join(cache, "apply.json"), created(addr, timestamp))
+        return path.join(cache, "apply.json")
+      }
+      write("a", "a.fresh", "2026-01-01T00:05:01.5Z")
+      const stalePath = write("b", "b.stale", "2026-01-01T00:00:00Z")
+      const reportFile = path.join(dir, "report.json")
+      writeFileSync(
+        reportFile,
+        JSON.stringify([
+          { Name: "a", Result: "succeeded", Cmd: "apply", Started: "2026-01-01T00:05:00Z" },
+          { Name: "b", Result: "failed", Cmd: "apply", Started: "2026-01-01T00:05:00Z" },
+        ]),
+      )
+      const loaded = loadSources({ applyJsonFiles: applyFiles(dir), reportFile })
+      expect(loaded.warnings).toEqual([
+        `The -json-into file of the unit b is from an earlier run, so the action ignored it: ${stalePath}`,
+      ])
+      const report = buildReport(loaded)
+      expect(report.units.map((u) => [u.name, u.result, u.changes.map((c) => c.address)])).toEqual([
+        ["a", "succeeded", ["a.fresh"]],
+        ["b", "failed", []],
+      ])
+      expect(report.units[1]?.counts).toBeUndefined()
     } finally {
       rmSync(dir, { recursive: true })
     }

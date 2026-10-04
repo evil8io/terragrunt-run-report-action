@@ -2,6 +2,7 @@ import { readFileSync, statSync } from "node:fs"
 import path from "node:path"
 import { z } from "zod"
 import type { Counts, Diagnostic } from "./model.ts"
+import { parseTime } from "./report.ts"
 
 export type ApplyFile = {
   unit: string
@@ -22,7 +23,11 @@ export type HookOutcome = {
 
 export type UnitApply = {
   unit: string
+  /** The -json-into file. */
+  path?: string
   version?: string
+  /** The first @timestamp of the file, in epoch milliseconds. */
+  startedAt?: number
   planned: PlannedChange[]
   /** The change_summary with the operation "plan". */
   planCounts?: Counts
@@ -153,6 +158,7 @@ export function parseApply(text: string, unit: string): UnitApply {
     skippedLines: 0,
   }
   const hooks = new Map<string, HookState>()
+  let startedAt: number | undefined
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim()
     if (line === "") continue
@@ -163,16 +169,17 @@ export function parseApply(text: string, unit: string): UnitApply {
       result.skippedLines++
       continue
     }
-    const type =
-      typeof message === "object" && message !== null
-        ? (message as { type?: unknown }).type
-        : undefined
+    const fields: { type?: unknown; "@timestamp"?: unknown } =
+      typeof message === "object" && message !== null ? message : {}
+    startedAt ??= parseTime(fields["@timestamp"])
+    const { type } = fields
     if (typeof type !== "string") {
       result.skippedLines++
       continue
     }
     if (!handleMessage(result, hooks, type, message)) result.skippedLines++
   }
+  if (startedAt !== undefined) result.startedAt = startedAt
   for (const [address, state] of hooks) {
     const outcome: HookOutcome = {
       outcome: state.errored ? "errored" : state.completed ? "complete" : "started",
@@ -258,7 +265,7 @@ export function applyUnitLabel(file: string, workingDirectory: string): string {
  * When more than one file has the same unit, for example from a stale
  * terragrunt cache directory, the function reads only the newest file.
  */
-export function readApplyFiles(files: readonly ApplyFile[]): UnitApply[] {
+export function readApplyFiles(files: readonly ApplyFile[]): (UnitApply & { path: string })[] {
   const newest = new Map<string, { path: string; mtime: number }>()
   for (const file of files) {
     const mtime = statSync(file.path).mtimeMs
@@ -267,5 +274,8 @@ export function readApplyFiles(files: readonly ApplyFile[]): UnitApply[] {
   }
   return [...newest.entries()]
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))
-    .map(([unit, file]) => parseApply(readFileSync(file.path, "utf8"), unit))
+    .map(([unit, file]) => ({
+      ...parseApply(readFileSync(file.path, "utf8"), unit),
+      path: file.path,
+    }))
 }
