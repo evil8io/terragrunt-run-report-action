@@ -10,9 +10,54 @@
 
 # terragrunt-run-report-action
 
-**terragrunt-run-report-action** is a GitHub Action. It reads the files that `terragrunt run --all -- plan` or `terragrunt run --all -- apply` write. It writes one markdown report to the job summary. The report has one table row for each unit, and one section for each unit with changes or a failure. Optionally, it posts the report as a sticky pull request comment. A sticky comment is a comment that the action updates on each run, instead of a new comment.
+**terragrunt-run-report-action** is a GitHub Action for `terragrunt run --all`. It turns the files of a plan or an apply into one markdown report. The report has one row for each unit and the diff of each changed resource. The action writes the report to the job summary, and it can post the report as a sticky pull request comment. A sticky comment is one comment that the action updates on each run.
 
-The action never calls tofu, terraform, or terragrunt. It installs nothing, and it reads no event payload. The repository, the pull request number, and the token are inputs.
+Your workflow runs terragrunt and keeps its files. The action reads those files. It installs nothing, and it runs no terragrunt command.
+
+## Report
+
+The report starts with a status line and a table with one row for each unit. Then it has one section for each unit with changes or a failure. A section has one collapsed diff for each resource, in groups by kind of change, then the changes to the outputs. The section of a failed unit starts with the error. A unit without changes, a unit that exited early, and an excluded unit have a table row only.
+
+An apply with one failed unit renders like this:
+
+````markdown
+## Apply (production)
+
+**Apply: 4 units, 2 with changes, 1 unchanged, 1 failed.** 3 added, 0 changed, 2 destroyed.
+
+| Unit      | Result                                  |    Add | Change | Destroy |
+| --------- | --------------------------------------- | -----: | -----: | ------: |
+| `network` | ✅ succeeded                            |      2 |      0 |       1 |
+| `dns`     | ✅ no changes                           |      0 |      0 |       0 |
+| `cluster` | ❌ failed (run error)                   | 1 of 2 |      0 |       1 |
+| `apps`    | ⏭️ early exit (ancestor error: cluster) |        |        |         |
+
+### `cluster`
+
+❌ failed (run error)
+
+```
+Error: creating EKS Node Group: operation error ...
+```
+
+Plan: 2 to add, 0 to change, 1 to destroy.
+
+<details><summary>✨ Create (1)</summary>
+
+<details><summary><code>aws_eks_node_group.workers</code> ❌ failed</summary>
+
+```diff
++ cluster_name    = "cluster"
++ node_group_name = "workers"
++ scaling_config {
++     desired_size = 3
+  }
+```
+
+</details>
+
+</details>
+````
 
 ## Usage
 
@@ -53,7 +98,9 @@ jobs:
           pr-number: ${{ github.event.pull_request.number }}
 ```
 
-The token of a pull request from a fork cannot write a comment, so the example posts a comment only for a branch of the repository.
+The plan command writes three things. The log has the name of the unit on each line, and `tee` keeps it. The option `--json-out-dir` writes the plan of each unit as JSON. The option `--report-file` writes the result of each unit. The last command keeps the exit code of terragrunt, so the step fails when a unit fails. The action still runs, because of `if: always()`.
+
+The token of a pull request from a fork cannot write a comment. The example posts a comment only for a branch of the repository.
 
 ### Apply on a push to main
 
@@ -91,74 +138,57 @@ jobs:
           working-directory: live
 ```
 
-The examples use the tag `v0`, which points to the newest 0.x release. For a fixed version, use a release tag such as `v0.1.0`, or the commit SHA of that tag.
+The apply command writes the log and the result of each unit, as the plan command does. In place of the plan JSON, each unit writes a `-json-into` file with its applied changes. Tofu writes that file in the working directory of the unit, under `.terragrunt-cache/`, so one glob pattern finds all of them. A push has no pull request number, so the example writes the job summary only.
+
+### Versions
+
+The examples use the tag `v0`, which points to the newest 0.x release. For a fixed version, pin a release tag such as `v0.1.0`, or the commit SHA of that tag. The tests run the action against the terragrunt and OpenTofu versions in [mise.toml](mise.toml).
+
+## Rules for the terragrunt command
+
+- Keep the default log format, or use `--log-format=json`. Do not use `--tf-forward-stdout`, because the log then has no unit names.
+- `--log-level=error` is fine. The lines from tofu stay in the log.
+- Do not apply from a saved plan file. A saved plan contains the mock outputs of the dependencies, so the apply writes the mock values.
+- Delete the `-json-into` files of an earlier run before an apply. An old file of a unit that did not run counts as a result.
+- Give each report on a pull request its own `header`. The action finds its comment by the header.
+- Set `pr-number` from the event. Use `${{ github.event.pull_request.number }}` on a `pull_request` event, and `${{ github.event.issue.number }}` on an `issue_comment` event.
+
+## Limits
+
+- A comment has at most 65,000 characters. The action splits a longer report into more comments.
+- The job summary has at most 1 MB. The action cuts the log in the middle, and then the report at the end.
+- With a `--filter` on a git range and a `--working-dir` in a subdirectory, terragrunt names the plan JSON directories differently from the units in the log. The report then shows such a unit twice. See [terragrunt issue 6602](https://github.com/gruntwork-io/terragrunt/issues/6602).
 
 ## Inputs
 
 Set at least one of `log-file`, `plan-json-dir`, `apply-json-files`, and `report-file`.
 
-| Input               | Required | Default                    | Description                                                                                                                                                                                             |
-| ------------------- | -------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `log-file`          | no       |                            | The log of the run: stdout and stderr of `terragrunt run --all`, in the default terragrunt log format or in `--log-format=json`. The diff of each resource comes from this file.                        |
-| `plan-json-dir`     | no       |                            | The `--json-out-dir` of a plan run. It has one `tfplan.json` file per unit.                                                                                                                             |
-| `apply-json-files`  | no       |                            | Glob patterns, one per line, of the `-json-into` files of an apply run. The patterns are relative to the workspace.                                                                                     |
-| `report-file`       | no       |                            | The `--report-file` of the run, in JSON format.                                                                                                                                                         |
-| `working-directory` | no       | `.`                        | The base directory of the `-json-into` file paths. The unit label is the name of a unit in the report. The unit label of a file is its path relative to this directory, cut before `.terragrunt-cache`. |
-| `header`            | no       | `Terragrunt run report`    | The title of the report. It is also the key of the sticky comment.                                                                                                                                      |
-| `summary`           | no       | `true`                     | Write the report to the job summary.                                                                                                                                                                    |
-| `raw-log`           | no       | `true`                     | Add the log file to the job summary in a collapsed section.                                                                                                                                             |
-| `comment`           | no       | `false`                    | Post the report as a sticky pull request comment.                                                                                                                                                       |
-| `repository`        | no       | `${{ github.repository }}` | The `owner/name` of the repository of the pull request.                                                                                                                                                 |
-| `pr-number`         | no       |                            | The number of the pull request. This input is required when `comment` is `true`.                                                                                                                        |
-| `token`             | no       | `${{ github.token }}`      | The token for the comment requests. It needs `pull-requests: write`.                                                                                                                                    |
-| `skip-empty`        | no       | `false`                    | When the output `empty` is `true`, the action deletes the sticky comment and posts no comment.                                                                                                          |
-| `expand`            | no       | `false`                    | Open every collapsed section of the report.                                                                                                                                                             |
+| Input               | Required | Default                    | Description                                                                                                                  |
+| ------------------- | -------- | -------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| `log-file`          | no       |                            | The log of the run: stdout and stderr of `terragrunt run --all`. The diff of each resource comes from this file.             |
+| `plan-json-dir`     | no       |                            | The `--json-out-dir` of a plan run.                                                                                          |
+| `apply-json-files`  | no       |                            | Glob patterns, one per line, of the `-json-into` files of an apply run. The patterns are relative to the workspace.          |
+| `report-file`       | no       |                            | The `--report-file` of the run, in JSON format.                                                                              |
+| `working-directory` | no       | `.`                        | The directory of the run. The action takes the unit name of each `-json-into` file from its path relative to this directory. |
+| `header`            | no       | `Terragrunt run report`    | The title of the report. It is also the key of the sticky comment.                                                           |
+| `summary`           | no       | `true`                     | Write the report to the job summary.                                                                                         |
+| `raw-log`           | no       | `true`                     | Add the log file to the job summary in a collapsed section.                                                                  |
+| `comment`           | no       | `false`                    | Post the report as a sticky pull request comment.                                                                            |
+| `repository`        | no       | `${{ github.repository }}` | The `owner/name` of the repository of the pull request.                                                                      |
+| `pr-number`         | no       |                            | The number of the pull request. This input is required when `comment` is `true`.                                             |
+| `token`             | no       | `${{ github.token }}`      | The token for the comment requests. It needs `pull-requests: write`.                                                         |
+| `skip-empty`        | no       | `false`                    | When the output `empty` is `true`, the action deletes the sticky comment and posts no comment.                               |
+| `expand`            | no       | `false`                    | Open every collapsed section of the report.                                                                                  |
 
 ## Outputs
 
 The action does not fail the step when a unit failed. Use the output `failed` to react to a failure.
 
-| Output    | Description                                                                                                                                                                 |
-| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `summary` | One line with the kind of run, the unit counts, and the resource totals.                                                                                                    |
-| `empty`   | The value is `true` when no unit has a change, no unit failed, and no unit exited early. The value is `false` when the run failed or when the counts of a unit are unknown. |
-| `failed`  | The value is `true` when a unit failed or exited early, or when the log reports a failed run.                                                                               |
-
-## Report
-
-The report has these parts, in this order:
-
-1. The heading, with the text of the input `header`.
-2. The status line, with the kind of run, the unit counts, and the resource totals. The kind of run is `Plan`, `Apply`, `Destroy`, or `Run` for an unknown kind.
-3. The text of the run error, when the log reports a failed run and no unit failed.
-4. A table with one row for each unit. The columns are Unit, Result, Add, Change, and Destroy. When the applied count differs from the planned count, a cell in an apply report contains both counts, for example `1 of 2`.
-5. One section for each unit with changes, diagnostics, or a failure.
-
-These units have a table row only:
-
-- A unit without changes, diagnostics, or a failure.
-- An early-exit unit.
-- An excluded unit.
-
-A section starts with the result of the unit, for example `❌ failed (run error)`, when the unit did not succeed. Next are the diagnostics and the tofu summary line, for example `Plan: 3 to add, 0 to change, 2 to destroy.` Then the section has one collapsed group for each kind of change, in this order: create, update, replace, destroy, read, import, forget, move, and ephemeral. A group has one collapsed diff for each resource, when the log contains the diff. In an apply report, each resource also has its outcome: `✅` with the duration, `❌ failed`, or `⏳ not applied`. The section ends with the changes to the outputs.
-
-## Contract
-
-The action depends on the format of the files that terragrunt writes. Use the invocations in the Usage section.
-
-- Tofu writes the `-json-into` file of each unit in the working directory of the unit, under `.terragrunt-cache/`. The glob patterns in `apply-json-files` match these files. The action takes the unit label from the path.
-- Delete the `-json-into` files of an earlier run before the apply, because a stale file of an early-exit unit would count as a result.
-- Do not reuse a saved plan file for the apply. A saved plan contains the mock outputs of the dependencies, so an apply from that file writes the mock values.
-- Use the default terragrunt log format, or `--log-format=json`. Do not use `--tf-forward-stdout`. With that flag, terragrunt writes no unit prefix, so the action cannot assign the lines to units.
-- With `--log-level=error`, the log still contains the lines that terragrunt forwards from tofu.
-- The action splits a report of more than 65,000 characters into more than one comment. The action cuts the job summary at 1 MB.
-- The action finds the sticky comment by the `header`. Two reports on one pull request need two headers.
-- Set `pr-number` in the workflow. Use `${{ github.event.pull_request.number }}` on a `pull_request` event, and `${{ github.event.issue.number }}` on an `issue_comment` event. A `push` event has no pull request number, so do not set `comment` there.
-- With a `--filter` on a git range and a `--working-dir` in a subdirectory, the paths under `--json-out-dir` differ from the unit labels in the log. The report then contains such a unit twice (terragrunt issue 6602).
-
-## Versions
-
-The tests run the action against the terragrunt and OpenTofu versions in [mise.toml](mise.toml).
+| Output    | Description                                                                                                       |
+| --------- | ----------------------------------------------------------------------------------------------------------------- |
+| `summary` | One line with the kind of run, the unit counts, and the resource totals.                                          |
+| `empty`   | The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit exited early. |
+| `failed`  | The value is `true` when a unit failed, a unit exited early, or the run failed.                                   |
 
 ## Contributing
 
