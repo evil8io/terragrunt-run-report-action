@@ -691,7 +691,7 @@ describe("loadSources", () => {
           { Name: "b", Result: "failed", Cmd: "apply", Started: "2026-01-01T00:05:00Z" },
         ]),
       )
-      const loaded = loadSources({ applyJsonFiles: applyFiles(dir), reportFile })
+      const loaded = loadSources({ applyJsonFiles: applyFiles(dir, "apply.json"), reportFile })
       expect(loaded.warnings).toEqual([
         `The -json-into file of the unit b is from an earlier run, so the action ignored it: ${stalePath}`,
       ])
