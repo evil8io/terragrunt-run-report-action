@@ -1,5 +1,6 @@
 import {
   compare,
+  countWarnings,
   hasChanges,
   hasCounts,
   type ChangeKind,
@@ -134,13 +135,7 @@ function totalsPhrase(report: RunReport): string {
 }
 
 function warningsPhrase(report: RunReport): string | undefined {
-  let warnings = 0
-  let units = 0
-  for (const unit of report.units) {
-    const count = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length
-    warnings += count
-    if (count > 0) units++
-  }
+  const { warnings, units } = countWarnings(report)
   if (warnings === 0) return undefined
   return `⚠️ ${plural(warnings, "warning")} in ${plural(units, "unit")}.`
 }

@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest"
 import { applyUnitLabel } from "../src/apply.ts"
 import {
   buildReport,
+  countWarnings,
   loadSources,
   type Diagnostic,
   type RunReport,
@@ -727,6 +728,35 @@ describe("statusLine", () => {
     const line = statusLine(report)
     expect(line.endsWith("0 to destroy.")).toBe(true)
     expect(line).not.toContain("⚠️")
+  })
+})
+
+describe("countWarnings", () => {
+  it("counts the warnings and the units with warnings", () => {
+    const report = runReport([
+      unitReport({
+        name: "a",
+        diagnostics: [
+          { severity: "warning", summary: "W" },
+          { severity: "warning", summary: "V" },
+          { severity: "error", summary: "E" },
+        ],
+      }),
+      unitReport({ name: "b", diagnostics: [{ severity: "warning", summary: "W" }] }),
+    ])
+    expect(countWarnings(report)).toEqual({ warnings: 3, units: 2 })
+  })
+
+  it("returns zero for a report with an error only", () => {
+    const report = runReport([unitReport({ diagnostics: [{ severity: "error", summary: "E" }] })])
+    expect(countWarnings(report)).toEqual({ warnings: 0, units: 0 })
+  })
+
+  it("counts the warnings of a fixture", () => {
+    expect(countWarnings(buildReport(sources("changes", "plan")))).toEqual({
+      warnings: 18,
+      units: 6,
+    })
   })
 })
 

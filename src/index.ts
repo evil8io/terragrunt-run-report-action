@@ -4,7 +4,7 @@ import * as core from "@actions/core"
 import * as github from "@actions/github"
 import { postComment } from "./comment.ts"
 import { readInputs, resolveJsonIntoFiles } from "./inputs.ts"
-import { buildReport, loadSources } from "./model.ts"
+import { buildReport, countWarnings, loadSources } from "./model.ts"
 import { markerLine, renderMarkdown, renderRunLink, statusLine } from "./render.ts"
 import { buildSummary, writeMarkdownFile } from "./summary.ts"
 
@@ -35,6 +35,7 @@ async function run(): Promise<void> {
 
   const markdown = renderMarkdown(report, { header: inputs.header, expand: inputs.expand })
   core.setOutput("summary", status)
+  core.setOutput("warnings", String(countWarnings(report).warnings))
   core.setOutput("empty", String(report.empty))
   core.setOutput("failed", String(report.failed))
   core.setOutput("markdown-file", writeMarkdownFile(markdown, process.env.RUNNER_TEMP ?? tmpdir()))

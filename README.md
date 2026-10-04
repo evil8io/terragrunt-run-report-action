@@ -196,11 +196,12 @@ Each file adds a part of the report. The action needs at least one of them. The 
 
 ## Outputs
 
-The action does not fail the step when a unit failed. Use the output `failed` to react to a failure. A later step can read the report from the file in the output `markdown-file`.
+The action does not fail the step when a unit failed. Use the output `failed` to react to a failure. A later step can read the report from the file in the output `markdown-file`. The output `warnings` gives the count of the warnings as a number, so a later step can compare it without a parse of the `summary` text.
 
 | Output          | Description                                                                                                                                                  |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | `summary`       | One line with the kind of run, the unit counts, the resource totals, and, for a run with warnings, the count of the warnings and of the units with warnings. |
+| `warnings`      | The number of warnings in the report, the same number as in the status line. The value is `0` without warnings.                                              |
 | `empty`         | The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit exited early.                                            |
 | `failed`        | The value is `true` when a unit failed, a unit exited early, or the run failed.                                                                              |
 | `markdown-file` | The path of a file with the report in markdown, without the log. A later step can read it, for example to send a message after a failed apply.               |
