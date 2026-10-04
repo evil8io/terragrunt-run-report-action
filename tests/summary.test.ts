@@ -51,6 +51,17 @@ describe("buildSummary", () => {
     expect(text).not.toContain("<summary>Log</summary>")
   })
 
+  it("closes the warnings element after a cut inside its fence", () => {
+    const lines = Array.from({ length: 500 }, (_, i) => `  on main.tf:${i}`).join("\n")
+    const big = `## Report\n\n<details><summary>⚠️ 500 warnings</summary>\n\n\`\`\`\nWarning: Deprecated (500)\n${lines}\n\`\`\`\n\n</details>\n\nPlan: 1 to add, 0 to change, 0 to destroy.\n`
+    const text = buildSummary({ markdown: big, maxBytes: 1000 })
+    expect(bytes(text)).toBeLessThanOrEqual(1000)
+    expect(text).toContain(
+      "<details><summary>⚠️ 500 warnings</summary>\n\n```\nWarning: Deprecated (500)\n  on main.tf:0\n",
+    )
+    expect(text.endsWith(`\n\`\`\`\n\n</details>\n\n${CUT_NOTE}\n`)).toBe(true)
+  })
+
   it("closes the open details elements after the open fence at the cut", () => {
     const diff = Array.from({ length: 500 }, (_, i) => `+ line ${i}`).join("\n")
     const big = `## Report\n\n<details><summary>a</summary>\n\n<details><summary>b</summary>\n\n\`\`\`diff\n${diff}\n\`\`\`\n\n</details>\n\n</details>\n`

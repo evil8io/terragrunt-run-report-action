@@ -113,7 +113,7 @@ describe("renderMarkdown for the fixtures", () => {
     )
   })
 
-  it("renders the stderr of a unit and not its JSON diagnostics", () => {
+  it("renders the stderr of a unit and not its JSON errors", () => {
     const md = renderMarkdown(buildReport(sources("failures", "apply")), OPTIONS)
     expect(md.match(/Error: local-exec provisioner error/g)).toHaveLength(1)
   })
@@ -399,6 +399,22 @@ describe("collapsed unit sections", () => {
     )
   })
 
+  it("keeps the closed warnings element above the collapsed changes of a failed unit", () => {
+    const list = eleven()
+    list[9] = { ...list[9]!, diagnostics: [{ severity: "warning", summary: "Careful" }] }
+    const md = renderMarkdown(runReport(list), OPTIONS)
+    expect(md).toContain(
+      [
+        "```\nError: boom\n```",
+        "<details><summary>⚠️ 1 warning</summary>",
+        "```\nWarning: Careful\n```",
+        "</details>",
+        `<details open><summary>${SUMMARY}</summary>`,
+      ].join("\n\n"),
+    )
+    checkStructure(md)
+  })
+
   it("does not collapse a report with 10 sections", () => {
     const md = renderMarkdown(runReport(units(10)), OPTIONS)
     expect(md).not.toContain(`<summary>${SUMMARY}</summary>`)
@@ -555,7 +571,7 @@ describe("diagnostics", () => {
     expect(md).toContain(
       '### <a id="trr-terragrunt-run-report-u"></a>`u`\n\n<details><summary>⚠️ 1 warning</summary>',
     )
-    expect(md).not.toContain("Plan: 1 to add")
+    expect(md.endsWith("\n</details>\n")).toBe(true)
   })
 
   it("renders the cause of a failed unit without other diagnostics", () => {
