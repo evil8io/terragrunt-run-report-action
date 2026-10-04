@@ -512,7 +512,7 @@ describe("diagnostics", () => {
     )
     expect(md).toContain("<details><summary>⚠️ 4 warnings</summary>")
     expect(md).toContain(
-      "```\nWarning: Deprecated\n\nWarning: Deprecated (2)\n  on a.tf:1\n  on a.tf:9 with x.y\n\nUse b.\n\nWarning: Other\n  with p.q\n\nD.\n```",
+      "```\nWarning: Deprecated (3)\n  on a.tf:1\n  on a.tf:9 with x.y\n    Use b.\n\nWarning: Other\n  with p.q\n\nD.\n```",
     )
     checkStructure(md)
   })
@@ -615,7 +615,7 @@ describe("diagnostics", () => {
     )
   })
 
-  it("orders the groups by summary, first location, and detail", () => {
+  it("renders one header for each summary with its sub-groups in order", () => {
     const md = renderWarnings([
       warn("Zeta"),
       warn("Alpha", { location: "b.tf:1", detail: "D3" }),
@@ -624,7 +624,53 @@ describe("diagnostics", () => {
       warn("Alpha", { location: "a.tf:9", detail: "D4" }),
     ])
     expect(md).toContain(
-      "```\nWarning: Alpha\n  on a.tf:9\n\nD4\n\nWarning: Alpha\n  on a.tf:10\n\nD1\n\nWarning: Alpha\n  on a.tf:10\n\nD2\n\nWarning: Alpha\n  on b.tf:1\n\nD3\n\nWarning: Zeta\n```",
+      "```\nWarning: Alpha (4)\n  on a.tf:9\n    D4\n\n  on a.tf:10\n    D1\n\n  on a.tf:10\n    D2\n\n  on b.tf:1\n    D3\n\nWarning: Zeta\n```",
+    )
+  })
+
+  it("renders a summary with two details under one header with the total count", () => {
+    const md = renderWarnings([
+      warn("Deprecated", { location: "a.tf:10", detail: "Use c instead." }),
+      warn("Deprecated", {
+        location: "a.tf:9",
+        address: "x.y",
+        detail: "Use b instead.\nSecond line.",
+      }),
+      warn("Deprecated", {
+        location: "a.tf:9",
+        address: "x.y",
+        detail: "Use b instead.\nSecond line.",
+      }),
+    ])
+    expect(md).toContain(
+      "```\nWarning: Deprecated (3)\n  on a.tf:9 with x.y (2)\n    Use b instead.\n    Second line.\n\n  on a.tf:10\n    Use c instead.\n```",
+    )
+  })
+
+  it("renders a sub-group without a detail as occurrence lines only", () => {
+    const md = renderWarnings([
+      warn("S", { location: "a.tf:1" }),
+      warn("S", { location: "a.tf:2", detail: "D." }),
+    ])
+    expect(md).toContain("```\nWarning: S (2)\n  on a.tf:1\n\n  on a.tf:2\n    D.\n```")
+  })
+
+  it("keeps the single-detail shape beside a summary with several details", () => {
+    const report = runReport([
+      unitReport({
+        diagnostics: [
+          warn("Multi", { location: "a.tf:1", detail: "D1" }),
+          warn("Multi", { location: "a.tf:2", detail: "D2" }),
+          warn("Single", { location: "b.tf:1", detail: "D3" }),
+          warn("Single", { location: "b.tf:2", detail: "D3" }),
+        ],
+      }),
+    ])
+    const md = renderMarkdown(report, OPTIONS)
+    checkStructure(md)
+    expect(md).toContain("<details><summary>⚠️ 4 warnings</summary>")
+    expect(md).toContain(
+      "```\nWarning: Multi (2)\n  on a.tf:1\n    D1\n\n  on a.tf:2\n    D2\n\nWarning: Single (2)\n  on b.tf:1\n  on b.tf:2\n\nD3\n```",
     )
   })
 

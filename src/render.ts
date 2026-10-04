@@ -315,12 +315,8 @@ function compareOccurrence(a: Diagnostic, b: Diagnostic): number {
   return compareLocation(a.location, b.location) || compareOptional(a.address, b.address)
 }
 
-function compareGroup(a: WarningGroup, b: WarningGroup): number {
-  return (
-    compare(a[0].summary, b[0].summary) ||
-    compareOccurrence(a[0], b[0]) ||
-    compareOptional(a[0].detail, b[0].detail)
-  )
+function compareSubgroup(a: WarningGroup, b: WarningGroup): number {
+  return compareOccurrence(a[0], b[0]) || compareOptional(a[0].detail, b[0].detail)
 }
 
 function placeOf(warning: Diagnostic): string {
@@ -336,9 +332,8 @@ function samePlace(a: Diagnostic, b: Diagnostic): boolean {
   return a.location === b.location && a.address === b.address
 }
 
-function warningGroup(group: WarningGroup): string {
-  const [first] = group
-  const lines = [`Warning: ${first.summary}${group.length > 1 ? ` (${group.length})` : ""}`]
+function occurrenceLines(group: WarningGroup): string[] {
+  const lines: string[] = []
   let index = 0
   while (index < group.length) {
     const head = group[index]!
@@ -349,22 +344,45 @@ function warningGroup(group: WarningGroup): string {
     if (place !== "") lines.push(`  ${place}${count > 1 ? ` (${count})` : ""}`)
     index = end
   }
-  if (first.detail) lines.push("", first.detail)
-  return lines.join("\n")
+  return lines
+}
+
+function warningSummary(summary: string, subgroups: WarningGroup[]): string {
+  const total = subgroups.reduce((sum, group) => sum + group.length, 0)
+  const header = `Warning: ${summary}${total > 1 ? ` (${total})` : ""}`
+  if (subgroups.length === 1) {
+    const [group] = subgroups as [WarningGroup]
+    const lines = [header, ...occurrenceLines(group)]
+    if (group[0].detail) lines.push("", group[0].detail)
+    return lines.join("\n")
+  }
+  const blocks = subgroups
+    .map((group) => {
+      const detail = group[0].detail?.split("\n").map((line) => `    ${line}`) ?? []
+      return [...occurrenceLines(group), ...detail].join("\n")
+    })
+    .filter((block) => block !== "")
+  return [header, blocks.join("\n\n")].filter((part) => part !== "").join("\n")
 }
 
 function warningsText(warnings: readonly Diagnostic[]): string {
-  const groups = new Map<string, WarningGroup>()
+  const summaries = new Map<string, Map<string, WarningGroup>>()
   for (const warning of warnings) {
-    const key = JSON.stringify([warning.summary, warning.detail])
-    const group = groups.get(key)
+    const subgroups = summaries.get(warning.summary) ?? new Map<string, WarningGroup>()
+    summaries.set(warning.summary, subgroups)
+    const group = subgroups.get(warning.detail ?? "")
     if (group) group.push(warning)
-    else groups.set(key, [warning])
+    else subgroups.set(warning.detail ?? "", [warning])
   }
-  const sorted = [...groups.values()].map((group): WarningGroup => {
-    return [...group].sort(compareOccurrence) as WarningGroup
-  })
-  return sorted.sort(compareGroup).map(warningGroup).join("\n\n")
+  return [...summaries.entries()]
+    .sort(([a], [b]) => compare(a, b))
+    .map(([summary, subgroups]) => {
+      const sorted = [...subgroups.values()]
+        .map((group) => [...group].sort(compareOccurrence) as WarningGroup)
+        .sort(compareSubgroup)
+      return warningSummary(summary, sorted)
+    })
+    .join("\n\n")
 }
 
 function warningsBlock(unit: UnitReport, expand: boolean): string | undefined {
