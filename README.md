@@ -10,13 +10,13 @@
 
 # terragrunt-run-report-action
 
-**terragrunt-run-report-action** is a GitHub Action for `terragrunt run --all`. It reads the files of a plan or an apply, and it makes one markdown report from them. The report has one row for each unit and the diff of each changed resource. The action writes the report to the job summary, and it can post the report as a sticky pull request comment. A sticky comment is one comment that the action updates on each run.
+**terragrunt-run-report-action** is a GitHub Action for `terragrunt run --all`. It reads the files of a run, for example a plan, an apply, or an init, and it makes one markdown report from them. The report has one row for each unit and the diff of each changed resource. The action writes the report to the job summary, and it can post the report as a sticky pull request comment. A sticky comment is one comment that the action updates on each run.
 
 ## Report
 
 The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes, warnings, or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error. For a run without changes, for example an init or a validate, the status line has the unit counts only, and the table has no count columns. For example, the status line of an init is `Init: 7 units, 6 succeeded, 1 failed.`.
 
-In a plan with `plan-json-files` and in an apply, the warnings of a unit follow the error in one collapsed element, grouped by message, with the location of each warning. When the run has warnings, the status line ends with the count of the warnings and the count of the units with warnings. The count is the number of warnings in the `-json-into` files. The log of a run with `-compact-warnings` has fewer lines, because tofu prints one location for each distinct warning message and the count of the other locations. A unit without changes or warnings, a unit that exited early, and an excluded unit have a table row only.
+In a plan with `plan-json-files` and in an apply, the warnings of a unit follow the error in one collapsed element, grouped by message, with the location of each warning. When the run has warnings, the status line ends with the count of the warnings and the count of the units with warnings. The count is the number of warnings in the `-json-into` files. The log shows fewer warnings, with or without `-compact-warnings`, because tofu prints each distinct warning message once, with one location and the count of the other locations. A unit without changes or warnings, a unit that exited early, and an excluded unit have a table row only.
 
 An apply with one failed unit looks like this:
 
@@ -149,7 +149,8 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 - Units can run in parallel. Each log line has the name of its unit, and the action groups the lines by unit before it reads them.
 - `--log-level=error` is permitted. Terragrunt still writes the lines from tofu to the log.
 - Do not apply from a saved plan file. A saved plan contains the mock outputs of the dependencies, so the apply writes the mock values.
-- With `report-file`, the action ignores a `tfplan.json` or `-json-into` file that is older than the run, and it writes a warning. Without `report-file`, delete the files of an earlier run before a plan or an apply. Terragrunt does not clear `--json-out-dir`, and a unit that does not run keeps its `-json-into` file. If you do not delete the files, the action reads the old file of a unit that wrote no new file.
+- With `report-file`, the action ignores a `tfplan.json` or `-json-into` file that is older than the run, and it writes a warning. After a configuration error, no unit runs, and the action ignores every file. Without `report-file`, delete the files of an earlier run before a plan or an apply. Terragrunt does not clear `--json-out-dir`, and a unit that does not run keeps its `-json-into` file. If you do not delete the files, the action reads the old file of a unit that wrote no new file.
+- Write one run to each log file. When a wrapper runs terragrunt a second time after a failure in the same `tee` pipe, the log has two runs, and the report shows the error of the first run next to the result of the second.
 - Give each report on a pull request its own `header`. The action finds its comment by the header. Jobs with different headers can post to one pull request at the same time.
 - Set `pr-number` from the event. Use `${{ github.event.pull_request.number }}` on a `pull_request` event, and `${{ github.event.issue.number }}` on an `issue_comment` event.
 
@@ -201,13 +202,13 @@ Each file adds a part of the report. The action needs at least one of them. The 
 
 The action does not fail the step when a unit failed. Use the output `failed` to react to a failure. A later step can read the report from the file in the output `markdown-file`. The output `warnings` gives the count of the warnings as a number, so a later step can compare it without a parse of the `summary` text.
 
-| Output          | Description                                                                                                                                                  |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `summary`       | One line with the kind of run, the unit counts, the resource totals, and, for a run with warnings, the count of the warnings and of the units with warnings. |
-| `warnings`      | The number of warnings in the report, the same number as in the status line. The value is `0` without warnings.                                              |
-| `empty`         | The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit exited early.                                            |
-| `failed`        | The value is `true` when a unit failed, a unit exited early, or the run failed.                                                                              |
-| `markdown-file` | The path of a file with the report in markdown, without the log. A later step can read it, for example to send a message after a failed apply.               |
+| Output          | Description                                                                                                                                                                        |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `summary`       | One line with the kind of run, the unit counts, the resource totals of a plan or an apply, and, for a run with warnings, the count of the warnings and of the units with warnings. |
+| `warnings`      | The number of warnings in the report, the same number as in the status line. The value is `0` without warnings.                                                                    |
+| `empty`         | The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit exited early.                                                                  |
+| `failed`        | The value is `true` when a unit failed, a unit exited early, or the run failed.                                                                                                    |
+| `markdown-file` | The path of a file with the report in markdown, without the log. A later step can read it, for example to send a message after a failed apply.                                     |
 
 ## Contributing
 

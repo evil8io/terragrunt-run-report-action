@@ -60,7 +60,7 @@ The workflow `e2e` runs on each pull request. It has these steps:
 5. It runs a plan and an apply with failures, and a second plan with `--log-format=json`.
 6. It destroys the stack.
 7. After the init, the validate, each plan, each apply, and the destroy, it runs the action from the checkout.
-8. It checks the outputs `failed` and `empty` of the eight runs.
+8. It checks the outputs `failed` and `empty` of the eight runs, the `summary` of the init and the validate, and the `warnings` of the phase 2 plan and apply.
 
 The job runs once with OpenTofu and once with Terraform, as the checks `e2e (opentofu)` and `e2e (terraform)`. Terraform has no `-concise` option and no `-json-into` option. The Terraform job runs without these options, so the action reads the apply and the destroy from the log and the report file. Only the OpenTofu job posts comments, so that a pull request gets one set of comments. Both jobs write the job summary.
 
