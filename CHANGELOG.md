@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.3.0...v0.4.0) (2026-10-04)
+
+
+### Features
+
+* group the warnings of a unit and collapse them ([#33](https://github.com/evil8io/terragrunt-run-report-action/issues/33)) ([67feddc](https://github.com/evil8io/terragrunt-run-report-action/commit/67feddced6dd254ee6f7ac959e60644710dc7459))
+
 ## [0.3.0](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.2.0...v0.3.0) (2026-10-04)
 
 
