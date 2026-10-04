@@ -2,7 +2,7 @@
   {
     "Started": "2026-01-01T00:00:00Z",
     "Ended": "2026-01-01T00:00:01Z",
-    "Name": ".terragrunt-stack/gamma",
+    "Name": ".terragrunt-stack/delta",
     "Result": "succeeded",
     "Cmd": "plan",
     "Args": [
@@ -28,7 +28,7 @@
   {
     "Started": "2026-01-01T00:00:00Z",
     "Ended": "2026-01-01T00:00:01Z",
-    "Name": ".terragrunt-stack/delta",
+    "Name": ".terragrunt-stack/gamma",
     "Result": "succeeded",
     "Cmd": "plan",
     "Args": [

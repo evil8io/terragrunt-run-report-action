@@ -52,7 +52,7 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 These facts were verified on terragrunt 1.1.6 and OpenTofu 1.13.1. The code or the Contract section of `README.md` depends on each fact.
 
 - The default log line is `HH:MM:SS.mmm LEVEL [unit] tofu: msg`. The `tofu:` token is the base name of the `--tf-path` binary, for example `opentofu:`. Terragrunt does not escape a `]` in the unit name, for example `[brkt[1]]`.
-- Terragrunt drops the empty lines of the tofu output.
+- In the default log format, terragrunt drops the empty lines of the tofu output. With `--log-format=json`, terragrunt keeps the empty lines in `msg`. The parser drops them, so that both formats give one report.
 - With `--log-level=error`, the log still contains the STDOUT and STDERR lines of tofu.
 - A failed plan writes no `tfplan.json` file.
 - An early-exit unit writes no `-json-into` file.

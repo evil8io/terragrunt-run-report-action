@@ -154,7 +154,7 @@ describe("formatDiff", () => {
       "! content              = <<-EOT # forces replacement",
       "-     zeta phase 1",
       "+     zeta phase 2",
-      "      replace=1e85d1df-8d55-30a4-2787-21e01b8f02f2",
+      "      replace=fbcfedcf-9542-8716-4328-4176f474036b",
     ])
   })
 
@@ -215,7 +215,7 @@ describe("extractOutputs", () => {
   it("reads the output lines after the plan line", () => {
     expect(extractOutputs(stdout("changes/plan/plan.log", "alpha"))).toEqual([
       '  ~ content    = "alpha phase 1" -> "alpha phase 2"',
-      '  ~ replace_id = "25bebadf-87d5-5ca0-4682-b2264c71b4b1" -> (known after apply)',
+      '  ~ replace_id = "66b0658a-d59f-91a6-061a-a7dbc04ebf66" -> (known after apply)',
     ])
   })
 

@@ -2,10 +2,21 @@
   {
     "Started": "2026-01-01T00:00:00Z",
     "Ended": "2026-01-01T00:00:01Z",
-    "Reason": "run error",
-    "Cause": "error occurred:\n\n* Failed to execute \"tofu apply -no-color -compact-warnings -json-into=apply.json -no-color -auto-approve -input=false\" in ./.terragrunt-stack/zeta/.terragrunt-cache/x/y\n  \n  Error: Resource precondition failed\n  \n    on main.tf line 43, in resource \"terraform_data\" \"main\":\n    43:       condition     = !var.fail_plan\n      ├────────────────\n      │ var.fail_plan is true\n  \n  The unit zeta is configured to fail at plan time.\n  \n  exit status 1\n",
-    "Name": ".terragrunt-stack/zeta",
-    "Result": "failed",
+    "Name": ".terragrunt-stack/alpha",
+    "Result": "succeeded",
+    "Cmd": "apply",
+    "Args": [
+      "-no-color",
+      "-compact-warnings",
+      "-json-into=apply.json",
+      "-no-color"
+    ]
+  },
+  {
+    "Started": "2026-01-01T00:00:00Z",
+    "Ended": "2026-01-01T00:00:01Z",
+    "Name": ".terragrunt-stack/gamma",
+    "Result": "succeeded",
     "Cmd": "apply",
     "Args": [
       "-no-color",
@@ -32,21 +43,10 @@
   {
     "Started": "2026-01-01T00:00:00Z",
     "Ended": "2026-01-01T00:00:01Z",
-    "Name": ".terragrunt-stack/gamma",
-    "Result": "succeeded",
-    "Cmd": "apply",
-    "Args": [
-      "-no-color",
-      "-compact-warnings",
-      "-json-into=apply.json",
-      "-no-color"
-    ]
-  },
-  {
-    "Started": "2026-01-01T00:00:00Z",
-    "Ended": "2026-01-01T00:00:01Z",
-    "Name": ".terragrunt-stack/alpha",
-    "Result": "succeeded",
+    "Reason": "run error",
+    "Cause": "error occurred:\n\n* Failed to execute \"tofu apply -no-color -compact-warnings -json-into=apply.json -no-color -auto-approve -input=false\" in ./.terragrunt-stack/zeta/.terragrunt-cache/x/y\n  \n  Error: Resource precondition failed\n  \n    on main.tf line 43, in resource \"terraform_data\" \"main\":\n    43:       condition     = !var.fail_plan\n      ├────────────────\n      │ var.fail_plan is true\n  \n  The unit zeta is configured to fail at plan time.\n  \n  exit status 1\n",
+    "Name": ".terragrunt-stack/zeta",
+    "Result": "failed",
     "Cmd": "apply",
     "Args": [
       "-no-color",

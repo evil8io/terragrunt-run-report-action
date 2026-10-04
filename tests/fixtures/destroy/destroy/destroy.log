@@ -1,0 +1,314 @@
+00:00:00.000 INFO   Terragrunt Cache server is listening on 127.0.0.1:46567
+00:00:00.000 INFO   Start Terragrunt Cache server
+00:00:00.000 INFO   Generating unit zeta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit gamma from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit epsilon from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit alpha from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit delta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit beta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   The following units will be run, starting with dependents and then their dependencies:
+.
+├── .terragrunt-stack/gamma
+├── .terragrunt-stack/zeta
+├── .terragrunt-stack/beta
+│   ╰── .terragrunt-stack/alpha
+╰── .terragrunt-stack/epsilon
+    ╰── .terragrunt-stack/delta
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: terraform_data.main: Refreshing state... [id=66d53f43-fbb6-ad72-43dc-b74eedb527dd]
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: terraform_data.replace: Refreshing state... [id=fbcfedcf-9542-8716-4328-4176f474036b]
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: local_file.main: Refreshing state... [id=3311c6679c26fc422037017e1d63b5283bd81bfe]
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: terraform_data.replace: Refreshing state... [id=bb3af989-83b3-06c5-a037-f4a716fc34bc]
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: terraform_data.main: Refreshing state... [id=fae6a4d3-bfbc-1d38-ff6c-981d73f5f4bf]
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: local_file.main: Refreshing state... [id=2ab88277d43fbaf5e5d67caddc4681676b9adca7]
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: terraform_data.main: Refreshing state... [id=82d99f5e-1a90-08ee-beac-34bba052dd71]
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: terraform_data.replace: Refreshing state... [id=9843b763-70c3-d2c2-64f8-21ce73a20a3b]
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: terraform_data.main: Refreshing state... [id=0c11cbf8-d923-8083-8037-c21cb0f392c4]
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: terraform_data.replace: Refreshing state... [id=cf9913bd-f4ea-b114-d981-134a726b7324]
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: local_file.main: Refreshing state... [id=9b0f4c6176a09b8ad0b8605dbf0e65c9eae9487a]
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: OpenTofu used the selected providers to generate the following execution
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: plan. Resource actions are indicated with the following symbols:
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   - destroy
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: OpenTofu will perform the following actions:
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   # local_file.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   - resource "local_file" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - content              = <<-EOT
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:             zeta phase 2
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:             replace=fbcfedcf-9542-8716-4328-4176f474036b
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:         EOT -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - content_base64sha256 = "+haNN2bDAB30z9ubT+uoMwoU3WOVpL6C1cxmKAFiYOc=" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - content_base64sha512 = "maewp4osmKzwaPxM7CO/dXd9OH1b7D/lgxRW+DTo+WNH5xqU6JkF3Z1w794bmQeRBDyS0veIH1pCP8wOpHW7CA==" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - content_md5          = "c28bb4aefbd1f039020fb513c82707a1" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - content_sha1         = "3311c6679c26fc422037017e1d63b5283bd81bfe" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - content_sha256       = "fa168d3766c3001df4cfdb9b4feba8330a14dd6395a4be82d5cc6628016260e7" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - content_sha512       = "99a7b0a78a2c98acf068fc4cec23bf75777d387d5bec3fe5831456f834e8f96347e71a94e89905dd9d70efde1b990791043c92d2f7881f5a423fcc0ea475bb08" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - directory_permission = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - file_permission      = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - filename             = "./.out/zeta.txt" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - id                   = "3311c6679c26fc422037017e1d63b5283bd81bfe" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   # terraform_data.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   - resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - id     = "66d53f43-fbb6-ad72-43dc-b74eedb527dd" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - input  = "zeta" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - output = "zeta" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   # terraform_data.replace will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   - resource "terraform_data" "replace" {
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - id               = "fbcfedcf-9542-8716-4328-4176f474036b" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       - triggers_replace = "static" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: Plan: 0 to add, 0 to change, 3 to destroy.
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: Changes to Outputs:
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   - content    = "zeta phase 4" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   - name       = "zeta" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   - replace_id = "fbcfedcf-9542-8716-4328-4176f474036b" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: OpenTofu used the selected providers to generate the following execution
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: plan. Resource actions are indicated with the following symbols:
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   - destroy
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: OpenTofu will perform the following actions:
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   # local_file.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   - resource "local_file" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - content              = <<-EOT
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:             gamma never changes
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:             replace=bb3af989-83b3-06c5-a037-f4a716fc34bc
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:         EOT -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - content_base64sha256 = "FdlBnySXuidDSClEZiRoZOR8FsBZtWOa27vii3ytBFI=" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - content_base64sha512 = "W72ZmKrSVhGqkiisYGN6OAXw/x5AJ0GBtky+LphpwcGcmBycrmLSLKCe/nBfpGWKDeIvqqPGmh5pzLZ5HR+ozA==" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - content_md5          = "4659e1a3a7f9de280ee0081f2027c60d" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - content_sha1         = "2ab88277d43fbaf5e5d67caddc4681676b9adca7" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - content_sha256       = "15d9419f2497ba274348294466246864e47c16c059b5639adbbbe28b7cad0452" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - content_sha512       = "5bbd9998aad25611aa9228ac60637a3805f0ff1e40274181b64cbe2e9869c1c19c981c9cae62d22ca09efe705fa4658a0de22faaa3c69a1e69ccb6791d1fa8cc" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - directory_permission = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - file_permission      = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - filename             = "./.out/gamma.txt" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - id                   = "2ab88277d43fbaf5e5d67caddc4681676b9adca7" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   # terraform_data.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   - resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - id     = "fae6a4d3-bfbc-1d38-ff6c-981d73f5f4bf" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - input  = "gamma" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - output = "gamma" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   # terraform_data.replace will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   - resource "terraform_data" "replace" {
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - id               = "bb3af989-83b3-06c5-a037-f4a716fc34bc" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:       - triggers_replace = "static" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: Plan: 0 to add, 0 to change, 3 to destroy.
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: Changes to Outputs:
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   - content    = "gamma never changes" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   - name       = "gamma" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu:   - replace_id = "bb3af989-83b3-06c5-a037-f4a716fc34bc" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: local_file.main: Refreshing state... [id=e5630073bfa1690ed4bc8c881851d5e95936ebc8]
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: terraform_data.main: Destroying... [id=66d53f43-fbb6-ad72-43dc-b74eedb527dd]
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: terraform_data.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: local_file.main: Destroying... [id=3311c6679c26fc422037017e1d63b5283bd81bfe]
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: local_file.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: terraform_data.replace: Destroying... [id=fbcfedcf-9542-8716-4328-4176f474036b]
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: terraform_data.replace: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: terraform_data.main: Destroying... [id=fae6a4d3-bfbc-1d38-ff6c-981d73f5f4bf]
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: terraform_data.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: local_file.main: Destroying... [id=2ab88277d43fbaf5e5d67caddc4681676b9adca7]
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: local_file.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: terraform_data.replace: Destroying... [id=bb3af989-83b3-06c5-a037-f4a716fc34bc]
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: terraform_data.replace: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: OpenTofu used the selected providers to generate the following execution
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: plan. Resource actions are indicated with the following symbols:
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   - destroy
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: OpenTofu will perform the following actions:
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   # local_file.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   - resource "local_file" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - content              = <<-EOT
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:             epsilon after delta phase 2
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:             replace=9843b763-70c3-d2c2-64f8-21ce73a20a3b
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:         EOT -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - content_base64sha256 = "ux9XXV7JHWs2nAtM70AjIz7vSpt/ANbjVhOfS3bu1y0=" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - content_base64sha512 = "rfNoZatLGFRy6rQJzQAQv8+EmKngtrHuvuVXtDDgNq0T6J/G7uU9SHAICEWmnWm8Uj+mkAubLt7vPjz1bzH4iQ==" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - content_md5          = "5c7695467665e6ca3674a3daf4865fff" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - content_sha1         = "9b0f4c6176a09b8ad0b8605dbf0e65c9eae9487a" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - content_sha256       = "bb1f575d5ec91d6b369c0b4cef4023233eef4a9b7f00d6e356139f4b76eed72d" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - content_sha512       = "adf36865ab4b185472eab409cd0010bfcf8498a9e0b6b1eebee557b430e036ad13e89fc6eee53d4870080845a69d69bc523fa6900b9b2edeef3e3cf56f31f889" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - directory_permission = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - file_permission      = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - filename             = "./.out/epsilon.txt" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - id                   = "9b0f4c6176a09b8ad0b8605dbf0e65c9eae9487a" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   # terraform_data.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   - resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - id     = "82d99f5e-1a90-08ee-beac-34bba052dd71" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - input  = "epsilon" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - output = "epsilon" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   # terraform_data.replace will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   - resource "terraform_data" "replace" {
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - id               = "9843b763-70c3-d2c2-64f8-21ce73a20a3b" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:       - triggers_replace = "static" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: Plan: 0 to add, 0 to change, 3 to destroy.
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: Changes to Outputs:
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   - content    = "epsilon after delta phase 3" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   - name       = "epsilon" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu:   - replace_id = "9843b763-70c3-d2c2-64f8-21ce73a20a3b" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: Destroy complete! Resources: 3 destroyed.
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: Destroy complete! Resources: 3 destroyed.
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: terraform_data.main: Destroying... [id=82d99f5e-1a90-08ee-beac-34bba052dd71]
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: terraform_data.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: OpenTofu used the selected providers to generate the following execution
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: plan. Resource actions are indicated with the following symbols:
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   - destroy
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: OpenTofu will perform the following actions:
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   # local_file.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   - resource "local_file" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - content              = <<-EOT
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:             beta after alpha, phase 3
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:             replace=cf9913bd-f4ea-b114-d981-134a726b7324
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:         EOT -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - content_base64sha256 = "4pqOPpalpEmJc9+Uaor75EbJxwTO+JmF/oBF1hnOE98=" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - content_base64sha512 = "ai5QIsLuZtLUwG+0FwJuVlUKyx2BCg8EkzvidcSrSrPUZukxZQlZRb/XA7OGomC9YlBzv0yvtMZGjp2L1Gfg/g==" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - content_md5          = "9074212c5ca190e17da11ca50a7bd5b0" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - content_sha1         = "e5630073bfa1690ed4bc8c881851d5e95936ebc8" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - content_sha256       = "e29a8e3e96a5a4498973df946a8afbe446c9c704cef89985fe8045d619ce13df" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - content_sha512       = "6a2e5022c2ee66d2d4c06fb417026e56550acb1d810a0f04933be275c4ab4ab3d466e93165095945bfd703b386a260bd625073bf4cafb4c6468e9d8bd467e0fe" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - directory_permission = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - file_permission      = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - filename             = "./.out/beta.txt" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - id                   = "e5630073bfa1690ed4bc8c881851d5e95936ebc8" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   # terraform_data.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   - resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - id     = "0c11cbf8-d923-8083-8037-c21cb0f392c4" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - input  = "beta" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - output = "beta" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   # terraform_data.replace will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   - resource "terraform_data" "replace" {
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - id               = "cf9913bd-f4ea-b114-d981-134a726b7324" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       - triggers_replace = "static" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Plan: 0 to add, 0 to change, 3 to destroy.
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Changes to Outputs:
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   - content    = "beta after alpha, phase 4" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   - name       = "beta" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   - replace_id = "cf9913bd-f4ea-b114-d981-134a726b7324" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: local_file.main: Destroying... [id=9b0f4c6176a09b8ad0b8605dbf0e65c9eae9487a]
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: local_file.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: terraform_data.replace: Destroying... [id=9843b763-70c3-d2c2-64f8-21ce73a20a3b]
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: terraform_data.replace: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: Destroy complete! Resources: 3 destroyed.
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: terraform_data.main: Destroying... [id=0c11cbf8-d923-8083-8037-c21cb0f392c4]
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: terraform_data.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: local_file.main: Destroying... [id=e5630073bfa1690ed4bc8c881851d5e95936ebc8]
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: local_file.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: terraform_data.replace: Destroying... [id=cf9913bd-f4ea-b114-d981-134a726b7324]
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: terraform_data.replace: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Destroy complete! Resources: 3 destroyed.
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: terraform_data.replace: Refreshing state... [id=f9371617-775d-ad7e-d166-004f689977c6]
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: terraform_data.main: Refreshing state... [id=39c9d2e9-7962-032e-70c6-cbf5b27498b0]
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: terraform_data.fail[0]: Refreshing state... [id=7694f194-bc54-2882-a7cc-13915bbbd6eb]
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: local_file.main: Refreshing state... [id=94e104ccf8b322161875e0924f9db64ed0b10e71]
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: terraform_data.replace: Refreshing state... [id=d2495e4d-6395-48d8-7c9c-b2ad217fdef8]
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: terraform_data.main: Refreshing state... [id=9694eb37-d060-7f99-3613-dc921fdef9ef]
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: local_file.main: Refreshing state... [id=ce53976c7e47c09d64799fe7d8e7fcb73740c977]
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: OpenTofu used the selected providers to generate the following execution
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: plan. Resource actions are indicated with the following symbols:
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   - destroy
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: OpenTofu will perform the following actions:
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   # local_file.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   - resource "local_file" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - content              = <<-EOT
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:             delta phase 3
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:             replace=f9371617-775d-ad7e-d166-004f689977c6
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:         EOT -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - content_base64sha256 = "1WEaNAHpLnJ70SkFDQQ9aYVDk0JbMxbaL3cnJosG32Y=" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - content_base64sha512 = "uzHN56s16/yfZJ/5d809AhUm17Or/2AtnW2I5JEiPsr5Qu5lUf49+j7GrnrCj3vETtIqwYMkvSNoSq8xoJ1sPA==" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - content_md5          = "6e49b61dde845fb363ddd1250d97a0e4" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - content_sha1         = "94e104ccf8b322161875e0924f9db64ed0b10e71" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - content_sha256       = "d5611a3401e92e727bd129050d043d69854393425b3316da2f7727268b06df66" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - content_sha512       = "bb31cde7ab35ebfc9f649ff977cd3d021526d7b3abff602d9d6d88e491223ecaf942ee6551fe3dfa3ec6ae7ac28f7bc44ed22ac18324bd23684aaf31a09d6c3c" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - directory_permission = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - file_permission      = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - filename             = "./.out/delta.txt" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - id                   = "94e104ccf8b322161875e0924f9db64ed0b10e71" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   # terraform_data.fail[0] will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   - resource "terraform_data" "fail" {
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - id     = "7694f194-bc54-2882-a7cc-13915bbbd6eb" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - input  = "delta phase 3" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - output = "delta phase 3" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   # terraform_data.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   - resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - id     = "39c9d2e9-7962-032e-70c6-cbf5b27498b0" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - input  = "delta" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - output = "delta" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   # terraform_data.replace will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   - resource "terraform_data" "replace" {
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - id               = "f9371617-775d-ad7e-d166-004f689977c6" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       - triggers_replace = "static" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Plan: 0 to add, 0 to change, 4 to destroy.
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Changes to Outputs:
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   - content    = "delta phase 4" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   - name       = "delta" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   - replace_id = "f9371617-775d-ad7e-d166-004f689977c6" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: terraform_data.main: Destroying... [id=39c9d2e9-7962-032e-70c6-cbf5b27498b0]
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: terraform_data.fail[0]: Destroying... [id=7694f194-bc54-2882-a7cc-13915bbbd6eb]
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: terraform_data.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: terraform_data.fail[0]: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: OpenTofu used the selected providers to generate the following execution
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: plan. Resource actions are indicated with the following symbols:
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   - destroy
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: OpenTofu will perform the following actions:
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   # local_file.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   - resource "local_file" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content              = <<-EOT
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:             alpha phase 3
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:             replace=d2495e4d-6395-48d8-7c9c-b2ad217fdef8
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:         EOT -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_base64sha256 = "Gpbiuq6qCFHvUvzhbwOSmHRIQcTHXH9Oyk7dljygycY=" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_base64sha512 = "9nemUJtnBf55JpLpOlaLQ5azZ3RZFGijJOZEVLkbHoSquOEUluToh6+FcNhb02O6+UldzHN9rzFl76G+NRQukA==" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_md5          = "73b777f9de105608ff0a59f5a29be416" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_sha1         = "ce53976c7e47c09d64799fe7d8e7fcb73740c977" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_sha256       = "1a96e2baaeaa0851ef52fce16f039298744841c4c75c7f4eca4edd963ca0c9c6" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_sha512       = "f677a6509b6705fe792692e93a568b4396b36774591468a324e64454b91b1e84aab8e11496e4e887af8570d85bd363baf9495dcc737daf3165efa1be35142e90" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - directory_permission = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - file_permission      = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - filename             = "./.out/alpha.txt" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - id                   = "ce53976c7e47c09d64799fe7d8e7fcb73740c977" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   # terraform_data.main will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   - resource "terraform_data" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - id     = "9694eb37-d060-7f99-3613-dc921fdef9ef" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - input  = "alpha" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - output = "alpha" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   # terraform_data.replace will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   - resource "terraform_data" "replace" {
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - id               = "d2495e4d-6395-48d8-7c9c-b2ad217fdef8" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - triggers_replace = "phase-3" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Plan: 0 to add, 0 to change, 3 to destroy.
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Changes to Outputs:
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   - content    = "alpha phase 4" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   - name       = "alpha" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   - replace_id = "d2495e4d-6395-48d8-7c9c-b2ad217fdef8" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: local_file.main: Destroying... [id=94e104ccf8b322161875e0924f9db64ed0b10e71]
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: local_file.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: terraform_data.replace: Destroying... [id=f9371617-775d-ad7e-d166-004f689977c6]
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: terraform_data.replace: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: terraform_data.main: Destroying... [id=9694eb37-d060-7f99-3613-dc921fdef9ef]
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: terraform_data.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: local_file.main: Destroying... [id=ce53976c7e47c09d64799fe7d8e7fcb73740c977]
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: local_file.main: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: terraform_data.replace: Destroying... [id=d2495e4d-6395-48d8-7c9c-b2ad217fdef8]
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: terraform_data.replace: Destruction complete after 0s
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Destroy complete! Resources: 4 destroyed.
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Destroy complete! Resources: 3 destroyed.
+
+❯❯ Run Summary  6 units  0ms
+   ────────────────────────────
+   Succeeded    6
+
+00:00:00.000 INFO   Shutting down Terragrunt Cache server...
+00:00:00.000 INFO   Terragrunt Cache server stopped
