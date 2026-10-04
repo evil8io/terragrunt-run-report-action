@@ -123,7 +123,8 @@ function readInput(input: string, file: string): string {
  * A unit that does not run keeps the -json-into file of an earlier run, and a
  * failed plan keeps the tfplan.json file of an earlier run. A file is stale
  * when its start time is earlier than the first start of a unit in the report
- * file. The comparison uses the precision of the file, in milliseconds.
+ * file. The comparison uses the precision of the file, in milliseconds. A
+ * report file without an entry means that no unit ran, so every file is stale.
  */
 export function freshSources<T extends { startedAt?: number | undefined }>(
   items: readonly T[],
@@ -133,8 +134,10 @@ export function freshSources<T extends { startedAt?: number | undefined }>(
   const starts = (report ?? []).flatMap((entry) => entry.startedAt ?? [])
   const runStart =
     starts.length > 0 ? Math.floor(Math.min(...starts) / precision) * precision : undefined
+  const noUnitRan = report !== undefined && report.length === 0
   const isStale = (item: T) =>
-    runStart !== undefined && item.startedAt !== undefined && item.startedAt < runStart
+    noUnitRan ||
+    (runStart !== undefined && item.startedAt !== undefined && item.startedAt < runStart)
   return {
     fresh: items.filter((item) => !isStale(item)),
     stale: items.filter(isStale),

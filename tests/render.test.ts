@@ -667,6 +667,24 @@ describe("diagnostics", () => {
     expect(md).toContain("```\nWarning: S (2)\n  on a.tf:1\n\n  on a.tf:2\n    D.\n```")
   })
 
+  it("renders a count line for a sub-group without a location and an address", () => {
+    const md = renderWarnings([
+      warn("S", { location: "a.tf:1", detail: "D1" }),
+      warn("S", { location: "a.tf:2", detail: "D1" }),
+      warn("S", { detail: "D2" }),
+      warn("S", { detail: "D2" }),
+      warn("S", { detail: "D2" }),
+    ])
+    expect(md).toContain(
+      "```\nWarning: S (5)\n  (3)\n    D2\n\n  on a.tf:1\n  on a.tf:2\n    D1\n```",
+    )
+    const one = renderWarnings([
+      warn("S", { location: "a.tf:1", detail: "D1" }),
+      warn("S", { detail: "D2" }),
+    ])
+    expect(one).toContain("```\nWarning: S (2)\n  (1)\n    D2\n\n  on a.tf:1\n    D1\n```")
+  })
+
   it("keeps the single-detail shape beside a summary with several details", () => {
     const report = runReport([
       unitReport({

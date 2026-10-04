@@ -189,6 +189,50 @@ describe("buildReport with the -json-into files of a plan", () => {
   })
 })
 
+describe("files after a configuration error", () => {
+  const dir = path.join(FIXTURES, "changes", "plan")
+  const log = [
+    "12:00:00.000 ERROR  Unsupported block type",
+    "  on terragrunt.hcl line 1",
+    "12:00:00.001 ERROR  1 error occurred:",
+  ].join("\n")
+
+  function loadAfterConfigError() {
+    const tmp = mkdtempSync(path.join(tmpdir(), "sources-"))
+    try {
+      const reportFile = path.join(tmp, "report.json")
+      writeFileSync(reportFile, "[]")
+      const logFile = path.join(tmp, "run.log")
+      writeFileSync(logFile, log)
+      return loadSources({
+        logFile,
+        reportFile,
+        planJsonDir: path.join(dir, "plans"),
+        planJsonFiles: applyFiles(path.join(dir, "json-into"), "plan.json"),
+      })
+    } finally {
+      rmSync(tmp, { recursive: true })
+    }
+  }
+
+  it("ignores every file and warns about each", () => {
+    const loaded = loadAfterConfigError()
+    expect(loaded.plans).toEqual([])
+    expect(loaded.planJson).toEqual([])
+    expect(loaded.warnings?.some((w) => w.startsWith("The tfplan.json file of the unit"))).toBe(
+      true,
+    )
+    expect(loaded.warnings?.some((w) => w.startsWith("The -json-into file of the unit"))).toBe(true)
+  })
+
+  it("reports no unit and the run error", () => {
+    const report = buildReport(loadAfterConfigError())
+    expect(report.units).toHaveLength(0)
+    expect(report.failed).toBe(true)
+    expect(report.runError).toBeDefined()
+  })
+})
+
 describe("buildReport for failures/plan", () => {
   const report = buildReport(sources("failures", "plan"))
   const zeta = unit(report, "zeta")

@@ -1,7 +1,7 @@
 name: Terragrunt run report
 description: >-
-  Write one markdown report of a terragrunt run --all plan or apply to the job summary and to a pull request
-  comment. The report has one table row per unit and one section per unit with changes or a failure.
+  Write one markdown report of a terragrunt run --all, for example a plan or an apply, to the job summary and to a pull request
+  comment. The report has one table row per unit and one section per unit with changes, warnings, or a failure.
 author: evil8io
 branding:
   icon: file-text
@@ -91,7 +91,7 @@ inputs:
     default: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 outputs:
   summary:
-    description: One line with the kind of run, the unit counts, the resource totals, and, for a run with warnings, the count of the warnings and of the units with warnings.
+    description: One line with the kind of run, the unit counts, the resource totals of a plan or an apply, and, for a run with warnings, the count of the warnings and of the units with warnings.
   warnings:
     description: >-
       The number of warnings in the report, the same number as in the status line. The value is `0`

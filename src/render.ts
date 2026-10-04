@@ -377,7 +377,9 @@ function warningSummary(summary: string, subgroups: WarningGroup[]): string {
   const blocks = subgroups
     .map((group) => {
       const detail = group[0].detail?.split("\n").map((line) => `    ${line}`) ?? []
-      return [...occurrenceLines(group), ...detail].join("\n")
+      const places = occurrenceLines(group)
+      if (places.length === 0 && detail.length > 0) places.push(`  (${group.length})`)
+      return [...places, ...detail].join("\n")
     })
     .filter((block) => block !== "")
   return [header, blocks.join("\n\n")].filter((part) => part !== "").join("\n")
