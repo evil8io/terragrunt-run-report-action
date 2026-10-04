@@ -39,6 +39,8 @@ resource "terraform_data" "main" {
   input = var.name
 
   lifecycle {
+    ignore_changes = [id]
+
     precondition {
       condition     = !var.fail_plan
       error_message = "The unit ${var.name} is configured to fail at plan time."
@@ -48,6 +50,10 @@ resource "terraform_data" "main" {
 
 resource "terraform_data" "replace" {
   triggers_replace = var.replace_trigger
+
+  lifecycle {
+    ignore_changes = [id]
+  }
 }
 
 resource "local_file" "main" {
@@ -67,6 +73,10 @@ resource "terraform_data" "fail" {
 
   provisioner "local-exec" {
     command = "echo 'simulated failure in ${var.name}' >&2; exit 1"
+  }
+
+  lifecycle {
+    ignore_changes = [id]
   }
 }
 

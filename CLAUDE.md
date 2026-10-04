@@ -34,12 +34,13 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 - The status line names the kind of run: `Plan`, `Apply`, `Destroy`, or `Run` when the kind is unknown. The kind comes from the report file, else from the log, else from the inputs.
 - When the log has a run error and no unit failed, the text of that error follows the status line.
 - The table has one row for each unit, sorted by name. In an apply report, a count cell shows `applied of planned` when the two differ.
-- A unit gets a section only with changes, diagnostics, or a failure. A section has the result line (when not succeeded), the diagnostics, the tofu summary line, the groups in this order: create, update, replace, destroy, read, import, forget, move, ephemeral, and then the changes to outputs.
+- A unit gets a section only with changes, diagnostics, or a failure. A section has the result line (when not succeeded), the error fence, the warnings element, the tofu summary line, the groups in this order: create, update, replace, destroy, read, import, forget, move, ephemeral, and then the changes to outputs.
+- Put the warnings of a unit in one closed `<details>` element, grouped by summary and detail, with the detail once per group. Keep the errors in the open fence above it, also for a failed unit. A unit can have 50 equal warnings, and an open block of that size hides the error and the diff.
 - In an apply report, each resource has its outcome: `✅` with the duration, `❌ failed`, or `⏳ not applied`.
 - Put the anchor of a unit section on its heading line as `<a id="ID"></a>`, before the code span. GitHub gives a markdown heading in a comment no `id`, but it keeps an explicit `<a id>` and renders it as `id="user-content-ID"`.
 - Link a table row to `#user-content-ID`, not to `#ID`. GitHub's own footnote links use this form, so the link works without the script of the page.
 - Make the ID from `trr-`, the slug of the `header`, and the slug of the unit name. One page can show more than one report, for example two reports on one pull request, or the plan and apply summaries of one job.
-- Above 10 unit sections, put the groups and the outputs diff of each section in one `<details>` element. The table is then the index. Keep the heading, the result line, and the diagnostics above that element. The reader then sees the error of a failed unit without a click.
+- Above 10 unit sections, put the groups and the outputs diff of each section in one `<details>` element. The table is then the index. Keep the heading, the result line, the error fence, and the warnings element above that element. The reader then sees the error of a failed unit without a click.
 - Escape the text of a `<summary>` element as HTML, not as markdown. GitHub renders an HTML block without markdown, so a markdown escape shows as a backslash.
 - Open a failed resource, its group, and the collapsed section of a failed unit, also without `expand`. The reader of a failed run looks for the error first.
 - Show the Duration column only when at least one unit has a duration. Only the report file gives a duration, and a report without that file must not have an empty column.
@@ -78,6 +79,7 @@ These facts were verified on terragrunt 1.1.6 and OpenTofu 1.13.1. The code or t
 - After a configuration error, terragrunt writes the report file `[]` and no `--json-out-dir` directory. The log then has top-level `ERROR` entries, but no `Run failed` entry.
 - The `Cause` of an early exit in the report file is the base name of the failed ancestor, not its path.
 - The `outputs` message of a `-json-into` file has the values of the outputs. Do not render these values, because they can be sensitive.
+- Tofu writes a warning to STDOUT and an error to STDERR. The stderr fence of a unit thus has no warning, and the warnings element shows each warning of the `-json-into` file once. A `tfplan.json` file has no diagnostics, so a plan report has no warnings element.
 
 ## Docs
 

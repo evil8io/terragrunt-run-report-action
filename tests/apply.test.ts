@@ -62,16 +62,19 @@ describe("parseApply", () => {
       elapsedSeconds: 0,
     })
     expect(delta.lastSummary).toBe("Plan: 2 to add, 0 to change, 1 to destroy.")
-    expect(delta.diagnostics).toEqual([
-      {
-        severity: "error",
-        summary: "local-exec provisioner error",
-        detail:
-          "Error running command 'echo 'simulated failure in delta' >&2; exit 1': exit status 1. Output: simulated failure in delta",
-        address: "terraform_data.fail[0]",
-        location: "main.tf:68",
-      },
+    expect(delta.diagnostics.slice(0, 3).map((d) => [d.severity, d.summary, d.location])).toEqual([
+      ["warning", "Redundant ignore_changes element", "main.tf:38"],
+      ["warning", "Redundant ignore_changes element", "main.tf:51"],
+      ["warning", "Redundant ignore_changes element", "main.tf:70"],
     ])
+    expect(delta.diagnostics[3]).toEqual({
+      severity: "error",
+      summary: "local-exec provisioner error",
+      detail:
+        "Error running command 'echo 'simulated failure in delta' >&2; exit 1': exit status 1. Output: simulated failure in delta",
+      address: "terraform_data.fail[0]",
+      location: "main.tf:74",
+    })
     expect(delta.skippedLines).toBe(0)
   })
 
@@ -81,7 +84,10 @@ describe("parseApply", () => {
     expect(zeta.outcomes.size).toBe(0)
     expect(zeta.hookCounts).toEqual({ add: 0, change: 0, remove: 0 })
     expect(zeta.diagnostics.map((d) => [d.summary, d.location])).toEqual([
-      ["Resource precondition failed", "main.tf:43"],
+      ["Redundant ignore_changes element", "main.tf:38"],
+      ["Redundant ignore_changes element", "main.tf:51"],
+      ["Redundant ignore_changes element", "main.tf:70"],
+      ["Resource precondition failed", "main.tf:45"],
     ])
   })
 

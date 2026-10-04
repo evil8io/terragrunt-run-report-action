@@ -22,7 +22,7 @@ describe("parseLog with the text format", () => {
     expect(entries[0]).toEqual({
       level: "INFO",
       unit: null,
-      lines: ["Terragrunt Cache server is listening on 127.0.0.1:36187"],
+      lines: ["Terragrunt Cache server is listening on 127.0.0.1:46345"],
     })
   })
 
@@ -38,7 +38,13 @@ describe("parseLog with the text format", () => {
     expect(text[0]?.unit).toBeNull()
     expect(text[0]?.lines[0]).toBe("❯❯ Run Summary  6 units  0ms")
     const epsilon = linesByUnit(entries).get(".terragrunt-stack/epsilon")
-    expect(epsilon?.stdout).toEqual(["No changes. Your infrastructure matches the configuration."])
+    expect(epsilon?.stdout).toEqual([
+      "No changes. Your infrastructure matches the configuration.",
+      "Warnings:",
+      "- Redundant ignore_changes element",
+      "  on main.tf line 38 (and 2 more)",
+      "To see the full warning notes, run OpenTofu without -compact-warnings.",
+    ])
   })
 
   it("attaches a multi-line error to the ERROR entry", () => {

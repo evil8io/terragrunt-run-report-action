@@ -106,14 +106,14 @@ describe("renderMarkdown for the fixtures", () => {
     const md = renderMarkdown(buildReport(sources("failures", "apply")), OPTIONS)
     const sections = md.split("\n").filter((line) => line.startsWith("### "))
     expect(sections).toEqual(
-      ["alpha", "beta", "delta", "zeta"].map(
+      ["alpha", "beta", "delta", "gamma", "zeta"].map(
         (name) =>
           `### <a id="trr-terragrunt-run-report-terragrunt-stack-${name}"></a>\`.terragrunt-stack/${name}\``,
       ),
     )
   })
 
-  it("renders the stderr of a unit and not its JSON diagnostics", () => {
+  it("renders the stderr of a unit and not its JSON errors", () => {
     const md = renderMarkdown(buildReport(sources("failures", "apply")), OPTIONS)
     expect(md.match(/Error: local-exec provisioner error/g)).toHaveLength(1)
   })
@@ -399,6 +399,22 @@ describe("collapsed unit sections", () => {
     )
   })
 
+  it("keeps the closed warnings element above the collapsed changes of a failed unit", () => {
+    const list = eleven()
+    list[9] = { ...list[9]!, diagnostics: [{ severity: "warning", summary: "Careful" }] }
+    const md = renderMarkdown(runReport(list), OPTIONS)
+    expect(md).toContain(
+      [
+        "```\nError: boom\n```",
+        "<details><summary>⚠️ 1 warning</summary>",
+        "```\nWarning: Careful\n```",
+        "</details>",
+        `<details open><summary>${SUMMARY}</summary>`,
+      ].join("\n\n"),
+    )
+    checkStructure(md)
+  })
+
   it("does not collapse a report with 10 sections", () => {
     const md = renderMarkdown(runReport(units(10)), OPTIONS)
     expect(md).not.toContain(`<summary>${SUMMARY}</summary>`)
@@ -464,9 +480,98 @@ describe("diagnostics", () => {
       ]),
       OPTIONS,
     )
+    expect(md).toContain("```\nError: Boom\n  with a.b\n  on main.tf:3\nDetails.\n```")
     expect(md).toContain(
-      "```\nError: Boom\n  with a.b\n  on main.tf:3\nDetails.\n\nWarning: Careful\n```",
+      "<details><summary>⚠️ 1 warning</summary>\n\n```\nWarning: Careful\n```\n\n</details>",
     )
+  })
+
+  it("groups the warnings by summary and detail", () => {
+    const md = renderMarkdown(
+      runReport([
+        unitReport({
+          diagnostics: [
+            { severity: "warning", summary: "Deprecated", detail: "Use b.", location: "a.tf:1" },
+            { severity: "warning", summary: "Deprecated" },
+            {
+              severity: "warning",
+              summary: "Deprecated",
+              detail: "Use b.",
+              location: "a.tf:9",
+              address: "x.y",
+            },
+            { severity: "warning", summary: "Other", detail: "D.", address: "p.q" },
+          ],
+        }),
+      ]),
+      OPTIONS,
+    )
+    expect(md).toContain("<details><summary>⚠️ 4 warnings</summary>")
+    expect(md).toContain(
+      "```\nWarning: Deprecated (2)\n  on a.tf:1\n  on a.tf:9 with x.y\n\nUse b.\n\nWarning: Deprecated\n\nWarning: Other\n  with p.q\n\nD.\n```",
+    )
+    checkStructure(md)
+  })
+
+  it("renders a single warning without a count", () => {
+    const md = renderMarkdown(
+      runReport([unitReport({ diagnostics: [{ severity: "warning", summary: "Careful" }] })]),
+      OPTIONS,
+    )
+    expect(md).toContain("<details><summary>⚠️ 1 warning</summary>")
+    expect(md).toContain("Warning: Careful\n")
+    expect(md).not.toContain("Warning: Careful (")
+  })
+
+  it("opens the warnings element with expand", () => {
+    const md = renderMarkdown(
+      runReport([unitReport({ diagnostics: [{ severity: "warning", summary: "Careful" }] })]),
+      { ...OPTIONS, expand: true },
+    )
+    expect(md).toContain("<details open><summary>⚠️ 1 warning</summary>")
+  })
+
+  it("renders the warnings element after the stderr fence", () => {
+    const md = renderMarkdown(
+      runReport([
+        unitReport({
+          result: "failed",
+          stderr: "Error: x",
+          diagnostics: [{ severity: "warning", summary: "Careful" }],
+        }),
+      ]),
+      OPTIONS,
+    )
+    expect(md).toContain(
+      "```\nError: x\n```\n\n<details><summary>⚠️ 1 warning</summary>\n\n```\nWarning: Careful\n```\n\n</details>",
+    )
+  })
+
+  it("renders the warnings element after the cause of a failed unit", () => {
+    const md = renderMarkdown(
+      runReport([
+        unitReport({
+          result: "failed",
+          cause: "boom\n",
+          diagnostics: [{ severity: "warning", summary: "Careful" }],
+        }),
+      ]),
+      OPTIONS,
+    )
+    expect(md).toContain(
+      "```\nboom\n```\n\n<details><summary>⚠️ 1 warning</summary>\n\n```\nWarning: Careful\n```\n\n</details>",
+    )
+  })
+
+  it("gives a unit with only warnings a section with the element and no summary line", () => {
+    const md = renderMarkdown(
+      runReport([unitReport({ diagnostics: [{ severity: "warning", summary: "Careful" }] })]),
+      OPTIONS,
+    )
+    expect(md).toContain(
+      '### <a id="trr-terragrunt-run-report-u"></a>`u`\n\n<details><summary>⚠️ 1 warning</summary>',
+    )
+    expect(md.endsWith("\n</details>\n")).toBe(true)
   })
 
   it("renders the cause of a failed unit without other diagnostics", () => {

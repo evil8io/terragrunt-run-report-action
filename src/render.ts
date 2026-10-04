@@ -3,6 +3,7 @@ import {
   hasCounts,
   type ChangeKind,
   type Counts,
+  type Diagnostic,
   type ResourceChange,
   type RunReport,
   type UnitReport,
@@ -261,23 +262,54 @@ function changeBlocks(changes: readonly ResourceChange[], expand: boolean): stri
   return blocks
 }
 
-function diagnosticsText(unit: UnitReport): string | undefined {
+function errorBlock(diagnostic: Diagnostic): string {
+  const lines = [`Error: ${diagnostic.summary}`]
+  if (diagnostic.address) lines.push(`  with ${diagnostic.address}`)
+  if (diagnostic.location) lines.push(`  on ${diagnostic.location}`)
+  if (diagnostic.detail) lines.push(diagnostic.detail)
+  return lines.join("\n")
+}
+
+function errorText(unit: UnitReport): string | undefined {
   if (unit.stderr !== undefined) return unit.stderr
-  if (unit.diagnostics.length > 0) {
-    return unit.diagnostics
-      .map((diagnostic) => {
-        const lines = [
-          `${diagnostic.severity === "error" ? "Error" : "Warning"}: ${diagnostic.summary}`,
-        ]
-        if (diagnostic.address) lines.push(`  with ${diagnostic.address}`)
-        if (diagnostic.location) lines.push(`  on ${diagnostic.location}`)
-        if (diagnostic.detail) lines.push(diagnostic.detail)
-        return lines.join("\n")
-      })
-      .join("\n\n")
-  }
+  const errors = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "error")
+  if (errors.length > 0) return errors.map(errorBlock).join("\n\n")
   if (unit.result === "failed" && unit.cause) return unit.cause.trimEnd()
   return undefined
+}
+
+type WarningGroup = [Diagnostic, ...Diagnostic[]]
+
+function warningGroup(group: WarningGroup): string {
+  const [first] = group
+  const lines = [`Warning: ${first.summary}${group.length > 1 ? ` (${group.length})` : ""}`]
+  for (const warning of group) {
+    const place = [
+      warning.location ? `on ${warning.location}` : undefined,
+      warning.address ? `with ${warning.address}` : undefined,
+    ].filter((part) => part !== undefined)
+    if (place.length > 0) lines.push(`  ${place.join(" ")}`)
+  }
+  if (first.detail) lines.push("", first.detail)
+  return lines.join("\n")
+}
+
+function warningsText(warnings: readonly Diagnostic[]): string {
+  const groups = new Map<string, WarningGroup>()
+  for (const warning of warnings) {
+    const key = JSON.stringify([warning.summary, warning.detail])
+    const group = groups.get(key)
+    if (group) group.push(warning)
+    else groups.set(key, [warning])
+  }
+  return [...groups.values()].map(warningGroup).join("\n\n")
+}
+
+function warningsBlock(unit: UnitReport, expand: boolean): string | undefined {
+  const warnings = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "warning")
+  if (warnings.length === 0) return undefined
+  const summary = `⚠️ ${plural(warnings.length, "warning")}`
+  return details(summary, [fence(warningsText(warnings))], expand)
 }
 
 function hasSection(unit: UnitReport): boolean {
@@ -309,8 +341,10 @@ type SectionOptions = { id: string; expand: boolean; collapse: boolean }
 function section(unit: UnitReport, { id, expand, collapse }: SectionOptions): string {
   const parts = [`### <a id="${id}"></a>${code(unit.name)}`]
   if (unit.result !== "succeeded") parts.push(resultText(unit))
-  const diagnostics = diagnosticsText(unit)
-  if (diagnostics !== undefined) parts.push(fence(diagnostics))
+  const errors = errorText(unit)
+  if (errors !== undefined) parts.push(fence(errors))
+  const warnings = warningsBlock(unit, expand)
+  if (warnings !== undefined) parts.push(warnings)
   const blocks = groupBlocks(unit, expand)
   if (collapse && blocks.length > 0) {
     const summary = unit.summaryLine === undefined ? "Changes" : html(unit.summaryLine)
