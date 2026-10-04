@@ -143,6 +143,7 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 ## Rules for the terragrunt command
 
 - Keep the default log format, or use `--log-format=json`. Do not use `--tf-forward-stdout`, because the log then has no unit names.
+- Units can run in parallel. Each log line has the name of its unit, and the action groups the lines by unit before it reads them.
 - `--log-level=error` is permitted. Terragrunt still writes the lines from tofu to the log.
 - Do not apply from a saved plan file. A saved plan contains the mock outputs of the dependencies, so the apply writes the mock values.
 - Delete the `-json-into` files of an earlier run before an apply. The action reads an old file of a unit that did not run as a result of this run.
