@@ -14,7 +14,7 @@
 
 ## Report
 
-The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes, warnings, or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error.
+The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes, warnings, or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error. For a run without changes, for example an init or a validate, the status line has the unit counts only, and the table has no count columns. For example, the status line of an init is `Init: 7 units, 6 succeeded, 1 failed.`.
 
 In a plan with `plan-json-files` and in an apply, the warnings of a unit follow the error in one collapsed element, grouped by message, with the location of each warning. When the run has warnings, the status line ends with the count of the warnings and the count of the units with warnings. The count is the number of warnings in the `-json-into` files. The log of a run with `-compact-warnings` has fewer lines, because tofu prints one location for each distinct warning message and the count of the other locations. A unit without changes or warnings, a unit that exited early, and an excluded unit have a table row only.
 
@@ -164,10 +164,11 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 
 Set the file inputs of the run, as in the examples:
 
-| Run   | Inputs                                                            |
-| ----- | ----------------------------------------------------------------- |
-| plan  | `log-file`, `plan-json-dir`, `plan-json-files`, and `report-file` |
-| apply | `log-file`, `apply-json-files`, and `report-file`                 |
+| Run            | Inputs                                                            |
+| -------------- | ----------------------------------------------------------------- |
+| plan           | `log-file`, `plan-json-dir`, `plan-json-files`, and `report-file` |
+| apply          | `log-file`, `apply-json-files`, and `report-file`                 |
+| init, validate | `log-file` and `report-file`                                      |
 
 Each file adds a part of the report. The action needs at least one of them. The report then has the parts that these files give:
 

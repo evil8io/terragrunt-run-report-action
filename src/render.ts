@@ -108,15 +108,26 @@ function plural(count: number, word: string, suffix = "s"): string {
   return `${count} ${word}${count === 1 ? "" : suffix}`
 }
 
+function kindLabel(report: RunReport): string {
+  if (report.kind !== "other") return KIND_LABELS[report.kind]
+  const cmd = report.cmd ?? "run"
+  return `${cmd.charAt(0).toUpperCase()}${cmd.slice(1)}`
+}
+
 function unitsPhrase(report: RunReport): string {
   const parts = [plural(report.units.length, "unit")]
-  if (report.changedUnits > 0) parts.push(`${report.changedUnits} with changes`)
-  if (report.unchangedUnits > 0) parts.push(`${report.unchangedUnits} unchanged`)
-  if (report.uncountedUnits > 0) parts.push(`${report.uncountedUnits} without counts`)
+  if (report.kind === "other") {
+    const succeeded = report.units.filter((unit) => unit.result === "succeeded").length
+    if (succeeded > 0) parts.push(`${succeeded} succeeded`)
+  } else {
+    if (report.changedUnits > 0) parts.push(`${report.changedUnits} with changes`)
+    if (report.unchangedUnits > 0) parts.push(`${report.unchangedUnits} unchanged`)
+    if (report.uncountedUnits > 0) parts.push(`${report.uncountedUnits} without counts`)
+  }
   if (report.failedUnits > 0) parts.push(`${report.failedUnits} failed`)
   if (report.earlyExitUnits > 0) parts.push(plural(report.earlyExitUnits, "early exit", "s"))
   if (report.excludedUnits > 0) parts.push(`${report.excludedUnits} excluded`)
-  return `${KIND_LABELS[report.kind]}: ${parts.join(", ")}.`
+  return `${kindLabel(report)}: ${parts.join(", ")}.`
 }
 
 function totalsPhrase(report: RunReport): string {
@@ -142,11 +153,12 @@ function warningsPhrase(report: RunReport): string | undefined {
 
 function statusTail(report: RunReport): string {
   const phrase = warningsPhrase(report)
+  if (report.kind === "other") return phrase ?? ""
   return phrase === undefined ? totalsPhrase(report) : `${totalsPhrase(report)} ${phrase}`
 }
 
 export function statusLine(report: RunReport): string {
-  return `${unitsPhrase(report)} ${statusTail(report)}`
+  return `${unitsPhrase(report)} ${statusTail(report)}`.trimEnd()
 }
 
 export function resultText(unit: UnitReport): string {
@@ -206,23 +218,29 @@ function durationCell(unit: UnitReport): string {
 
 function table(report: RunReport, ids: ReadonlyMap<UnitReport, string>): string {
   const apply = report.kind === "apply" || report.kind === "destroy"
+  const counts = report.kind !== "other"
   const duration = report.units.some((unit) => unit.durationSeconds !== undefined)
   const rows = report.units.map((unit) => {
     const id = ids.get(unit)
     // GitHub renders the id of an element in a comment with the prefix user-content-.
     const name = id === undefined ? code(unit.name) : `[${code(unit.name)}](#user-content-${id})`
-    const cells = [
-      cell(name),
-      resultText(unit),
-      countCell(unit, "add", apply),
-      countCell(unit, "change", apply),
-      countCell(unit, "remove", apply),
-    ]
+    const cells = [cell(name), resultText(unit)]
+    if (counts) {
+      cells.push(
+        countCell(unit, "add", apply),
+        countCell(unit, "change", apply),
+        countCell(unit, "remove", apply),
+      )
+    }
     if (duration) cells.push(durationCell(unit))
     return `| ${cells.join(" | ")} |`
   })
-  const titles = ["Unit", "Result", "Add", "Change", "Destroy"]
-  const aligns = ["---", "---", "---:", "---:", "---:"]
+  const titles = ["Unit", "Result"]
+  const aligns = ["---", "---"]
+  if (counts) {
+    titles.push("Add", "Change", "Destroy")
+    aligns.push("---:", "---:", "---:")
+  }
   if (duration) {
     titles.push("Duration")
     aligns.push("---:")
@@ -439,7 +457,7 @@ function section(unit: UnitReport, { id, expand, collapse }: SectionOptions): st
 export function renderMarkdown(report: RunReport, options: RenderOptions): string {
   const parts = [
     `${markerLine(options.header)}\n## ${options.header}`,
-    `**${unitsPhrase(report)}** ${statusTail(report)}`,
+    `**${unitsPhrase(report)}** ${statusTail(report)}`.trimEnd(),
   ]
   if (report.runError !== undefined && report.failedUnits === 0) {
     parts.push("❌ Run failed", fence(report.runError))

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Regenerate the input files in tests/fixtures from the e2e stack. Phase 1 is the baseline apply.
+# Regenerate the input files in tests/fixtures from the e2e stack. Phase 1 is an init, a validate, and the baseline apply.
 # Phase 2 produces the "changes" scenario. Phase 3 produces the "failures" scenario.
 # Phase 4 produces the "destroy" scenario.
 set -euo pipefail
@@ -70,6 +70,21 @@ run_plan() {
   rm -rf "$tmp"
 }
 
+# run_command <command> <out>, where <command> is init or validate.
+run_command() {
+  local command=$1 out=$2 tmp
+  tmp=$(mktemp -d)
+  set +e
+  terragrunt run --all --report-file "$tmp/report.json" --report-format json \
+    -- "$command" -no-color > "$tmp/$command.log" 2>&1
+  echo "$command exit code: $?"
+  set -e
+  mkdir -p "$out"
+  normalize_log "$tmp/$command.log" "$out/$command.log"
+  normalize_report "$tmp/report.json" "$out/report.json"
+  rm -rf "$tmp"
+}
+
 # run_apply <command> <out>, where <command> is apply or destroy. An empty <out> keeps no files.
 run_apply() {
   local command=$1 out=$2 tmp
@@ -90,13 +105,15 @@ run_apply() {
 }
 
 rm -rf "$E2E/.state" "$STACK/.terragrunt-stack" "$E2E/modules/demo/.out"
-for scenario in "$FIXTURES"/{changes,failures}/{plan,apply} "$FIXTURES/destroy/destroy"; do
-  rm -rf "$scenario"/{plan.log,plan.jsonl,apply.log,destroy.log,report.json,plans,json-into,apply-json}
+for scenario in "$FIXTURES"/{changes,failures}/{plan,apply} "$FIXTURES/destroy/destroy" "$FIXTURES/baseline/init" "$FIXTURES/baseline/validate"; do
+  rm -rf "$scenario"/{plan.log,plan.jsonl,apply.log,destroy.log,init.log,validate.log,report.json,plans,json-into,apply-json}
 done
 cd "$STACK"
 terragrunt stack generate > /dev/null 2>&1
 
 export E2E_PHASE=1
+run_command init "$FIXTURES/baseline/init"
+run_command validate "$FIXTURES/baseline/validate"
 run_apply apply ""
 
 export E2E_PHASE=2

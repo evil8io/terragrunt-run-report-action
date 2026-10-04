@@ -1,0 +1,115 @@
+00:00:00.000 INFO   Terragrunt Cache server is listening on 127.0.0.1:32897
+00:00:00.000 INFO   Start Terragrunt Cache server
+00:00:00.000 INFO   Generating unit zeta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit gamma from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit alpha from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit beta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit delta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit epsilon from ./terragrunt.stack.hcl
+00:00:00.000 INFO   The following units will be run, starting with dependencies and then their dependents:
+.
+├── .terragrunt-stack/gamma
+├── .terragrunt-stack/zeta
+├── .terragrunt-stack/alpha
+│   ╰── .terragrunt-stack/beta
+╰── .terragrunt-stack/delta
+    ╰── .terragrunt-stack/epsilon
+00:00:00.000 INFO   [.terragrunt-stack/zeta] Downloading Terraform configurations from ../modules/demo into ./.terragrunt-stack/zeta/.terragrunt-cache/x/y
+00:00:00.000 INFO   [.terragrunt-stack/alpha] Downloading Terraform configurations from ../modules/demo into ./.terragrunt-stack/alpha/.terragrunt-cache/x/y
+00:00:00.000 INFO   [.terragrunt-stack/delta] Downloading Terraform configurations from ../modules/demo into ./.terragrunt-stack/delta/.terragrunt-cache/x/y
+00:00:00.000 INFO   [.terragrunt-stack/gamma] Downloading Terraform configurations from ../modules/demo into ./.terragrunt-stack/gamma/.terragrunt-cache/x/y
+00:00:00.000 INFO   [.terragrunt-stack/delta] Caching terraform providers for /repo/tests/e2e/stack/.terragrunt-stack/delta/.terragrunt-cache/x/y
+00:00:00.000 INFO   [.terragrunt-stack/alpha] Caching terraform providers for /repo/tests/e2e/stack/.terragrunt-stack/alpha/.terragrunt-cache/x/y
+00:00:00.000 INFO   [.terragrunt-stack/gamma] Caching terraform providers for /repo/tests/e2e/stack/.terragrunt-stack/gamma/.terragrunt-cache/x/y
+00:00:00.000 INFO   [.terragrunt-stack/zeta] Caching terraform providers for /repo/tests/e2e/stack/.terragrunt-stack/zeta/.terragrunt-cache/x/y
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Initializing the backend...
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: Initializing the backend...
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Initializing provider plugins...
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: - terraform.io/builtin/terraform is built in to OpenTofu
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: - Reusing previous version of hashicorp/local from the dependency lock file
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: Initializing provider plugins...
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: - terraform.io/builtin/terraform is built in to OpenTofu
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: - Reusing previous version of hashicorp/local from the dependency lock file
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: Initializing the backend...
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Initializing the backend...
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: Initializing provider plugins...
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: - terraform.io/builtin/terraform is built in to OpenTofu
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: - Reusing previous version of hashicorp/local from the dependency lock file
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Initializing provider plugins...
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: - terraform.io/builtin/terraform is built in to OpenTofu
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: - Reusing previous version of hashicorp/local from the dependency lock file
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: - Installing hashicorp/local v2.9.1...
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: - Installing hashicorp/local v2.9.1...
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: - Installing hashicorp/local v2.9.1...
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: - Installing hashicorp/local v2.9.1...
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: - Installed hashicorp/local v2.9.1 (unauthenticated)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: OpenTofu has been successfully initialized!
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: You may now begin working with OpenTofu. Try running "tofu plan" to see
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: any changes that are required for your infrastructure. All OpenTofu commands
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: should now work.
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: If you ever set or change modules or backend configuration for OpenTofu,
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: rerun this command to reinitialize your working directory. If you forget, other
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: commands will detect it and remind you to do so if necessary.
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: - Installed hashicorp/local v2.9.1 (unauthenticated)
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: OpenTofu has been successfully initialized!
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: You may now begin working with OpenTofu. Try running "tofu plan" to see
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: any changes that are required for your infrastructure. All OpenTofu commands
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: should now work.
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: If you ever set or change modules or backend configuration for OpenTofu,
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: rerun this command to reinitialize your working directory. If you forget, other
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: commands will detect it and remind you to do so if necessary.
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: - Installed hashicorp/local v2.9.1 (unauthenticated)
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: OpenTofu has been successfully initialized!
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: You may now begin working with OpenTofu. Try running "tofu plan" to see
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: any changes that are required for your infrastructure. All OpenTofu commands
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: should now work.
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: If you ever set or change modules or backend configuration for OpenTofu,
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: rerun this command to reinitialize your working directory. If you forget, other
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: commands will detect it and remind you to do so if necessary.
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: - Installed hashicorp/local v2.9.1 (unauthenticated)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: OpenTofu has been successfully initialized!
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: You may now begin working with OpenTofu. Try running "tofu plan" to see
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: any changes that are required for your infrastructure. All OpenTofu commands
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: should now work.
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: If you ever set or change modules or backend configuration for OpenTofu,
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: rerun this command to reinitialize your working directory. If you forget, other
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: commands will detect it and remind you to do so if necessary.
+00:00:00.000 WARN   [.terragrunt-stack/beta] Config /repo/tests/e2e/stack/.terragrunt-stack/alpha/terragrunt.hcl is a dependency of /repo/tests/e2e/stack/.terragrunt-stack/beta/terragrunt.hcl that has no outputs, but mock outputs provided and returning those in dependency output.
+00:00:00.000 INFO   [.terragrunt-stack/beta] Downloading Terraform configurations from ../modules/demo into ./.terragrunt-stack/beta/.terragrunt-cache/x/y
+00:00:00.000 INFO   [.terragrunt-stack/beta] Caching terraform providers for /repo/tests/e2e/stack/.terragrunt-stack/beta/.terragrunt-cache/x/y
+00:00:00.000 WARN   [.terragrunt-stack/epsilon] Config /repo/tests/e2e/stack/.terragrunt-stack/delta/terragrunt.hcl is a dependency of /repo/tests/e2e/stack/.terragrunt-stack/epsilon/terragrunt.hcl that has no outputs, but mock outputs provided and returning those in dependency output.
+00:00:00.000 INFO   [.terragrunt-stack/epsilon] Downloading Terraform configurations from ../modules/demo into ./.terragrunt-stack/epsilon/.terragrunt-cache/x/y
+00:00:00.000 INFO   [.terragrunt-stack/epsilon] Caching terraform providers for /repo/tests/e2e/stack/.terragrunt-stack/epsilon/.terragrunt-cache/x/y
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Initializing the backend...
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Initializing provider plugins...
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: - terraform.io/builtin/terraform is built in to OpenTofu
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: - Reusing previous version of hashicorp/local from the dependency lock file
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: Initializing the backend...
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: Initializing provider plugins...
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: - terraform.io/builtin/terraform is built in to OpenTofu
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: - Reusing previous version of hashicorp/local from the dependency lock file
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: - Installing hashicorp/local v2.9.1...
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: - Installing hashicorp/local v2.9.1...
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: - Installed hashicorp/local v2.9.1 (unauthenticated)
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: OpenTofu has been successfully initialized!
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: You may now begin working with OpenTofu. Try running "tofu plan" to see
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: any changes that are required for your infrastructure. All OpenTofu commands
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: should now work.
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: If you ever set or change modules or backend configuration for OpenTofu,
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: rerun this command to reinitialize your working directory. If you forget, other
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: commands will detect it and remind you to do so if necessary.
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: - Installed hashicorp/local v2.9.1 (unauthenticated)
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: OpenTofu has been successfully initialized!
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: You may now begin working with OpenTofu. Try running "tofu plan" to see
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: any changes that are required for your infrastructure. All OpenTofu commands
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: should now work.
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: If you ever set or change modules or backend configuration for OpenTofu,
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: rerun this command to reinitialize your working directory. If you forget, other
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: commands will detect it and remind you to do so if necessary.
+
+❯❯ Run Summary  6 units  1s
+   ────────────────────────────
+   Succeeded    6
+
+00:00:00.000 INFO   Shutting down Terragrunt Cache server...
+00:00:00.000 INFO   Terragrunt Cache server stopped

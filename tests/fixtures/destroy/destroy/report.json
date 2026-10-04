@@ -28,7 +28,7 @@
   {
     "Started": "2026-01-01T00:00:00Z",
     "Ended": "2026-01-01T00:00:01Z",
-    "Name": ".terragrunt-stack/beta",
+    "Name": ".terragrunt-stack/epsilon",
     "Result": "succeeded",
     "Cmd": "destroy",
     "Args": [
@@ -41,7 +41,7 @@
   {
     "Started": "2026-01-01T00:00:00Z",
     "Ended": "2026-01-01T00:00:01Z",
-    "Name": ".terragrunt-stack/epsilon",
+    "Name": ".terragrunt-stack/beta",
     "Result": "succeeded",
     "Cmd": "destroy",
     "Args": [

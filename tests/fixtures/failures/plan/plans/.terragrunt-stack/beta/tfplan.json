@@ -36,7 +36,7 @@
       "replace_id": {
         "sensitive": false,
         "type": "string",
-        "value": "6e9cb995-1623-16cd-b6e5-00d1988e8976"
+        "value": "222bc366-78c8-8d40-e1fc-9d75149fdda4"
       }
     },
     "root_module": {
@@ -49,7 +49,7 @@
           "provider_name": "registry.opentofu.org/hashicorp/local",
           "schema_version": 0,
           "values": {
-            "content": "beta after alpha, phase 3\nreplace=6e9cb995-1623-16cd-b6e5-00d1988e8976\n",
+            "content": "beta after alpha, phase 3\nreplace=222bc366-78c8-8d40-e1fc-9d75149fdda4\n",
             "content_base64": null,
             "directory_permission": "0777",
             "file_permission": "0777",
@@ -67,7 +67,7 @@
           "provider_name": "terraform.io/builtin/terraform",
           "schema_version": 0,
           "values": {
-            "id": "e5faf3ee-0f07-827a-e68d-06e6d71c599b",
+            "id": "eef04383-c85d-da03-5021-29fc6e6e7eee",
             "input": "beta",
             "output": "beta",
             "triggers_replace": null
@@ -82,7 +82,7 @@
           "provider_name": "terraform.io/builtin/terraform",
           "schema_version": 0,
           "values": {
-            "id": "6e9cb995-1623-16cd-b6e5-00d1988e8976",
+            "id": "222bc366-78c8-8d40-e1fc-9d75149fdda4",
             "input": null,
             "output": null,
             "triggers_replace": "static"
@@ -105,23 +105,23 @@
           "create"
         ],
         "before": {
-          "content": "beta after alpha, phase 2\nreplace=6e9cb995-1623-16cd-b6e5-00d1988e8976\n",
+          "content": "beta after alpha, phase 2\nreplace=222bc366-78c8-8d40-e1fc-9d75149fdda4\n",
           "content_base64": null,
-          "content_base64sha256": "GnHbTj69KN9Vr3USyh6xWr6k9Rt2diarGZVG2Yp857M=",
-          "content_base64sha512": "bxLYH1HED5jEVVFfdOYlKH2RIfvrFbZU2t3Y8DXeg/QzEyZpJO4i7GRauYMgB7sP69GwpCPKyspqgF35OvDdNw==",
-          "content_md5": "0b88da56920f38f8a8701444798f5a4f",
-          "content_sha1": "fddb3371a81239886a188f546ae73af3de88c4af",
-          "content_sha256": "1a71db4e3ebd28df55af7512ca1eb15abea4f51b767626ab199546d98a7ce7b3",
-          "content_sha512": "6f12d81f51c40f98c455515f74e625287d9121fbeb15b654daddd8f035de83f43313266924ee22ec645ab9832007bb0febd1b0a423cacaca6a805df93af0dd37",
+          "content_base64sha256": "n/oM5qWTIPcdkYQZudicXUo9Ba/mS6gVsQ+U5CbJ/eg=",
+          "content_base64sha512": "vethEuXd/R9WP3fViaOVUavCW8RjAI66TmgWQDLcFeEGlaOSjpIxqrxqQl3y1CHTjpdZp4qfU8ff0rdVNqrMqA==",
+          "content_md5": "386ad1e669d2c7ff572866a7dc65636e",
+          "content_sha1": "9addccda1f3a24870ccf008d0ec201f2f822b6a3",
+          "content_sha256": "9ffa0ce6a59320f71d918419b9d89c5d4a3d05afe64ba815b10f94e426c9fde8",
+          "content_sha512": "bdeb6112e5ddfd1f563f77d589a39551abc25bc463008eba4e68164032dc15e10695a3928e9231aabc6a425df2d421d38e9759a78a9f53c7dfd2b75536aacca8",
           "directory_permission": "0777",
           "file_permission": "0777",
           "filename": "./.out/beta.txt",
-          "id": "fddb3371a81239886a188f546ae73af3de88c4af",
+          "id": "9addccda1f3a24870ccf008d0ec201f2f822b6a3",
           "sensitive_content": null,
           "source": null
         },
         "after": {
-          "content": "beta after alpha, phase 3\nreplace=6e9cb995-1623-16cd-b6e5-00d1988e8976\n",
+          "content": "beta after alpha, phase 3\nreplace=222bc366-78c8-8d40-e1fc-9d75149fdda4\n",
           "content_base64": null,
           "directory_permission": "0777",
           "file_permission": "0777",
@@ -163,13 +163,13 @@
           "no-op"
         ],
         "before": {
-          "id": "e5faf3ee-0f07-827a-e68d-06e6d71c599b",
+          "id": "eef04383-c85d-da03-5021-29fc6e6e7eee",
           "input": "beta",
           "output": "beta",
           "triggers_replace": null
         },
         "after": {
-          "id": "e5faf3ee-0f07-827a-e68d-06e6d71c599b",
+          "id": "eef04383-c85d-da03-5021-29fc6e6e7eee",
           "input": "beta",
           "output": "beta",
           "triggers_replace": null
@@ -190,13 +190,13 @@
           "no-op"
         ],
         "before": {
-          "id": "6e9cb995-1623-16cd-b6e5-00d1988e8976",
+          "id": "222bc366-78c8-8d40-e1fc-9d75149fdda4",
           "input": null,
           "output": null,
           "triggers_replace": "static"
         },
         "after": {
-          "id": "6e9cb995-1623-16cd-b6e5-00d1988e8976",
+          "id": "222bc366-78c8-8d40-e1fc-9d75149fdda4",
           "input": null,
           "output": null,
           "triggers_replace": "static"
@@ -232,8 +232,8 @@
       "actions": [
         "no-op"
       ],
-      "before": "6e9cb995-1623-16cd-b6e5-00d1988e8976",
-      "after": "6e9cb995-1623-16cd-b6e5-00d1988e8976",
+      "before": "222bc366-78c8-8d40-e1fc-9d75149fdda4",
+      "after": "222bc366-78c8-8d40-e1fc-9d75149fdda4",
       "after_unknown": false,
       "before_sensitive": false,
       "after_sensitive": false
@@ -256,7 +256,7 @@
         },
         "replace_id": {
           "sensitive": false,
-          "value": "6e9cb995-1623-16cd-b6e5-00d1988e8976",
+          "value": "222bc366-78c8-8d40-e1fc-9d75149fdda4",
           "type": "string"
         }
       },
@@ -270,18 +270,18 @@
             "provider_name": "registry.opentofu.org/hashicorp/local",
             "schema_version": 0,
             "values": {
-              "content": "beta after alpha, phase 2\nreplace=6e9cb995-1623-16cd-b6e5-00d1988e8976\n",
+              "content": "beta after alpha, phase 2\nreplace=222bc366-78c8-8d40-e1fc-9d75149fdda4\n",
               "content_base64": null,
-              "content_base64sha256": "GnHbTj69KN9Vr3USyh6xWr6k9Rt2diarGZVG2Yp857M=",
-              "content_base64sha512": "bxLYH1HED5jEVVFfdOYlKH2RIfvrFbZU2t3Y8DXeg/QzEyZpJO4i7GRauYMgB7sP69GwpCPKyspqgF35OvDdNw==",
-              "content_md5": "0b88da56920f38f8a8701444798f5a4f",
-              "content_sha1": "fddb3371a81239886a188f546ae73af3de88c4af",
-              "content_sha256": "1a71db4e3ebd28df55af7512ca1eb15abea4f51b767626ab199546d98a7ce7b3",
-              "content_sha512": "6f12d81f51c40f98c455515f74e625287d9121fbeb15b654daddd8f035de83f43313266924ee22ec645ab9832007bb0febd1b0a423cacaca6a805df93af0dd37",
+              "content_base64sha256": "n/oM5qWTIPcdkYQZudicXUo9Ba/mS6gVsQ+U5CbJ/eg=",
+              "content_base64sha512": "vethEuXd/R9WP3fViaOVUavCW8RjAI66TmgWQDLcFeEGlaOSjpIxqrxqQl3y1CHTjpdZp4qfU8ff0rdVNqrMqA==",
+              "content_md5": "386ad1e669d2c7ff572866a7dc65636e",
+              "content_sha1": "9addccda1f3a24870ccf008d0ec201f2f822b6a3",
+              "content_sha256": "9ffa0ce6a59320f71d918419b9d89c5d4a3d05afe64ba815b10f94e426c9fde8",
+              "content_sha512": "bdeb6112e5ddfd1f563f77d589a39551abc25bc463008eba4e68164032dc15e10695a3928e9231aabc6a425df2d421d38e9759a78a9f53c7dfd2b75536aacca8",
               "directory_permission": "0777",
               "file_permission": "0777",
               "filename": "./.out/beta.txt",
-              "id": "fddb3371a81239886a188f546ae73af3de88c4af",
+              "id": "9addccda1f3a24870ccf008d0ec201f2f822b6a3",
               "sensitive_content": null,
               "source": null
             },
@@ -300,7 +300,7 @@
             "provider_name": "terraform.io/builtin/terraform",
             "schema_version": 0,
             "values": {
-              "id": "e5faf3ee-0f07-827a-e68d-06e6d71c599b",
+              "id": "eef04383-c85d-da03-5021-29fc6e6e7eee",
               "input": "beta",
               "output": "beta",
               "triggers_replace": null
@@ -315,7 +315,7 @@
             "provider_name": "terraform.io/builtin/terraform",
             "schema_version": 0,
             "values": {
-              "id": "6e9cb995-1623-16cd-b6e5-00d1988e8976",
+              "id": "222bc366-78c8-8d40-e1fc-9d75149fdda4",
               "input": null,
               "output": null,
               "triggers_replace": "static"

@@ -68,10 +68,12 @@ export type UnitReport = {
 
 export type Totals = Required<Counts>
 
-export type RunKind = "plan" | "apply" | "destroy" | "run"
+export type RunKind = "plan" | "apply" | "destroy" | "run" | "other"
 
 export type RunReport = {
   kind: RunKind
+  /** The Cmd of the report file when the kind is other, for example init. */
+  cmd?: string
   units: UnitReport[]
   totals: Totals
   failedUnits: number
@@ -513,15 +515,19 @@ function buildUnit(name: string, kind: RunKind, given: UnitSources): UnitReport 
   return unit
 }
 
-function runKind(sources: Sources, outputs: ReadonlyMap<string, UnitOutput>): RunKind {
-  const cmd = sources.report?.find((entry) => entry.cmd !== undefined)?.cmd
-  if (cmd === "plan" || cmd === "apply" || cmd === "destroy") return cmd
-  if (sources.plans || sources.planJson) return "plan"
-  if (sources.applies) return "apply"
+function runKind(
+  sources: Sources,
+  outputs: ReadonlyMap<string, UnitOutput>,
+): { kind: RunKind; cmd?: string } {
+  const cmd = sources.report?.find((entry) => entry.cmd)?.cmd
+  if (cmd === "plan" || cmd === "apply" || cmd === "destroy") return { kind: cmd }
+  if (cmd) return { kind: "other", cmd }
+  if (sources.plans || sources.planJson) return { kind: "plan" }
+  if (sources.applies) return { kind: "apply" }
   const stdout = [...outputs.values()].flatMap((output) => output.stdout)
-  if (stdout.some((line) => line.startsWith("Destroy complete! "))) return "destroy"
-  if (stdout.some((line) => line.startsWith("Apply complete! "))) return "apply"
-  return "run"
+  if (stdout.some((line) => line.startsWith("Destroy complete! "))) return { kind: "destroy" }
+  if (stdout.some((line) => line.startsWith("Apply complete! "))) return { kind: "apply" }
+  return { kind: "run" }
 }
 
 /**
@@ -612,7 +618,7 @@ export function buildReport(sources: Sources): RunReport {
     const name = canonical(entry.name)
     entries.set(name, [...(entries.get(name) ?? []), entry])
   }
-  const kind = runKind(sources, outputs)
+  const { kind, cmd } = runKind(sources, outputs)
   const names = [
     ...new Set([
       ...entries.keys(),
@@ -659,9 +665,10 @@ export function buildReport(sources: Sources): RunReport {
     changedUnits: count((unit) => nonTerminal(unit) && hasChanges(unit)),
     unchangedUnits: count((unit) => nonTerminal(unit) && !hasChanges(unit) && hasCounts(unit)),
     uncountedUnits,
-    empty: !failed && uncountedUnits === 0 && !units.some(hasChanges),
+    empty: kind === "other" ? !failed : !failed && uncountedUnits === 0 && !units.some(hasChanges),
     failed,
   }
+  if (kind === "other" && cmd !== undefined) report.cmd = cmd
   if (error !== undefined) report.runError = error
   return report
 }

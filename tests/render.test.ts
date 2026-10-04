@@ -3,6 +3,7 @@ import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 import { applyUnitLabel } from "../src/apply.ts"
+import { parseLog } from "../src/log.ts"
 import {
   buildReport,
   countWarnings,
@@ -27,8 +28,17 @@ function applyFiles(dir: string, name: string) {
     }))
 }
 
-function sources(scenario: string, kind: "plan" | "apply" | "destroy"): Sources {
+function sources(
+  scenario: string,
+  kind: "plan" | "apply" | "destroy" | "init" | "validate",
+): Sources {
   const dir = path.join(FIXTURES, scenario, kind)
+  if (kind === "init" || kind === "validate") {
+    return loadSources({
+      logFile: path.join(dir, `${kind}.log`),
+      reportFile: path.join(dir, "report.json"),
+    })
+  }
   return loadSources({
     logFile: path.join(dir, `${kind}.log`),
     planJsonDir: kind === "plan" ? path.join(dir, "plans") : undefined,
@@ -92,6 +102,8 @@ describe("renderMarkdown for the fixtures", () => {
     ["failures", "plan"],
     ["failures", "apply"],
     ["destroy", "destroy"],
+    ["baseline", "init"],
+    ["baseline", "validate"],
   ] as const)("renders %s/%s", async (scenario, kind) => {
     const md = renderMarkdown(buildReport(sources(scenario, kind)), OPTIONS)
     checkStructure(md)
@@ -774,6 +786,85 @@ describe("statusLine", () => {
     const line = statusLine(report)
     expect(line.endsWith("0 to destroy.")).toBe(true)
     expect(line).not.toContain("⚠️")
+  })
+})
+
+describe("a run of another command", () => {
+  const FAILED_INIT_LOG = [
+    ...["alpha", "beta", "gamma", "delta", "epsilon", "zeta"].flatMap((name) =>
+      name === "alpha"
+        ? [
+            "21:49:42.263 STDERR [.terragrunt-stack/alpha] tofu: Error: Failed to query available provider packages",
+            "21:49:42.263 STDERR [.terragrunt-stack/alpha] tofu: Could not retrieve the list of available versions for provider",
+            "21:49:42.263 STDERR [.terragrunt-stack/alpha] tofu: hashicorp/does-not-exist-anywhere: provider",
+            "21:49:42.263 STDERR [.terragrunt-stack/alpha] tofu: registry.opentofu.org/hashicorp/does-not-exist-anywhere was not found in any",
+            "21:49:42.263 STDERR [.terragrunt-stack/alpha] tofu: of the search locations",
+          ]
+        : [
+            `21:49:41.000 STDOUT [.terragrunt-stack/${name}] tofu: Initializing the backend...`,
+            `21:49:41.000 STDOUT [.terragrunt-stack/${name}] tofu: OpenTofu has been successfully initialized!`,
+          ],
+    ),
+    "21:49:42.356 ERROR  Run failed: 2 errors occurred:",
+    '  * Failed to execute "tofu init -no-color -no-color -input=false" in ./.terragrunt-stack/alpha/.terragrunt-cache/x/y',
+    "  Error: Failed to query available provider packages",
+    "  exit status 1",
+    "  * Unit '.../.terragrunt-stack/beta' did not run due to a failure in '.../.terragrunt-stack/alpha'",
+  ].join("\n")
+
+  function failedInit(): RunReport {
+    const entry = (name: string, fields: object) => ({
+      Started: "2026-01-01T00:00:00Z",
+      Ended: "2026-01-01T00:00:02Z",
+      Name: `.terragrunt-stack/${name}`,
+      Cmd: "init",
+      ...fields,
+    })
+    const report = parseReport(
+      JSON.stringify([
+        entry("alpha", { Result: "failed", Reason: "run error", Cause: "error occurred" }),
+        entry("beta", { Result: "early exit", Reason: "ancestor error", Cause: "alpha" }),
+        ...["gamma", "delta", "epsilon", "zeta"].map((name) =>
+          entry(name, { Result: "succeeded" }),
+        ),
+      ]),
+    )
+    return buildReport({ log: parseLog(FAILED_INIT_LOG), report })
+  }
+
+  it("names the unit counts of a failed init without totals", () => {
+    const report = failedInit()
+    expect(statusLine(report)).toBe("Init: 6 units, 4 succeeded, 1 failed, 1 early exit.")
+    const md = renderMarkdown(report, OPTIONS)
+    checkStructure(md)
+    expect(md).toContain("\n**Init: 6 units, 4 succeeded, 1 failed, 1 early exit.**\n")
+    expect(md).toContain("| Unit | Result | Duration |")
+    expect(md).toContain('### <a id="trr-terragrunt-run-report-terragrunt-stack-alpha"></a>')
+    expect(md).toMatch(/```\nError: Failed to query available provider packages\n/)
+    expect(md).not.toContain('### <a id="trr-terragrunt-run-report-terragrunt-stack-beta">')
+  })
+
+  it("adds the warnings sentence to the status line", () => {
+    const report = runReport(
+      [unitReport({ diagnostics: [{ severity: "warning", summary: "W" }] })],
+      "other",
+    )
+    report.cmd = "validate"
+    expect(statusLine(report)).toBe("Validate: 1 unit, 1 succeeded. ⚠️ 1 warning in 1 unit.")
+  })
+
+  it("leaves out the duration column without durations", () => {
+    const report = runReport([unitReport({})], "other")
+    report.cmd = "init"
+    const md = renderMarkdown(report, OPTIONS)
+    expect(md).toContain("| Unit | Result |\n")
+    expect(md).toContain("**Init: 1 unit, 1 succeeded.**\n")
+  })
+
+  it("makes the label from the command", () => {
+    const report = runReport([], "other")
+    report.cmd = "output"
+    expect(statusLine(report)).toBe("Output: 0 units.")
   })
 })
 

@@ -37,7 +37,7 @@ CI runs the same checks on every pull request.
 
 ## Fixtures
 
-`tests/e2e/generate.sh` runs the stack in `tests/e2e/` through four phases: baseline, changes, failures, and destroy. It writes the logs, the `tfplan.json` files, the `-json-into` files, and the terragrunt report files to `tests/fixtures/<scenario>/<command>/`. It keeps the `expected.md` snapshots. The script uses OpenTofu only.
+`tests/e2e/generate.sh` runs an init and a validate of the stack in `tests/e2e/`, and then four phases: baseline, changes, failures, and destroy. It writes the logs, the `tfplan.json` files, the `-json-into` files, and the terragrunt report files to `tests/fixtures/<scenario>/<command>/`. The init and the validate write only the log and the report file, to `tests/fixtures/baseline/init/` and `tests/fixtures/baseline/validate/`. It keeps the `expected.md` snapshots. The script uses OpenTofu only.
 
 In the changes and failures phases, the script runs the plan a second time with `--log-format=json`. It keeps only the log of that run, as `plan.jsonl`. A test renders the report from `plan.jsonl` and the other files of the scenario, and expects the same `expected.md`.
 
@@ -54,12 +54,13 @@ Each run of the script gives new resource IDs. Update the tests that compare an 
 The workflow `e2e` runs on each pull request. It has these steps:
 
 1. It builds the action.
-2. It applies the stack as a baseline.
-3. It runs a plan and an apply with changes.
-4. It runs a plan and an apply with failures, and a second plan with `--log-format=json`.
-5. It destroys the stack.
-6. After each plan, each apply, and the destroy, it runs the action from the checkout.
-7. It checks the outputs `failed` and `empty` of the six runs.
+2. It runs an init and a validate of the stack.
+3. It applies the stack as a baseline.
+4. It runs a plan and an apply with changes.
+5. It runs a plan and an apply with failures, and a second plan with `--log-format=json`.
+6. It destroys the stack.
+7. After the init, the validate, each plan, each apply, and the destroy, it runs the action from the checkout.
+8. It checks the outputs `failed` and `empty` of the eight runs.
 
 The job runs once with OpenTofu and once with Terraform, as the checks `e2e (opentofu)` and `e2e (terraform)`. Terraform has no `-concise` option and no `-json-into` option. The Terraform job runs without these options, so the action reads the apply and the destroy from the log and the report file. Only the OpenTofu job posts comments, so that a pull request gets one set of comments. Both jobs write the job summary.
 
