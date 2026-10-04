@@ -24,6 +24,12 @@
       "rangeStrategy": "pin"
     },
     {
+      "description": "Leave the Node range in engines alone. The action runtime is node24, and the range is a statement, not a dependency.",
+      "enabled": false,
+      "matchDepTypes": ["engines"],
+      "matchManagers": ["npm"]
+    },
+    {
       "description": "Put mise in its own group. Wait 3 days after a mise release before the update.",
       "groupName": "mise",
       "matchDepNames": ["jdx/mise"],
