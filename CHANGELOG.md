@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.4.0...v0.5.0) (2026-10-04)
+
+
+### Features
+
+* count the warnings in the status line and sort the warning groups ([#35](https://github.com/evil8io/terragrunt-run-report-action/issues/35)) ([f6c0ace](https://github.com/evil8io/terragrunt-run-report-action/commit/f6c0aceae640a304a2c6ab076e55633da5bf3020))
+
 ## [0.4.0](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.3.0...v0.4.0) (2026-10-04)
 
 
