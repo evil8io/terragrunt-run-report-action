@@ -138,7 +138,7 @@ The apply step writes the log and the result of each unit, as the plan step does
 
 ### Versions
 
-The examples use the tag `v0`, which points to the newest 0.x release. For a fixed version, pin a release tag such as `v0.1.0`, or the commit SHA of that tag. The tests run the action with the terragrunt and OpenTofu versions in [mise.toml](mise.toml).
+The examples use the tag `v0`, which points to the newest 0.x release. For a fixed version, pin a release tag such as `v0.1.0`, or the commit SHA of that tag. The tests run the action with the terragrunt, OpenTofu, and Terraform versions in [mise.toml](mise.toml).
 
 ## Rules for the terragrunt command
 

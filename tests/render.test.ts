@@ -16,21 +16,22 @@ import { parseReport } from "../src/report.ts"
 const FIXTURES = fileURLToPath(new URL("./fixtures", import.meta.url))
 const OPTIONS = { header: "Terragrunt run report", expand: false }
 
-function applyFiles(dir: string) {
+function applyFiles(dir: string, name: string) {
   return readdirSync(dir, { recursive: true, encoding: "utf8" })
-    .filter((file) => path.basename(file) === "apply.json")
+    .filter((file) => path.basename(file) === name)
     .map((file) => ({
       unit: applyUnitLabel(path.join(dir, file), dir),
       path: path.join(dir, file),
     }))
 }
 
-function sources(scenario: string, kind: "plan" | "apply"): Sources {
+function sources(scenario: string, kind: "plan" | "apply" | "destroy"): Sources {
   const dir = path.join(FIXTURES, scenario, kind)
   return loadSources({
     logFile: path.join(dir, `${kind}.log`),
     planJsonDir: kind === "plan" ? path.join(dir, "plans") : undefined,
-    applyJsonFiles: kind === "apply" ? applyFiles(path.join(dir, "apply-json")) : undefined,
+    applyJsonFiles:
+      kind === "plan" ? undefined : applyFiles(path.join(dir, "apply-json"), `${kind}.json`),
     reportFile: path.join(dir, "report.json"),
   })
 }
@@ -86,6 +87,7 @@ describe("renderMarkdown for the fixtures", () => {
     ["changes", "apply"],
     ["failures", "plan"],
     ["failures", "apply"],
+    ["destroy", "destroy"],
   ] as const)("renders %s/%s", async (scenario, kind) => {
     const md = renderMarkdown(buildReport(sources(scenario, kind)), OPTIONS)
     checkStructure(md)

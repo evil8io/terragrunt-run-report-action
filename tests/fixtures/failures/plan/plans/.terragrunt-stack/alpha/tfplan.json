@@ -64,7 +64,7 @@
           "provider_name": "terraform.io/builtin/terraform",
           "schema_version": 0,
           "values": {
-            "id": "d67d2547-c4f2-cc25-179b-4e2c2b6d2d63",
+            "id": "9694eb37-d060-7f99-3613-dc921fdef9ef",
             "input": "alpha",
             "output": "alpha",
             "triggers_replace": null
@@ -137,18 +137,18 @@
           "create"
         ],
         "before": {
-          "content": "alpha phase 2\nreplace=2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f\n",
+          "content": "alpha phase 2\nreplace=c907a00a-7d8c-d530-cc83-1f337f26f4f1\n",
           "content_base64": null,
-          "content_base64sha256": "KBl/np1qitfugafcsXSIoG9tTrf765zFxcfMBAubGvQ=",
-          "content_base64sha512": "MKzSUbFky+PYDi6VU/vOdqt4ua6BR91G9wMkqeGL3xMd3NmZADhkM1giP8ym8KQRUMOf3VsdBycU7xiLkX2tZA==",
-          "content_md5": "5871d8a447904de6c57a6ea51f62ad61",
-          "content_sha1": "26555dfe7ffdbc57c82b418bada6af961704ca64",
-          "content_sha256": "28197f9e9d6a8ad7ee81a7dcb17488a06f6d4eb7fbeb9cc5c5c7cc040b9b1af4",
-          "content_sha512": "30acd251b164cbe3d80e2e9553fbce76ab78b9ae8147dd46f70324a9e18bdf131ddcd9990038643358223fcca6f0a41150c39fdd5b1d072714ef188b917dad64",
+          "content_base64sha256": "dEA3O9kksby5s+bFWwmDAGA6eW5JzEequfJ91Ge/VPw=",
+          "content_base64sha512": "GCUIvnG0GQwYMsAzMAr5sgVtWN4Spi5W11xWsdCpM9bJHZr0qtu1mE4q3GqvKWJFrXVDgm1hjQDa6Kv95XN2ug==",
+          "content_md5": "ce7ab6950aed6ff77c55792098642492",
+          "content_sha1": "5b6abecd7c33f993100c5a3ee3921b2e3ac626c4",
+          "content_sha256": "7440373bd924b1bcb9b3e6c55b098300603a796e49cc47aab9f27dd467bf54fc",
+          "content_sha512": "182508be71b4190c1832c033300af9b2056d58de12a62e56d75c56b1d0a933d6c91d9af4aadbb5984e2adc6aaf296245ad7543826d618d00dae8abfde57376ba",
           "directory_permission": "0777",
           "file_permission": "0777",
           "filename": "./.out/alpha.txt",
-          "id": "26555dfe7ffdbc57c82b418bada6af961704ca64",
+          "id": "5b6abecd7c33f993100c5a3ee3921b2e3ac626c4",
           "sensitive_content": null,
           "source": null
         },
@@ -195,13 +195,13 @@
           "no-op"
         ],
         "before": {
-          "id": "d67d2547-c4f2-cc25-179b-4e2c2b6d2d63",
+          "id": "9694eb37-d060-7f99-3613-dc921fdef9ef",
           "input": "alpha",
           "output": "alpha",
           "triggers_replace": null
         },
         "after": {
-          "id": "d67d2547-c4f2-cc25-179b-4e2c2b6d2d63",
+          "id": "9694eb37-d060-7f99-3613-dc921fdef9ef",
           "input": "alpha",
           "output": "alpha",
           "triggers_replace": null
@@ -223,7 +223,7 @@
           "create"
         ],
         "before": {
-          "id": "2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f",
+          "id": "c907a00a-7d8c-d530-cc83-1f337f26f4f1",
           "input": null,
           "output": null,
           "triggers_replace": "phase-2"
@@ -272,7 +272,7 @@
       "actions": [
         "update"
       ],
-      "before": "2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f",
+      "before": "c907a00a-7d8c-d530-cc83-1f337f26f4f1",
       "after_unknown": true,
       "before_sensitive": false,
       "after_sensitive": false
@@ -295,7 +295,7 @@
         },
         "replace_id": {
           "sensitive": false,
-          "value": "2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f",
+          "value": "c907a00a-7d8c-d530-cc83-1f337f26f4f1",
           "type": "string"
         }
       },
@@ -337,18 +337,18 @@
             "provider_name": "registry.opentofu.org/hashicorp/local",
             "schema_version": 0,
             "values": {
-              "content": "alpha phase 2\nreplace=2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f\n",
+              "content": "alpha phase 2\nreplace=c907a00a-7d8c-d530-cc83-1f337f26f4f1\n",
               "content_base64": null,
-              "content_base64sha256": "KBl/np1qitfugafcsXSIoG9tTrf765zFxcfMBAubGvQ=",
-              "content_base64sha512": "MKzSUbFky+PYDi6VU/vOdqt4ua6BR91G9wMkqeGL3xMd3NmZADhkM1giP8ym8KQRUMOf3VsdBycU7xiLkX2tZA==",
-              "content_md5": "5871d8a447904de6c57a6ea51f62ad61",
-              "content_sha1": "26555dfe7ffdbc57c82b418bada6af961704ca64",
-              "content_sha256": "28197f9e9d6a8ad7ee81a7dcb17488a06f6d4eb7fbeb9cc5c5c7cc040b9b1af4",
-              "content_sha512": "30acd251b164cbe3d80e2e9553fbce76ab78b9ae8147dd46f70324a9e18bdf131ddcd9990038643358223fcca6f0a41150c39fdd5b1d072714ef188b917dad64",
+              "content_base64sha256": "dEA3O9kksby5s+bFWwmDAGA6eW5JzEequfJ91Ge/VPw=",
+              "content_base64sha512": "GCUIvnG0GQwYMsAzMAr5sgVtWN4Spi5W11xWsdCpM9bJHZr0qtu1mE4q3GqvKWJFrXVDgm1hjQDa6Kv95XN2ug==",
+              "content_md5": "ce7ab6950aed6ff77c55792098642492",
+              "content_sha1": "5b6abecd7c33f993100c5a3ee3921b2e3ac626c4",
+              "content_sha256": "7440373bd924b1bcb9b3e6c55b098300603a796e49cc47aab9f27dd467bf54fc",
+              "content_sha512": "182508be71b4190c1832c033300af9b2056d58de12a62e56d75c56b1d0a933d6c91d9af4aadbb5984e2adc6aaf296245ad7543826d618d00dae8abfde57376ba",
               "directory_permission": "0777",
               "file_permission": "0777",
               "filename": "./.out/alpha.txt",
-              "id": "26555dfe7ffdbc57c82b418bada6af961704ca64",
+              "id": "5b6abecd7c33f993100c5a3ee3921b2e3ac626c4",
               "sensitive_content": null,
               "source": null
             },
@@ -367,7 +367,7 @@
             "provider_name": "terraform.io/builtin/terraform",
             "schema_version": 0,
             "values": {
-              "id": "d67d2547-c4f2-cc25-179b-4e2c2b6d2d63",
+              "id": "9694eb37-d060-7f99-3613-dc921fdef9ef",
               "input": "alpha",
               "output": "alpha",
               "triggers_replace": null
@@ -382,7 +382,7 @@
             "provider_name": "terraform.io/builtin/terraform",
             "schema_version": 0,
             "values": {
-              "id": "2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f",
+              "id": "c907a00a-7d8c-d530-cc83-1f337f26f4f1",
               "input": null,
               "output": null,
               "triggers_replace": "phase-2"

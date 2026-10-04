@@ -14,6 +14,10 @@ concurrency:
 jobs:
   e2e:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tf: [opentofu, terraform]
     defaults:
       run:
         working-directory: tests/e2e/stack
@@ -22,6 +26,7 @@ jobs:
       TG_NON_INTERACTIVE: 1
       TG_NO_COLOR: 1
       NO_COLOR: 1
+      TG_TF_PATH: ${{ matrix.tf == 'opentofu' && 'tofu' || 'terraform' }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -32,7 +37,7 @@ jobs:
       - uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
         with:
           version: ${{ steps.mise.outputs.version }}
-          install_args: node pnpm opentofu terragrunt
+          install_args: node pnpm terragrunt ${{ matrix.tf }}
           cache: true
 
       - name: Build the action
@@ -55,7 +60,7 @@ jobs:
         continue-on-error: true
         run: |
           terragrunt run --all --json-out-dir plans-2 --report-file report-plan-2.json --report-format json \
-            -- plan -no-color -compact-warnings -concise 2>&1 | tee plan-2.log; exit ${PIPESTATUS[0]}
+            -- plan -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-concise' || '' }} 2>&1 | tee plan-2.log; exit ${PIPESTATUS[0]}
 
       - name: Phase 2, plan report
         id: plan-2
@@ -67,7 +72,7 @@ jobs:
           plan-json-dir: tests/e2e/stack/plans-2
           report-file: tests/e2e/stack/report-plan-2.json
           working-directory: tests/e2e/stack
-          comment: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Phase 2, apply
@@ -76,7 +81,7 @@ jobs:
         continue-on-error: true
         run: |
           terragrunt run --all --report-file report-apply-2.json --report-format json \
-            -- apply -no-color -compact-warnings -json-into=apply.json 2>&1 | tee apply-2.log; exit ${PIPESTATUS[0]}
+            -- apply -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-json-into=apply.json' || '' }} 2>&1 | tee apply-2.log; exit ${PIPESTATUS[0]}
 
       - name: Phase 2, apply report
         id: apply-2
@@ -85,10 +90,10 @@ jobs:
         with:
           header: "Apply (changes)"
           log-file: tests/e2e/stack/apply-2.log
-          apply-json-files: tests/e2e/stack/.terragrunt-stack/**/.terragrunt-cache/**/apply.json
+          apply-json-files: ${{ matrix.tf == 'opentofu' && 'tests/e2e/stack/.terragrunt-stack/**/.terragrunt-cache/**/apply.json' || '' }}
           report-file: tests/e2e/stack/report-apply-2.json
           working-directory: tests/e2e/stack
-          comment: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Remove the -json-into files of phase 2
@@ -100,7 +105,7 @@ jobs:
         continue-on-error: true
         run: |
           terragrunt run --all --json-out-dir plans-3 --report-file report-plan-3.json --report-format json \
-            -- plan -no-color -compact-warnings -concise 2>&1 | tee plan-3.log; exit ${PIPESTATUS[0]}
+            -- plan -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-concise' || '' }} 2>&1 | tee plan-3.log; exit ${PIPESTATUS[0]}
 
       - name: Phase 3, plan report
         id: plan-3
@@ -112,7 +117,28 @@ jobs:
           plan-json-dir: tests/e2e/stack/plans-3
           report-file: tests/e2e/stack/report-plan-3.json
           working-directory: tests/e2e/stack
-          comment: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - name: Phase 3, plan with the JSON log format
+        env:
+          E2E_PHASE: 3
+        continue-on-error: true
+        run: |
+          terragrunt run --all --log-format=json --json-out-dir plans-3-json --report-file report-plan-3-json.json --report-format json \
+            -- plan -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-concise' || '' }} 2>&1 | tee plan-3-json.log; exit ${PIPESTATUS[0]}
+
+      - name: Phase 3, plan report of the JSON log format
+        id: plan-3-json
+        if: always()
+        uses: ./
+        with:
+          header: "Plan (failures, JSON log)"
+          log-file: tests/e2e/stack/plan-3-json.log
+          plan-json-dir: tests/e2e/stack/plans-3-json
+          report-file: tests/e2e/stack/report-plan-3-json.json
+          working-directory: tests/e2e/stack
+          comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Phase 3, apply
@@ -121,7 +147,7 @@ jobs:
         continue-on-error: true
         run: |
           terragrunt run --all --report-file report-apply-3.json --report-format json \
-            -- apply -no-color -compact-warnings -json-into=apply.json 2>&1 | tee apply-3.log; exit ${PIPESTATUS[0]}
+            -- apply -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-json-into=apply.json' || '' }} 2>&1 | tee apply-3.log; exit ${PIPESTATUS[0]}
 
       - name: Phase 3, apply report
         id: apply-3
@@ -130,10 +156,31 @@ jobs:
         with:
           header: "Apply (failures)"
           log-file: tests/e2e/stack/apply-3.log
-          apply-json-files: tests/e2e/stack/.terragrunt-stack/**/.terragrunt-cache/**/apply.json
+          apply-json-files: ${{ matrix.tf == 'opentofu' && 'tests/e2e/stack/.terragrunt-stack/**/.terragrunt-cache/**/apply.json' || '' }}
           report-file: tests/e2e/stack/report-apply-3.json
           working-directory: tests/e2e/stack
-          comment: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+          comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
+          pr-number: ${{ github.event.pull_request.number }}
+
+      - name: Phase 4, destroy
+        env:
+          E2E_PHASE: 4
+        continue-on-error: true
+        run: |
+          terragrunt run --all --report-file report-destroy-4.json --report-format json \
+            -- destroy -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-json-into=destroy.json' || '' }} 2>&1 | tee destroy-4.log; exit ${PIPESTATUS[0]}
+
+      - name: Phase 4, destroy report
+        id: destroy-4
+        if: always()
+        uses: ./
+        with:
+          header: "Destroy"
+          log-file: tests/e2e/stack/destroy-4.log
+          apply-json-files: ${{ matrix.tf == 'opentofu' && 'tests/e2e/stack/.terragrunt-stack/**/.terragrunt-cache/**/destroy.json' || '' }}
+          report-file: tests/e2e/stack/report-destroy-4.json
+          working-directory: tests/e2e/stack
+          comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
           pr-number: ${{ github.event.pull_request.number }}
 
       - name: Check the outputs
@@ -146,12 +193,20 @@ jobs:
           PLAN_3_EMPTY: ${{ steps.plan-3.outputs.empty }}
           APPLY_3_FAILED: ${{ steps.apply-3.outputs.failed }}
           APPLY_3_EMPTY: ${{ steps.apply-3.outputs.empty }}
+          PLAN_3_JSON_FAILED: ${{ steps.plan-3-json.outputs.failed }}
+          PLAN_3_JSON_EMPTY: ${{ steps.plan-3-json.outputs.empty }}
+          DESTROY_4_FAILED: ${{ steps.destroy-4.outputs.failed }}
+          DESTROY_4_EMPTY: ${{ steps.destroy-4.outputs.empty }}
         run: |
           test "$PLAN_2_FAILED" = false
           test "$APPLY_2_FAILED" = false
           test "$PLAN_3_FAILED" = true
           test "$APPLY_3_FAILED" = true
+          test "$PLAN_3_JSON_FAILED" = true
+          test "$DESTROY_4_FAILED" = false
           test "$PLAN_2_EMPTY" = false
           test "$APPLY_2_EMPTY" = false
           test "$PLAN_3_EMPTY" = false
           test "$APPLY_3_EMPTY" = false
+          test "$PLAN_3_JSON_EMPTY" = false
+          test "$DESTROY_4_EMPTY" = false

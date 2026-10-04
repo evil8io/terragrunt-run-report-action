@@ -22,7 +22,7 @@ describe("parseLog with the text format", () => {
     expect(entries[0]).toEqual({
       level: "INFO",
       unit: null,
-      lines: ["Terragrunt Cache server is listening on 127.0.0.1:45975"],
+      lines: ["Terragrunt Cache server is listening on 127.0.0.1:36187"],
     })
   })
 
@@ -125,9 +125,16 @@ describe("parseLog with the JSON format", () => {
     ])
   })
 
-  it("keeps the empty lines inside msg", () => {
-    const [entry] = parseLog(line({ level: "stdout", "working-dir": "u", msg: "a\n\nb\n" }))
-    expect(entry?.lines).toEqual(["a", "", "b"])
+  it("keeps the empty lines inside the msg of a terragrunt message", () => {
+    const [entry] = parseLog(line({ level: "error", msg: "error occurred:\n\n* boom\n" }))
+    expect(entry?.lines).toEqual(["error occurred:", "", "* boom"])
+  })
+
+  it("drops the empty lines of a stderr entry", () => {
+    const [entry] = parseLog(
+      line({ level: "stderr", "working-dir": "u", msg: "\nError: x\n\n  on main.tf\n\nDetail.\n" }),
+    )
+    expect(entry?.lines).toEqual(["Error: x", "  on main.tf", "Detail."])
   })
 
   it("treats a JSON line without level and msg as text", () => {

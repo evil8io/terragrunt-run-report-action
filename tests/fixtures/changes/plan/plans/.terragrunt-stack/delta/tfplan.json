@@ -36,7 +36,7 @@
       "replace_id": {
         "sensitive": false,
         "type": "string",
-        "value": "650b754c-2e08-8e9f-c911-55279363ab36"
+        "value": "f9371617-775d-ad7e-d166-004f689977c6"
       }
     },
     "root_module": {
@@ -49,7 +49,7 @@
           "provider_name": "registry.opentofu.org/hashicorp/local",
           "schema_version": 0,
           "values": {
-            "content": "delta phase 2\nreplace=650b754c-2e08-8e9f-c911-55279363ab36\n",
+            "content": "delta phase 2\nreplace=f9371617-775d-ad7e-d166-004f689977c6\n",
             "content_base64": null,
             "directory_permission": "0777",
             "file_permission": "0777",
@@ -67,7 +67,7 @@
           "provider_name": "terraform.io/builtin/terraform",
           "schema_version": 0,
           "values": {
-            "id": "315dfc49-a9af-cc90-1c83-e0b100d5d63c",
+            "id": "39c9d2e9-7962-032e-70c6-cbf5b27498b0",
             "input": "delta",
             "output": "delta",
             "triggers_replace": null
@@ -82,7 +82,7 @@
           "provider_name": "terraform.io/builtin/terraform",
           "schema_version": 0,
           "values": {
-            "id": "650b754c-2e08-8e9f-c911-55279363ab36",
+            "id": "f9371617-775d-ad7e-d166-004f689977c6",
             "input": null,
             "output": null,
             "triggers_replace": "static"
@@ -105,23 +105,23 @@
           "create"
         ],
         "before": {
-          "content": "delta phase 1\nreplace=650b754c-2e08-8e9f-c911-55279363ab36\n",
+          "content": "delta phase 1\nreplace=f9371617-775d-ad7e-d166-004f689977c6\n",
           "content_base64": null,
-          "content_base64sha256": "qCyxy+dto04ERaS/r2SJpDf5ZbI107oJc3swVAJ7UJw=",
-          "content_base64sha512": "nO95eYbi/ftgC9eKOZcGjHHTCuWLy3vt7GqYaMlEHWg5B0NFJeUzND4Sp/DAd8gE6peusLV5wGnZmANg9/oI1Q==",
-          "content_md5": "13a49a2df4562a98156728eb1c18a8e1",
-          "content_sha1": "7c63740e1ca63c4cf0ababe04e3f8856d336d759",
-          "content_sha256": "a82cb1cbe76da34e0445a4bfaf6489a437f965b235d3ba09737b3054027b509c",
-          "content_sha512": "9cef797986e2fdfb600bd78a3997068c71d30ae58bcb7bedec6a9868c9441d683907434525e533343e12a7f0c077c804ea97aeb0b579c069d9980360f7fa08d5",
+          "content_base64sha256": "IGhBbYWPyes89h0EDxnE3GhaXsIMMhJP2j07RDg/VoQ=",
+          "content_base64sha512": "7aF+VOav1EP/jp7UX6EZntNOntj0+OOVseh+9aU//8rVPkhZKWByLHRMyb4XvhnOTQBr4hSkEHgTMwHwghK5ag==",
+          "content_md5": "d0c9fe83dd48844d770feb70cc487781",
+          "content_sha1": "b592e76cea7d5d066517730b426d5c016ac99754",
+          "content_sha256": "2068416d858fc9eb3cf61d040f19c4dc685a5ec20c32124fda3d3b44383f5684",
+          "content_sha512": "eda17e54e6afd443ff8e9ed45fa1199ed34e9ed8f4f8e395b1e87ef5a53fffcad53e48592960722c744cc9be17be19ce4d006be214a41078133301f08212b96a",
           "directory_permission": "0777",
           "file_permission": "0777",
           "filename": "./.out/delta.txt",
-          "id": "7c63740e1ca63c4cf0ababe04e3f8856d336d759",
+          "id": "b592e76cea7d5d066517730b426d5c016ac99754",
           "sensitive_content": null,
           "source": null
         },
         "after": {
-          "content": "delta phase 2\nreplace=650b754c-2e08-8e9f-c911-55279363ab36\n",
+          "content": "delta phase 2\nreplace=f9371617-775d-ad7e-d166-004f689977c6\n",
           "content_base64": null,
           "directory_permission": "0777",
           "file_permission": "0777",
@@ -163,13 +163,13 @@
           "no-op"
         ],
         "before": {
-          "id": "315dfc49-a9af-cc90-1c83-e0b100d5d63c",
+          "id": "39c9d2e9-7962-032e-70c6-cbf5b27498b0",
           "input": "delta",
           "output": "delta",
           "triggers_replace": null
         },
         "after": {
-          "id": "315dfc49-a9af-cc90-1c83-e0b100d5d63c",
+          "id": "39c9d2e9-7962-032e-70c6-cbf5b27498b0",
           "input": "delta",
           "output": "delta",
           "triggers_replace": null
@@ -190,13 +190,13 @@
           "no-op"
         ],
         "before": {
-          "id": "650b754c-2e08-8e9f-c911-55279363ab36",
+          "id": "f9371617-775d-ad7e-d166-004f689977c6",
           "input": null,
           "output": null,
           "triggers_replace": "static"
         },
         "after": {
-          "id": "650b754c-2e08-8e9f-c911-55279363ab36",
+          "id": "f9371617-775d-ad7e-d166-004f689977c6",
           "input": null,
           "output": null,
           "triggers_replace": "static"
@@ -232,8 +232,8 @@
       "actions": [
         "no-op"
       ],
-      "before": "650b754c-2e08-8e9f-c911-55279363ab36",
-      "after": "650b754c-2e08-8e9f-c911-55279363ab36",
+      "before": "f9371617-775d-ad7e-d166-004f689977c6",
+      "after": "f9371617-775d-ad7e-d166-004f689977c6",
       "after_unknown": false,
       "before_sensitive": false,
       "after_sensitive": false
@@ -256,7 +256,7 @@
         },
         "replace_id": {
           "sensitive": false,
-          "value": "650b754c-2e08-8e9f-c911-55279363ab36",
+          "value": "f9371617-775d-ad7e-d166-004f689977c6",
           "type": "string"
         }
       },
@@ -270,18 +270,18 @@
             "provider_name": "registry.opentofu.org/hashicorp/local",
             "schema_version": 0,
             "values": {
-              "content": "delta phase 1\nreplace=650b754c-2e08-8e9f-c911-55279363ab36\n",
+              "content": "delta phase 1\nreplace=f9371617-775d-ad7e-d166-004f689977c6\n",
               "content_base64": null,
-              "content_base64sha256": "qCyxy+dto04ERaS/r2SJpDf5ZbI107oJc3swVAJ7UJw=",
-              "content_base64sha512": "nO95eYbi/ftgC9eKOZcGjHHTCuWLy3vt7GqYaMlEHWg5B0NFJeUzND4Sp/DAd8gE6peusLV5wGnZmANg9/oI1Q==",
-              "content_md5": "13a49a2df4562a98156728eb1c18a8e1",
-              "content_sha1": "7c63740e1ca63c4cf0ababe04e3f8856d336d759",
-              "content_sha256": "a82cb1cbe76da34e0445a4bfaf6489a437f965b235d3ba09737b3054027b509c",
-              "content_sha512": "9cef797986e2fdfb600bd78a3997068c71d30ae58bcb7bedec6a9868c9441d683907434525e533343e12a7f0c077c804ea97aeb0b579c069d9980360f7fa08d5",
+              "content_base64sha256": "IGhBbYWPyes89h0EDxnE3GhaXsIMMhJP2j07RDg/VoQ=",
+              "content_base64sha512": "7aF+VOav1EP/jp7UX6EZntNOntj0+OOVseh+9aU//8rVPkhZKWByLHRMyb4XvhnOTQBr4hSkEHgTMwHwghK5ag==",
+              "content_md5": "d0c9fe83dd48844d770feb70cc487781",
+              "content_sha1": "b592e76cea7d5d066517730b426d5c016ac99754",
+              "content_sha256": "2068416d858fc9eb3cf61d040f19c4dc685a5ec20c32124fda3d3b44383f5684",
+              "content_sha512": "eda17e54e6afd443ff8e9ed45fa1199ed34e9ed8f4f8e395b1e87ef5a53fffcad53e48592960722c744cc9be17be19ce4d006be214a41078133301f08212b96a",
               "directory_permission": "0777",
               "file_permission": "0777",
               "filename": "./.out/delta.txt",
-              "id": "7c63740e1ca63c4cf0ababe04e3f8856d336d759",
+              "id": "b592e76cea7d5d066517730b426d5c016ac99754",
               "sensitive_content": null,
               "source": null
             },
@@ -300,7 +300,7 @@
             "provider_name": "terraform.io/builtin/terraform",
             "schema_version": 0,
             "values": {
-              "id": "315dfc49-a9af-cc90-1c83-e0b100d5d63c",
+              "id": "39c9d2e9-7962-032e-70c6-cbf5b27498b0",
               "input": "delta",
               "output": "delta",
               "triggers_replace": null
@@ -315,7 +315,7 @@
             "provider_name": "terraform.io/builtin/terraform",
             "schema_version": 0,
             "values": {
-              "id": "650b754c-2e08-8e9f-c911-55279363ab36",
+              "id": "f9371617-775d-ad7e-d166-004f689977c6",
               "input": null,
               "output": null,
               "triggers_replace": "static"

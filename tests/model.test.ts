@@ -11,16 +11,19 @@ import { parseReport } from "../src/report.ts"
 
 const FIXTURES = fileURLToPath(new URL("./fixtures", import.meta.url))
 
-function applyFiles(dir: string) {
+function applyFiles(dir: string, name: string) {
   return readdirSync(dir, { recursive: true, encoding: "utf8" })
-    .filter((file) => path.basename(file) === "apply.json")
+    .filter((file) => path.basename(file) === name)
     .map((file) => ({
       unit: applyUnitLabel(path.join(dir, file), dir),
       path: path.join(dir, file),
     }))
 }
 
-function sources(scenario: "changes" | "failures", kind: "plan" | "apply"): Sources {
+function sources(
+  scenario: "changes" | "failures" | "destroy",
+  kind: "plan" | "apply" | "destroy",
+): Sources {
   const dir = path.join(FIXTURES, scenario, kind)
   if (kind === "plan") {
     return loadSources({
@@ -30,8 +33,8 @@ function sources(scenario: "changes" | "failures", kind: "plan" | "apply"): Sour
     })
   }
   return loadSources({
-    logFile: path.join(dir, "apply.log"),
-    applyJsonFiles: applyFiles(path.join(dir, "apply-json")),
+    logFile: path.join(dir, `${kind}.log`),
+    applyJsonFiles: applyFiles(path.join(dir, "apply-json"), `${kind}.json`),
     reportFile: path.join(dir, "report.json"),
   })
 }
@@ -68,7 +71,7 @@ describe("buildReport for changes/plan", () => {
     ])
     const replace = unit(report, "alpha").changes[2]
     expect(replace?.diff).toBe(
-      '! id               = "25bebadf-87d5-5ca0-4682-b2264c71b4b1" -> (known after apply)\n! triggers_replace = "phase-1" -> "phase-2"',
+      '! id               = "66b0658a-d59f-91a6-061a-a7dbc04ebf66" -> (known after apply)\n! triggers_replace = "phase-1" -> "phase-2"',
     )
     expect(replace?.reason).toBeUndefined()
     expect(replace?.outcome).toBeUndefined()
@@ -198,6 +201,29 @@ describe("buildReport for failures/apply", () => {
       unchangedUnits: 1,
       empty: false,
       failed: true,
+    })
+  })
+})
+
+describe("buildReport for destroy/destroy", () => {
+  const report = buildReport(sources("destroy", "destroy"))
+  const changes = report.units.flatMap((u) => u.changes)
+
+  it("marks every change of every unit as a complete delete", () => {
+    expect(report.kind).toBe("destroy")
+    expect(report.units.every((u) => u.changes.length > 0)).toBe(true)
+    for (const change of changes) {
+      expect(change).toMatchObject({ kind: "delete", outcome: "complete" })
+    }
+  })
+
+  it("counts every destroyed resource in the totals", () => {
+    expect(report.totals).toEqual({
+      add: 0,
+      change: 0,
+      remove: changes.length,
+      import: 0,
+      forget: 0,
     })
   })
 })

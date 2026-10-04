@@ -37,13 +37,17 @@ CI runs the same checks on every pull request.
 
 ## Fixtures
 
-`tests/e2e/generate.sh` runs the stack in `tests/e2e/` through the three phases: baseline, changes, and failures. It writes the logs, the `tfplan.json` files, the `-json-into` files, and the terragrunt report files to `tests/fixtures/`. It keeps the `expected.md` snapshots.
+`tests/e2e/generate.sh` runs the stack in `tests/e2e/` through four phases: baseline, changes, failures, and destroy. It writes the logs, the `tfplan.json` files, the `-json-into` files, and the terragrunt report files to `tests/fixtures/<scenario>/<command>/`. It keeps the `expected.md` snapshots. The script uses OpenTofu only.
+
+In the changes and failures phases, the script runs the plan a second time with `--log-format=json`. It keeps only the log of that run, as `plan.jsonl`. A test renders the report from `plan.jsonl` and the other files of the scenario, and expects the same `expected.md`.
 
 After a change to the stack, to terragrunt, or to OpenTofu, update the fixtures:
 
 1. Run `tests/e2e/generate.sh`.
 2. Run `pnpm test`. When the report changes, the snapshot test fails.
 3. Review the diff of the `expected.md` files. Run `pnpm test -u` to accept the diff.
+
+Each run of the script gives new resource IDs. Update the tests that compare an ID.
 
 ## End-to-end workflow
 
@@ -52,9 +56,12 @@ The workflow `e2e` runs on each pull request. It has these steps:
 1. It builds the action.
 2. It applies the stack as a baseline.
 3. It runs a plan and an apply with changes.
-4. It runs a plan and an apply with failures.
-5. After each plan and each apply, it runs the action from the checkout.
-6. It checks the outputs `failed` and `empty` of the four runs.
+4. It runs a plan and an apply with failures, and a second plan with `--log-format=json`.
+5. It destroys the stack.
+6. After each plan, each apply, and the destroy, it runs the action from the checkout.
+7. It checks the outputs `failed` and `empty` of the six runs.
+
+The job runs once with OpenTofu and once with Terraform, as the checks `e2e (opentofu)` and `e2e (terraform)`. Terraform has no `-concise` option and no `-json-into` option. The Terraform job runs without these options, so the action reads the apply and the destroy from the log and the report file. Only the OpenTofu job posts comments, so that a pull request gets one set of comments. Both jobs write the job summary.
 
 The action posts the report as a comment only for a pull request from this repository. The token of a pull request from a fork has no write access. In the failures phase, terragrunt exits with code 1, and the steps continue on error.
 

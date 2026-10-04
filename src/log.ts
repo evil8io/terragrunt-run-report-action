@@ -41,10 +41,15 @@ function parseJsonEntry(line: string): LogEntry | undefined {
   if (typeof level !== "string" || typeof msg !== "string") return undefined
   const dir = record["working-dir"]
   const unit = typeof dir === "string" && dir !== "" ? dir.replace(/^\.\//, "") : null
-  const lines = stripAnsi(msg).split(/\r?\n/)
-  if (lines[0] === "") lines.shift()
-  if (lines.at(-1) === "") lines.pop()
-  return { level: level.toUpperCase(), unit, lines }
+  const upper = level.toUpperCase()
+  let lines = stripAnsi(msg).split(/\r?\n/)
+  if (isUnitOutput(upper)) {
+    lines = lines.filter((line) => line !== "")
+  } else {
+    if (lines[0] === "") lines.shift()
+    if (lines.at(-1) === "") lines.pop()
+  }
+  return { level: upper, unit, lines }
 }
 
 function textEntry(level: string, rest: string): LogEntry {
