@@ -14,7 +14,7 @@
 
 ## Report
 
-The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error. A unit without changes, a unit that exited early, and an excluded unit have a table row only.
+The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes, warnings, or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error. The warnings of a unit follow the error in one collapsed element, grouped by message, with the location of each warning. A unit without changes or warnings, a unit that exited early, and an excluded unit have a table row only.
 
 An apply with one failed unit looks like this:
 
@@ -169,7 +169,7 @@ Set the three file inputs of the run, as in the examples:
 Each file adds a part of the report. The action needs at least one of them. The report then has the parts that these files give:
 
 - `log-file` contains the diff of each resource, the error text of a failed unit, and the text of a run error. Without it, the report has the list of changes, but no diff.
-- `plan-json-dir` or `apply-json-files` contains the exact list of changes, with the kind of each change and the counts. In an apply, it also contains the outcome of each resource. Without it, the action reads the list of changes from the log.
+- `plan-json-dir` or `apply-json-files` contains the exact list of changes, with the kind of each change and the counts. In an apply, it also contains the outcome of each resource and the warnings of each unit. Without it, the action reads the list of changes from the log.
 - `report-file` contains the result of each unit: succeeded, failed, early exit, or excluded, with the reason. Without it, the report does not contain a unit that did not run.
 
 | Input               | Required | Default                                                                               | Description                                                                                                                                                                                     |

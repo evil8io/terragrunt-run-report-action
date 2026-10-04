@@ -79,7 +79,7 @@ describe("buildReport for changes/plan", () => {
     ])
     const replace = unit(report, "alpha").changes[2]
     expect(replace?.diff).toBe(
-      '! id               = "66b0658a-d59f-91a6-061a-a7dbc04ebf66" -> (known after apply)\n! triggers_replace = "phase-1" -> "phase-2"',
+      '! id               = "05faebba-2b8e-0d00-1a9e-7a8cc76e8a69" -> (known after apply)\n! triggers_replace = "phase-1" -> "phase-2"',
     )
     expect(replace?.reason).toBeUndefined()
     expect(replace?.outcome).toBeUndefined()
@@ -176,7 +176,12 @@ describe("buildReport for failures/apply", () => {
       ["local_file.main", "complete"],
       ["terraform_data.fail[0]", "errored"],
     ])
-    expect(delta.diagnostics.map((d) => d.summary)).toEqual(["local-exec provisioner error"])
+    expect(delta.diagnostics.map((d) => d.summary)).toEqual([
+      "Redundant ignore_changes element",
+      "Redundant ignore_changes element",
+      "Redundant ignore_changes element",
+      "local-exec provisioner error",
+    ])
     expect(delta.counts).toEqual({ add: 2, change: 0, remove: 1 })
     expect(delta.appliedCounts).toEqual({ add: 1, change: 0, remove: 1 })
   })
@@ -194,7 +199,12 @@ describe("buildReport for failures/apply", () => {
 
   it("marks every change of zeta as pending", () => {
     const zeta = unit(report, "zeta")
-    expect(zeta.diagnostics.map((d) => d.summary)).toEqual(["Resource precondition failed"])
+    expect(zeta.diagnostics.map((d) => d.summary)).toEqual([
+      "Redundant ignore_changes element",
+      "Redundant ignore_changes element",
+      "Redundant ignore_changes element",
+      "Resource precondition failed",
+    ])
     expect(zeta.changes.length).toBeGreaterThan(0)
     expect(
       zeta.changes.every((c) => c.outcome === "pending" && c.elapsedSeconds === undefined),

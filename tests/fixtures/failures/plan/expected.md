@@ -23,15 +23,15 @@ Plan: 2 to add, 0 to change, 3 to destroy.
 ```diff
 ! content              = <<-EOT # forces replacement
       alpha phase 2
-      replace=c907a00a-7d8c-d530-cc83-1f337f26f4f1
+      replace=6a365a60-6fe4-d957-6d62-fc566cc0924e
   EOT -> (known after apply) # forces replacement
-! content_base64sha256 = "dEA3O9kksby5s+bFWwmDAGA6eW5JzEequfJ91Ge/VPw=" -> (known after apply)
-! content_base64sha512 = "GCUIvnG0GQwYMsAzMAr5sgVtWN4Spi5W11xWsdCpM9bJHZr0qtu1mE4q3GqvKWJFrXVDgm1hjQDa6Kv95XN2ug==" -> (known after apply)
-! content_md5          = "ce7ab6950aed6ff77c55792098642492" -> (known after apply)
-! content_sha1         = "5b6abecd7c33f993100c5a3ee3921b2e3ac626c4" -> (known after apply)
-! content_sha256       = "7440373bd924b1bcb9b3e6c55b098300603a796e49cc47aab9f27dd467bf54fc" -> (known after apply)
-! content_sha512       = "182508be71b4190c1832c033300af9b2056d58de12a62e56d75c56b1d0a933d6c91d9af4aadbb5984e2adc6aaf296245ad7543826d618d00dae8abfde57376ba" -> (known after apply)
-! id                   = "5b6abecd7c33f993100c5a3ee3921b2e3ac626c4" -> (known after apply)
+! content_base64sha256 = "HN7KIqlReJITX66McTFr3JLEMmyGkb9lzkGCMwTZ1gc=" -> (known after apply)
+! content_base64sha512 = "H2ArmVxHN9lZKhN8vIhYF2++GRHe50B/8wHddMgy6K4vOd8pH36EWzrw4RX67ZDNAaaXYZ4Tyma2MIwq1VdcHQ==" -> (known after apply)
+! content_md5          = "0c47e5d00bd02ae167d4b10637e51587" -> (known after apply)
+! content_sha1         = "5fc26f27ab73af27411444cc1dbc4ce2d01ad06c" -> (known after apply)
+! content_sha256       = "1cdeca22a9517892135fae8c71316bdc92c4326c8691bf65ce41823304d9d607" -> (known after apply)
+! content_sha512       = "1f602b995c4737d9592a137cbc8858176fbe1911dee7407ff301dd74c832e8ae2f39df291f7e845b3af0e115faed90cd01a697619e13ca66b6308c2ad5575c1d" -> (known after apply)
+! id                   = "5fc26f27ab73af27411444cc1dbc4ce2d01ad06c" -> (known after apply)
   # (3 unchanged attributes hidden)
 ```
 
@@ -40,7 +40,7 @@ Plan: 2 to add, 0 to change, 3 to destroy.
 <details><summary><code>terraform_data.replace</code></summary>
 
 ```diff
-! id               = "c907a00a-7d8c-d530-cc83-1f337f26f4f1" -> (known after apply)
+! id               = "6a365a60-6fe4-d957-6d62-fc566cc0924e" -> (known after apply)
 ! triggers_replace = "phase-2" -> "phase-3"
 ```
 
@@ -78,7 +78,7 @@ _→ because index [0] is out of range for count_
 
 ```diff
 ! content    = "alpha phase 2" -> "alpha phase 3"
-! replace_id = "c907a00a-7d8c-d530-cc83-1f337f26f4f1" -> (known after apply)
+! replace_id = "6a365a60-6fe4-d957-6d62-fc566cc0924e" -> (known after apply)
 ```
 
 </details>
@@ -95,15 +95,15 @@ Plan: 1 to add, 0 to change, 1 to destroy.
 ! content              = <<-EOT # forces replacement
 -     beta after alpha, phase 2
 +     beta after alpha, phase 3
-      replace=cf9913bd-f4ea-b114-d981-134a726b7324
+      replace=fd98a5eb-06ae-4bbd-958b-0ee57ac1e3c5
   EOT
-! content_base64sha256 = "OSIht/d83KflokSK2hW7HTvfYqqUTMXYjt6QSNTywYg=" -> (known after apply)
-! content_base64sha512 = "Wvbg++Mdc6YB7yvPVx8SziuBj3Dt87kPWPuANHADuKriA2taGKwJSbXmSBn1GCbBYs2AJxBErQk8WYl5iw0TmQ==" -> (known after apply)
-! content_md5          = "fdffeaa9c9589770f326c66b970dee90" -> (known after apply)
-! content_sha1         = "ab55dc35c03f714812c8e09fa7021d50351d5b73" -> (known after apply)
-! content_sha256       = "392221b7f77cdca7e5a2448ada15bb1d3bdf62aa944cc5d88ede9048d4f2c188" -> (known after apply)
-! content_sha512       = "5af6e0fbe31d73a601ef2bcf571f12ce2b818f70edf3b90f58fb80347003b8aae2036b5a18ac0949b5e64819f51826c162cd80271044ad093c5989798b0d1399" -> (known after apply)
-! id                   = "ab55dc35c03f714812c8e09fa7021d50351d5b73" -> (known after apply)
+! content_base64sha256 = "b6NRKfbuWc541TGwuKSZ/goaOyDoQqzSJYiKE6I1040=" -> (known after apply)
+! content_base64sha512 = "JsyoLJ7yz+VcnJl45rlqf86ehAZ51YJ9k/288y6W8Jur4vo3IGVljVkpCTrV4hKP35p7yxEuaRKTlyO5rIjglg==" -> (known after apply)
+! content_md5          = "5c41495a892fbd33a205db80324a2d1c" -> (known after apply)
+! content_sha1         = "43ab2c5bc9a1d8b433420322601c6492acbe7392" -> (known after apply)
+! content_sha256       = "6fa35129f6ee59ce78d531b0b8a499fe0a1a3b20e842acd225888a13a235d38d" -> (known after apply)
+! content_sha512       = "26cca82c9ef2cfe55c9c9978e6b96a7fce9e840679d5827d93fdbcf32e96f09babe2fa372065658d5929093ad5e2128fdf9a7bcb112e6912939723b9ac88e096" -> (known after apply)
+! id                   = "43ab2c5bc9a1d8b433420322601c6492acbe7392" -> (known after apply)
   # (3 unchanged attributes hidden)
 ```
 
@@ -145,15 +145,15 @@ Plan: 2 to add, 0 to change, 1 to destroy.
 ! content              = <<-EOT # forces replacement
 -     delta phase 2
 +     delta phase 3
-      replace=f9371617-775d-ad7e-d166-004f689977c6
+      replace=3b06cc70-90e0-1315-cb65-6d655943a066
   EOT
-! content_base64sha256 = "0H61GaOKrZ3FlDlUHPdCKEm9Qz5uxXE4BVUc+LAp6e0=" -> (known after apply)
-! content_base64sha512 = "D/RAVpTzDo5eCM8Jw5SBuf8710wdJnxBEZhUwQqd5YGVH66gRnbyqK4KNTXTzVxnTU3V1wWMBMh6mnP/DwARvw==" -> (known after apply)
-! content_md5          = "2346192c950ac812631b731256518f7e" -> (known after apply)
-! content_sha1         = "9f1b742c26c738c26734d5f892afb57cd623b018" -> (known after apply)
-! content_sha256       = "d07eb519a38aad9dc59439541cf7422849bd433e6ec5713805551cf8b029e9ed" -> (known after apply)
-! content_sha512       = "0ff4405694f30e8e5e08cf09c39481b9ff3bd74c1d267c41119854c10a9de581951faea04676f2a8ae0a3535d3cd5c674d4dd5d7058c04c87a9a73ff0f0011bf" -> (known after apply)
-! id                   = "9f1b742c26c738c26734d5f892afb57cd623b018" -> (known after apply)
+! content_base64sha256 = "xUDc/9de7DrGaQOzoRUfDyAmMR7ygzPTrQFzjoQZERk=" -> (known after apply)
+! content_base64sha512 = "mU/u4l+kJqlzZDBw/amnp9IWb1D7MX/d+An/TSdqmpVJ7ZAjfF+VgQAOM/Ti/x34x2jCaf/IMVobY3VYdQMEaQ==" -> (known after apply)
+! content_md5          = "d528ca582c6eac87381bbbe74491c090" -> (known after apply)
+! content_sha1         = "0c6137175ceb6f27cae6ef43ab292d93a9bdf077" -> (known after apply)
+! content_sha256       = "c540dcffd75eec3ac66903b3a1151f0f2026311ef28333d3ad01738e84191119" -> (known after apply)
+! content_sha512       = "994feee25fa426a973643070fda9a7a7d2166f50fb317fddf809ff4d276a9a9549ed90237c5f9581000e33f4e2ff1df8c768c269ffc8315a1b63755875030469" -> (known after apply)
+! id                   = "0c6137175ceb6f27cae6ef43ab292d93a9bdf077" -> (known after apply)
   # (3 unchanged attributes hidden)
 ```
 
@@ -175,8 +175,8 @@ Plan: 2 to add, 0 to change, 1 to destroy.
 
 ```
 Error: Resource precondition failed
-  on main.tf line 43, in resource "terraform_data" "main":
-  43:       condition     = !var.fail_plan
+  on main.tf line 45, in resource "terraform_data" "main":
+  45:       condition     = !var.fail_plan
     ├────────────────
     │ var.fail_plan is true
 The unit zeta is configured to fail at plan time.
@@ -192,15 +192,15 @@ Plan: 1 to add, 0 to change, 1 to destroy.
 ! content              = <<-EOT # forces replacement
 -     zeta phase 2
 +     zeta phase 3
-      replace=fbcfedcf-9542-8716-4328-4176f474036b
+      replace=5517f486-d950-f570-4fe7-baf2e9d46234
   EOT
-! content_base64sha256 = "+haNN2bDAB30z9ubT+uoMwoU3WOVpL6C1cxmKAFiYOc=" -> (known after apply)
-! content_base64sha512 = "maewp4osmKzwaPxM7CO/dXd9OH1b7D/lgxRW+DTo+WNH5xqU6JkF3Z1w794bmQeRBDyS0veIH1pCP8wOpHW7CA==" -> (known after apply)
-! content_md5          = "c28bb4aefbd1f039020fb513c82707a1" -> (known after apply)
-! content_sha1         = "3311c6679c26fc422037017e1d63b5283bd81bfe" -> (known after apply)
-! content_sha256       = "fa168d3766c3001df4cfdb9b4feba8330a14dd6395a4be82d5cc6628016260e7" -> (known after apply)
-! content_sha512       = "99a7b0a78a2c98acf068fc4cec23bf75777d387d5bec3fe5831456f834e8f96347e71a94e89905dd9d70efde1b990791043c92d2f7881f5a423fcc0ea475bb08" -> (known after apply)
-! id                   = "3311c6679c26fc422037017e1d63b5283bd81bfe" -> (known after apply)
+! content_base64sha256 = "RSOG4UP26gkIoEaJr6WZDp817+wL/lucFydOwDmOmM0=" -> (known after apply)
+! content_base64sha512 = "EXs7QupP6N8ZgMwPOQBfkIUBRMmMcLFkh1uVItqqR4EwDRDB1oVBqgPyp3i77ifIv6UjF2GEUgHlDqOJEO92oA==" -> (known after apply)
+! content_md5          = "7a9cdee3dacd3635d6df6ae653340e2d" -> (known after apply)
+! content_sha1         = "95198e5fb6c7a6d29cec70f09c1c8828df325fe8" -> (known after apply)
+! content_sha256       = "452386e143f6ea0908a04689afa5990e9f35efec0bfe5b9c17274ec0398e98cd" -> (known after apply)
+! content_sha512       = "117b3b42ea4fe8df1980cc0f39005f90850144c98c70b164875b9522daaa4781300d10c1d68541aa03f2a778bbee27c8bfa5231761845201e50ea38910ef76a0" -> (known after apply)
+! id                   = "95198e5fb6c7a6d29cec70f09c1c8828df325fe8" -> (known after apply)
   # (3 unchanged attributes hidden)
 ```
 
