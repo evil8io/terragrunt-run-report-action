@@ -115,23 +115,29 @@ function readInput(input: string, file: string): string {
 }
 
 /**
- * A unit that does not run keeps the -json-into file of an earlier run. A file
- * is stale when its first timestamp is earlier than the first start of a unit
- * in the report file.
+ * A unit that does not run keeps the -json-into file of an earlier run, and a
+ * failed plan keeps the tfplan.json file of an earlier run. A file is stale
+ * when its start time is earlier than the first start of a unit in the report
+ * file. The comparison uses the precision of the file, in milliseconds.
  */
-export function freshApplies<T extends UnitApply>(
-  applies: readonly T[],
+export function freshSources<T extends { startedAt?: number | undefined }>(
+  items: readonly T[],
   report: readonly ReportEntry[] | undefined,
+  precision = 1,
 ): { fresh: T[]; stale: T[] } {
   const starts = (report ?? []).flatMap((entry) => entry.startedAt ?? [])
-  const runStart = starts.length > 0 ? Math.min(...starts) : undefined
-  const isStale = (apply: T) =>
-    runStart !== undefined && apply.startedAt !== undefined && apply.startedAt < runStart
+  const runStart =
+    starts.length > 0 ? Math.floor(Math.min(...starts) / precision) * precision : undefined
+  const isStale = (item: T) =>
+    runStart !== undefined && item.startedAt !== undefined && item.startedAt < runStart
   return {
-    fresh: applies.filter((apply) => !isStale(apply)),
-    stale: applies.filter(isStale),
+    fresh: items.filter((item) => !isStale(item)),
+    stale: items.filter(isStale),
   }
 }
+
+/** The timestamp of a tfplan.json file has whole seconds. */
+const PLAN_TIME_PRECISION = 1000
 
 /**
  * A run that fails before the first unit writes no plan directory and no
@@ -146,12 +152,19 @@ export function loadSources(files: SourceFiles): Sources {
   }
   const { planJsonDir, applyJsonFiles } = files
   if (planJsonDir !== undefined && existsSync(planJsonDir)) {
-    sources.plans = readPlanDir(planJsonDir)
+    const plans = readPlanDir(planJsonDir)
+    const { fresh, stale } = freshSources(plans, sources.report, PLAN_TIME_PRECISION)
+    sources.plans = fresh
+    for (const plan of stale) {
+      warnings.push(
+        `The tfplan.json file of the unit ${plan.unit} is from an earlier run, so the action ignored it: ${plan.path}`,
+      )
+    }
   } else if (planJsonDir !== undefined) {
     warnings.push(`The directory of the input plan-json-dir does not exist: ${planJsonDir}`)
   }
   if (applyJsonFiles !== undefined && applyJsonFiles.length > 0) {
-    const { fresh, stale } = freshApplies(readApplyFiles(applyJsonFiles), sources.report)
+    const { fresh, stale } = freshSources(readApplyFiles(applyJsonFiles), sources.report)
     sources.applies = fresh
     for (const apply of stale) {
       warnings.push(
@@ -355,12 +368,35 @@ function assignDeposed(drafts: readonly Draft[], blocks: ReadonlyMap<string, Dif
   return result
 }
 
-function applyOutcome(kind: ChangeKind, hook: HookOutcome | undefined, apply: UnitApply) {
-  if (hook?.outcome === "complete" || hook?.outcome === "errored") return hook.outcome
-  return HOOKLESS_KINDS.has(kind) && apply.applyCounts !== undefined ? "complete" : "pending"
+/**
+ * Tofu writes no apply_errored message for a failed destroy of a deposed
+ * object. It writes one apply_complete message for two deposed objects of one
+ * address. So an apply_start without an end is a failure in a failed unit only.
+ */
+function deposedOutcome(hook: HookOutcome | undefined, failed: boolean): ApplyOutcome {
+  if (!hook) return "pending"
+  if (failed && hook.starts > hook.completes + hook.errors) return "errored"
+  return hook.completes > 0 || (!failed && hook.starts > 0) ? "complete" : "pending"
 }
 
-function toChange(draft: Draft, block: DiffBlock | undefined, apply: UnitApply | undefined) {
+function applyOutcome(
+  draft: Draft,
+  hook: HookOutcome | undefined,
+  apply: UnitApply,
+  failed: boolean,
+): ApplyOutcome {
+  if (DEPOSED_ADDRESS.test(draft.address)) return deposedOutcome(hook, failed)
+  if (hook?.outcome === "complete" || hook?.outcome === "errored") return hook.outcome
+  return HOOKLESS_KINDS.has(draft.kind) && apply.applyCounts !== undefined ? "complete" : "pending"
+}
+
+type ChangeContext = {
+  block: DiffBlock | undefined
+  apply: UnitApply | undefined
+  failed: boolean
+}
+
+function toChange(draft: Draft, { block, apply, failed }: ChangeContext) {
   const change: ResourceChange = { address: draft.address, kind: draft.kind }
   const reason =
     block && block.reasons.length > 0
@@ -376,7 +412,7 @@ function toChange(draft: Draft, block: DiffBlock | undefined, apply: UnitApply |
   }
   if (apply) {
     const hook = apply.outcomes.get(liveAddress(draft.address))
-    const outcome = applyOutcome(draft.kind, hook, apply)
+    const outcome = applyOutcome(draft, hook, apply, failed)
     change.outcome = outcome
     if (outcome !== "pending" && hook?.elapsedSeconds !== undefined) {
       change.elapsedSeconds = hook.elapsedSeconds
@@ -403,6 +439,11 @@ function buildUnit(name: string, kind: RunKind, given: UnitSources): UnitReport 
       : given
   const stdout = sources.output?.stdout ?? []
   const stderr = stderrText(sources.output?.stderr ?? [])
+  const diagnostics = sources.apply?.diagnostics ?? []
+  const errored =
+    diagnostics.some((diagnostic) => diagnostic.severity === "error") ||
+    (stderr !== undefined && /^(?:│ )?Error: /m.test(stderr))
+  const failed = entry?.result === "failed" || errored
   const found = jsonChanges(kind, sources)
   const blocks = changeBlocks(stdout, found?.map((draft) => draft.address) ?? [])
   const drafts = found && assignDeposed(found, blocks)
@@ -414,7 +455,9 @@ function buildUnit(name: string, kind: RunKind, given: UnitSources): UnitReport 
       kind: phraseKind(block.phrase) ?? "update",
     }))
   )
-    .map((draft) => toChange(draft, blocks.get(draft.address), sources.apply))
+    .map((draft) =>
+      toChange(draft, { block: blocks.get(draft.address), apply: sources.apply, failed }),
+    )
     .sort((a, b) => compare(a.address, b.address))
 
   const summaries = findSummaries(stdout)
@@ -437,7 +480,6 @@ function buildUnit(name: string, kind: RunKind, given: UnitSources): UnitReport 
     ? formatDiff(outputLines, 2).join("\n")
     : (outputNamesDiff(sources.plan?.outputActions) ??
       outputNamesDiff(sources.apply?.outputActions))
-  const diagnostics = sources.apply?.diagnostics ?? []
 
   const unit: UnitReport = { name, result: "succeeded", changes, diagnostics }
   if (entry) {
@@ -445,11 +487,7 @@ function buildUnit(name: string, kind: RunKind, given: UnitSources): UnitReport 
     if (entry.reason) unit.reason = entry.reason
     if (entry.cause) unit.cause = entry.cause
     if (entry.durationSeconds !== undefined) unit.durationSeconds = entry.durationSeconds
-  } else if (
-    diagnostics.some((diagnostic) => diagnostic.severity === "error") ||
-    (stderr !== undefined && /^(?:│ )?Error: /m.test(stderr)) ||
-    sources.plan?.errored
-  ) {
+  } else if (errored || sources.plan?.errored) {
     unit.result = "failed"
   }
   if (summaryLine !== undefined) unit.summaryLine = summaryLine
@@ -505,17 +543,19 @@ function pathSuffixMatch(name: string, other: string): boolean {
 }
 
 /**
- * Terragrunt can name a unit with a longer path in one source than in another,
- * see https://github.com/gruntwork-io/terragrunt/issues/6602. The sources come
- * in rank order. A name that matches exactly one canonical name of a higher
- * rank by path suffix gets that name. Any other name stays as it is.
+ * A unit can have a longer name in one source than in another. The sources
+ * come in rank order. A name that matches exactly one canonical name of a
+ * higher rank by path suffix gets that name. Any other name stays as it is.
+ * One source does not name one unit twice, so a name does not match a name of
+ * its own source.
  */
 export function unifyNames(ranked: readonly Iterable<string>[]): Map<string, string> {
   const mapping = new Map<string, string>()
   const canonical = new Set<string>()
   for (const source of ranked) {
     const names = [...source]
-    const higher = [...canonical]
+    const own = new Set(names)
+    const higher = [...canonical].filter((name) => !own.has(name))
     for (const name of names) {
       if (mapping.has(name)) continue
       const matches = canonical.has(name) ? [name] : higher.filter((n) => pathSuffixMatch(name, n))

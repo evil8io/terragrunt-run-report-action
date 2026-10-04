@@ -7,13 +7,14 @@ import { applyUnitLabel, parseApply } from "../src/apply.ts"
 import { parseLog } from "../src/log.ts"
 import {
   buildReport,
-  freshApplies,
+  freshSources,
   loadSources,
   unifyNames,
   type RunReport,
   type Sources,
 } from "../src/model.ts"
 import { parsePlan } from "../src/plan.ts"
+import { renderMarkdown } from "../src/render.ts"
 import { parseReport } from "../src/report.ts"
 
 const FIXTURES = fileURLToPath(new URL("./fixtures", import.meta.url))
@@ -433,7 +434,7 @@ const created = (addr: string, timestamp?: string) =>
     { type: "change_summary", changes: { add: 1, change: 0, remove: 0, operation: "plan" } },
   )
 
-describe("freshApplies", () => {
+describe("freshSources", () => {
   const stale = parseApply(created("a.b", "2026-01-01T00:00:00Z"), "stale")
   const fresh = parseApply(created("a.b", "2026-01-01T02:05:00.5+02:00"), "fresh")
   const untimed = parseApply(created("a.b"), "untimed")
@@ -447,15 +448,27 @@ describe("freshApplies", () => {
         { Name: "stale", Result: "failed", Started: "2026-01-01T00:05:00.123456789Z" },
       ]),
     )
-    const result = freshApplies(applies, report)
+    const result = freshSources(applies, report)
     expect(units(result.fresh)).toEqual(["fresh", "untimed"])
     expect(units(result.stale)).toEqual(["stale"])
   })
 
+  it("compares the start time of a tfplan.json file at whole seconds", () => {
+    const plan = (unit: string, timestamp: string) =>
+      parsePlan(JSON.stringify({ timestamp, resource_changes: [] }), unit)
+    const report = parseReport(
+      JSON.stringify([{ Name: "a", Result: "succeeded", Started: "2026-01-01T00:05:00.7Z" }]),
+    )
+    const plans = [plan("same", "2026-01-01T00:05:00Z"), plan("old", "2026-01-01T00:04:59Z")]
+    const result = freshSources(plans, report, 1000)
+    expect(units(result.fresh)).toEqual(["same"])
+    expect(units(result.stale)).toEqual(["old"])
+  })
+
   it("keeps every file without a report file or without a start time", () => {
     const report = parseReport(JSON.stringify([{ Name: "stale", Result: "failed" }]))
-    expect(units(freshApplies(applies, undefined).fresh)).toEqual(["stale", "fresh", "untimed"])
-    expect(units(freshApplies(applies, report).fresh)).toEqual(["stale", "fresh", "untimed"])
+    expect(units(freshSources(applies, undefined).fresh)).toEqual(["stale", "fresh", "untimed"])
+    expect(units(freshSources(applies, report).fresh)).toEqual(["stale", "fresh", "untimed"])
   })
 })
 
@@ -533,6 +546,92 @@ describe("buildReport for a deposed object", () => {
       { ...live, ...applied },
       { ...old, ...applied },
     ])
+  })
+
+  describe("the outcome", () => {
+    const addr = "aws_instance.web"
+    const hook = (type: string, action: string) => ({
+      type,
+      hook: { resource: { addr }, action, elapsed_seconds: 1 },
+    })
+    const planned = (action: string) => ({
+      type: "planned_change",
+      change: { resource: { addr }, action },
+    })
+    const error = { type: "diagnostic", diagnostic: { severity: "error", summary: "boom" } }
+    const outcomes = (unitLog: typeof log, ...messages: object[]) =>
+      buildReport({
+        log: unitLog,
+        applies: [parseApply(ndjson(...messages), "u")],
+      }).units[0]?.changes.map((change) => [change.address, change.outcome])
+
+    it("marks a deposed destroy without an end as failed next to a complete live update", () => {
+      expect(
+        outcomes(
+          log,
+          planned("delete"),
+          planned("update"),
+          hook("apply_start", "update"),
+          hook("apply_complete", "update"),
+          hook("apply_start", "delete"),
+          error,
+        ),
+      ).toEqual([
+        [addr, "complete"],
+        [deposed, "errored"],
+      ])
+    })
+
+    it("marks a deposed destroy without an end as failed without a live change", () => {
+      const deposedLog = parseLog(
+        [
+          `  # ${deposed} will be destroyed`,
+          '  - resource "aws_instance" "web" {',
+          '      - id = "i-old" -> null',
+          "    }",
+        ]
+          .map((text) => `12:00:00.000 STDOUT [u] tofu: ${text}`)
+          .join("\n"),
+      )
+      expect(outcomes(deposedLog, planned("delete"), hook("apply_start", "delete"), error)).toEqual(
+        [[deposed, "errored"]],
+      )
+    })
+
+    it("marks both changes as complete in a succeeded unit", () => {
+      expect(
+        outcomes(
+          log,
+          planned("delete"),
+          planned("update"),
+          hook("apply_start", "delete"),
+          hook("apply_complete", "delete"),
+          hook("apply_start", "update"),
+          hook("apply_complete", "update"),
+        ),
+      ).toEqual([
+        [addr, "complete"],
+        [deposed, "complete"],
+      ])
+    })
+
+    it("marks a complete deposed destroy as complete next to a failed live update", () => {
+      expect(
+        outcomes(
+          log,
+          planned("delete"),
+          planned("update"),
+          hook("apply_start", "delete"),
+          hook("apply_complete", "delete"),
+          hook("apply_start", "update"),
+          hook("apply_errored", "update"),
+          error,
+        ),
+      ).toEqual([
+        [addr, "errored"],
+        [deposed, "complete"],
+      ])
+    })
   })
 
   it("reads the deposed address and the reason from the log alone", () => {
@@ -705,6 +804,44 @@ describe("loadSources", () => {
       rmSync(dir, { recursive: true })
     }
   })
+
+  it("warns about a tfplan.json file of an earlier run and ignores its changes", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "sources-"))
+    try {
+      const planJsonDir = path.join(dir, "plans")
+      const write = (unit: string, address: string, timestamp: string) => {
+        mkdirSync(path.join(planJsonDir, unit), { recursive: true })
+        const file = path.join(planJsonDir, unit, "tfplan.json")
+        const change = { address, change: { actions: ["create"] } }
+        writeFileSync(file, JSON.stringify({ timestamp, resource_changes: [change] }))
+        return file
+      }
+      write("a", "a.fresh", "2026-01-01T00:05:00Z")
+      const stalePath = write("b", "b.stale", "2026-01-01T00:00:00Z")
+      const reportFile = path.join(dir, "report.json")
+      writeFileSync(
+        reportFile,
+        JSON.stringify([
+          { Name: "a", Result: "succeeded", Cmd: "plan", Started: "2026-01-01T00:05:00.5Z" },
+          { Name: "b", Result: "failed", Cmd: "plan", Started: "2026-01-01T00:05:00.5Z" },
+        ]),
+      )
+      const loaded = loadSources({ planJsonDir, reportFile })
+      expect(loaded.warnings).toEqual([
+        `The tfplan.json file of the unit b is from an earlier run, so the action ignored it: ${stalePath}`,
+      ])
+      const report = buildReport(loaded)
+      expect(report.units.map((u) => [u.name, u.result, u.changes.map((c) => c.address)])).toEqual([
+        ["a", "succeeded", ["a.fresh"]],
+        ["b", "failed", []],
+      ])
+      expect(report.units[1]?.counts).toBeUndefined()
+      const md = renderMarkdown(report, { header: "r", expand: false })
+      expect(md).toContain("| [`b`](#user-content-trr-r-b) | ❌ failed |  |  |  |\n")
+    } finally {
+      rmSync(dir, { recursive: true })
+    }
+  })
 })
 
 describe("buildReport with unit names of different path depth", () => {
@@ -759,6 +896,38 @@ describe("buildReport with unit names of different path depth", () => {
     expect(report.units[0]?.changes.map((c) => c.address)).toEqual(["a.b"])
   })
 
+  it("keeps an early-exit unit apart from a log unit with a longer name", () => {
+    const log = parseLog(
+      [
+        "12:00:00.000 STDERR [broken] tofu: Error: Invalid value for variable",
+        "12:00:00.000 STDOUT [team/app] tofu:   # terraform_data.main will be updated in-place",
+        '12:00:00.000 STDOUT [team/app] tofu:   ~ resource "terraform_data" "main" {',
+        '12:00:00.000 STDOUT [team/app] tofu:       ~ input = "a" -> "b"',
+        "12:00:00.000 STDOUT [team/app] tofu:     }",
+        "12:00:00.000 STDOUT [team/app] tofu: Plan: 0 to add, 1 to change, 0 to destroy.",
+      ].join("\n"),
+    )
+    const report = parseReport(
+      JSON.stringify([
+        { Name: "broken", Result: "failed", Reason: "run error", Cmd: "plan" },
+        { Name: "team/app", Result: "succeeded", Cmd: "plan" },
+        {
+          Name: "app",
+          Result: "early exit",
+          Reason: "ancestor error",
+          Cause: "broken",
+          Cmd: "plan",
+        },
+      ]),
+    )
+    const units = buildReport({ log, report }).units
+    expect(units.map((u) => [u.name, u.result, u.changes.map((c) => c.address)])).toEqual([
+      ["app", "early exit", []],
+      ["broken", "failed", []],
+      ["team/app", "succeeded", ["terraform_data.main"]],
+    ])
+  })
+
   it("does not match the label of a file directly under the working directory", () => {
     const report = buildReport({ log: logOf("live/unit2"), applies: [parseApply("", ".")] })
     expect(report.units.map((u) => u.name)).toEqual([".", "live/unit2"])
@@ -786,5 +955,14 @@ describe("unifyNames", () => {
   it("keeps a name with more than one match", () => {
     const mapping = unifyNames([["a/u", "b/u"], ["u"]])
     expect(mapping.get("u")).toBe("u")
+  })
+
+  it("does not map a name to a name of its own source", () => {
+    const mapping = unifyNames([
+      ["broken", "team/app"],
+      ["broken", "team/app", "app"],
+    ])
+    expect(mapping.get("app")).toBe("app")
+    expect(mapping.get("team/app")).toBe("team/app")
   })
 })

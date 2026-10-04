@@ -18,14 +18,14 @@ The report starts with the `header` as a heading, then a status line, then a tab
 
 An apply with one failed unit looks like this:
 
-> **Apply: 4 units, 2 with changes, 1 unchanged, 1 failed.** 3 added, 0 changed, 2 destroyed.
+> **Apply: 4 units, 1 with changes, 1 unchanged, 1 failed, 1 early exit.** 3 added, 0 changed, 2 destroyed.
 >
 > | Unit      | Result                                  |    Add | Change | Destroy | Duration |
 > | --------- | --------------------------------------- | -----: | -----: | ------: | -------: |
 > | `network` | ✅ succeeded                            |      2 |      0 |       1 |      12s |
 > | `dns`     | ✅ no changes                           |      0 |      0 |       0 |       3s |
 > | `cluster` | ❌ failed (run error)                   | 1 of 2 |      0 |       1 |      45s |
-> | `apps`    | ⏭️ early exit (ancestor error: cluster) |        |        |         |          |
+> | `apps`    | ⏭️ early exit (ancestor error: cluster) |        |        |         |       0s |
 >
 > **`cluster`**
 >
@@ -96,7 +96,7 @@ jobs:
 
 The plan step writes three files. `tee` writes the log to `plan.log`, and each log line has the name of its unit. With `--json-out-dir`, terragrunt writes the plan of each unit as JSON. With `--report-file`, terragrunt writes the result of each unit. The `exit` command returns the exit code of terragrunt, so the step fails when a unit fails. The action still runs, because of `if: always()`.
 
-The token of a pull request from a fork has no write permission, so the example posts a comment only for a branch of the repository. A workflow that always sets `comment: true` can set `comment-failure: warn` instead, so that the step writes a warning and does not fail.
+The token of a pull request from a fork has no write permission. So the example posts a comment only for a branch of the repository. A workflow that sets `comment: true` on every pull request, also on a pull request from a fork, can set `comment-failure: warn`. The `warn` value does not cover a `pr-number` that is not set, because the inputs check fails before the action makes the report.
 
 ### Apply on a push to main
 
@@ -146,7 +146,7 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 - Units can run in parallel. Each log line has the name of its unit, and the action groups the lines by unit before it reads them.
 - `--log-level=error` is permitted. Terragrunt still writes the lines from tofu to the log.
 - Do not apply from a saved plan file. A saved plan contains the mock outputs of the dependencies, so the apply writes the mock values.
-- With `report-file`, the action ignores a `-json-into` file that is older than the run, and it writes a warning. Without `report-file`, delete the `-json-into` files of an earlier run before an apply. If you do not delete them, the action reads the old file of a unit that did not run as a result of this run.
+- With `report-file`, the action ignores a `tfplan.json` or `-json-into` file that is older than the run, and it writes a warning. Without `report-file`, delete the files of an earlier run before a plan or an apply. Terragrunt does not clear `--json-out-dir`, and a unit that does not run keeps its `-json-into` file. If you do not delete the files, the action reads the old file of a unit that wrote no new file.
 - Give each report on a pull request its own `header`. The action finds its comment by the header. Jobs with different headers can post to one pull request at the same time.
 - Set `pr-number` from the event. Use `${{ github.event.pull_request.number }}` on a `pull_request` event, and `${{ github.event.issue.number }}` on an `issue_comment` event.
 
@@ -154,7 +154,8 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 
 - The action puts at most 65,000 characters in one comment. It splits a longer report into more comments.
 - GitHub limits a job summary to 1 MB. Above that limit, the action removes lines from the middle of the log first, and then from the end of the report.
-- A unit can have a longer path in one file than in the log, for example `live/unit2` and `unit2`. This happens with a `--filter` on a git range and a `--working-dir` in a subdirectory, see [terragrunt issue 6602](https://github.com/gruntwork-io/terragrunt/issues/6602). The action then uses the name from the log. When more than one unit matches, the report contains the unit twice.
+- With a `--filter` on a git range, terragrunt runs the units in a temporary git worktree and deletes it after the run. So the `-json-into` files of that run are lost. For such a run, use the log and the report file.
+- A unit can have a longer name in one input file than in another, for example `live/unit2` and `unit2`. This happens when the paths of the `-json-into` files are relative to a directory other than the `--working-dir` of terragrunt. The action then uses the name from the log. When more than one unit matches, the report contains the unit twice.
 
 ## Inputs
 
@@ -194,12 +195,12 @@ Each file adds a part of the report. The action needs at least one of them. The 
 
 The action does not fail the step when a unit failed. Use the output `failed` to react to a failure. A later step can read the report from the file in the output `markdown-file`.
 
-| Output          | Description                                                                                                                                                                     |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `summary`       | One line with the kind of run, the unit counts, and the resource totals.                                                                                                        |
-| `empty`         | The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit exited early.                                                               |
-| `failed`        | The value is `true` when a unit failed, a unit exited early, or the run failed.                                                                                                 |
-| `markdown-file` | The path of a file with the report in markdown, the same text as the job summary without the log. A later step can read it, for example to send a message after a failed apply. |
+| Output          | Description                                                                                                                                    |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `summary`       | One line with the kind of run, the unit counts, and the resource totals.                                                                       |
+| `empty`         | The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit exited early.                              |
+| `failed`        | The value is `true` when a unit failed, a unit exited early, or the run failed.                                                                |
+| `markdown-file` | The path of a file with the report in markdown, without the log. A later step can read it, for example to send a message after a failed apply. |
 
 ## Contributing
 

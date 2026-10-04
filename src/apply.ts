@@ -16,8 +16,15 @@ export type PlannedChange = {
   reason?: string
 }
 
+/**
+ * The hook messages of one address. A deposed object uses the address of its
+ * live object, so one address can have more than one apply_start message.
+ */
 export type HookOutcome = {
   outcome: "complete" | "errored" | "started"
+  starts: number
+  completes: number
+  errors: number
   elapsedSeconds?: number
 }
 
@@ -123,7 +130,7 @@ function toDiagnostic(diagnostic: z.infer<typeof DiagnosticMessage>["diagnostic"
   return result
 }
 
-type HookState = { completed: boolean; errored: boolean; elapsedSeconds?: number }
+type HookState = Omit<HookOutcome, "outcome">
 
 function recordHook(
   hooks: Map<string, HookState>,
@@ -131,17 +138,20 @@ function recordHook(
   type: string,
   hook: z.infer<typeof HookMessage>["hook"],
 ): void {
-  const state = hooks.get(hook.resource.addr) ?? { completed: false, errored: false }
+  const state = hooks.get(hook.resource.addr) ?? { starts: 0, completes: 0, errors: 0 }
   hooks.set(hook.resource.addr, state)
-  if (type === "apply_start") return
+  if (type === "apply_start") {
+    state.starts++
+    return
+  }
   if (hook.elapsed_seconds !== undefined) {
     state.elapsedSeconds = (state.elapsedSeconds ?? 0) + hook.elapsed_seconds
   }
   if (type === "apply_errored") {
-    state.errored = true
+    state.errors++
     return
   }
-  state.completed = true
+  state.completes++
   const key = HOOK_COUNT_KEYS[hook.action ?? ""]
   if (key) counts[key] = (counts[key] ?? 0) + 1
 }
@@ -181,11 +191,8 @@ export function parseApply(text: string, unit: string): UnitApply {
   }
   if (startedAt !== undefined) result.startedAt = startedAt
   for (const [address, state] of hooks) {
-    const outcome: HookOutcome = {
-      outcome: state.errored ? "errored" : state.completed ? "complete" : "started",
-    }
-    if (state.elapsedSeconds !== undefined) outcome.elapsedSeconds = state.elapsedSeconds
-    result.outcomes.set(address, outcome)
+    const outcome = state.errors > 0 ? "errored" : state.completes > 0 ? "complete" : "started"
+    result.outcomes.set(address, { outcome, ...state })
   }
   return result
 }

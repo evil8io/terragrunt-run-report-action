@@ -49,10 +49,16 @@ describe("parseApply", () => {
     expect(delta.hookCounts).toEqual({ add: 1, change: 0, remove: 1 })
     expect(delta.outcomes.get("terraform_data.fail[0]")).toEqual({
       outcome: "errored",
+      starts: 1,
+      completes: 0,
+      errors: 1,
       elapsedSeconds: 0,
     })
     expect(delta.outcomes.get("local_file.main")).toEqual({
       outcome: "complete",
+      starts: 2,
+      completes: 2,
+      errors: 0,
       elapsedSeconds: 0,
     })
     expect(delta.lastSummary).toBe("Plan: 2 to add, 0 to change, 1 to destroy.")
