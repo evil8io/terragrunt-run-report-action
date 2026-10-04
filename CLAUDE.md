@@ -53,7 +53,8 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 
 - Change `dist/` only through the release workflow, for two reasons. A dependency update without a rebuild has no effect at runtime. If every pull request needs a rebuild, CI fails on every Renovate pull request, because Renovate does not rebuild `dist/`. The workflow adds the build with `git add -f`, because `dist/` is in `.gitignore`.
 - Keep the release branch exempt from the `dist/` check in `ci.yml`, because the release workflow commits the build there.
-- Merge the release pull request without the ci, e2e, and pr-title checks, because they do not run on it. release-please and the `dist/` commit step use the default token, and GitHub starts no workflow run for an event from that token. The ci run on `main` after the merge must pass.
+- Merge the release pull request with `gh pr merge --admin`. The checks do not run on it, because release-please and the `dist/` commit step use the default token, and GitHub starts no workflow run for an event from that token. The ruleset on `main` requires the checks, and the admin role has a bypass for pull requests. The ci run on `main` after the merge must pass.
+- Keep the `-json-into` files of phase 2 in `e2e.yml` for phase 3. The e2e run then covers the rule of the action to ignore a `-json-into` file that is older than the run.
 
 ## Facts about terragrunt and OpenTofu
 

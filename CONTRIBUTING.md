@@ -69,9 +69,13 @@ The action posts the report as a comment only for a pull request from this repos
 
 Write the pull request title in the [Conventional Commits](https://www.conventionalcommits.org/) format. The workflow `pr-title` checks the title. Every pull request is squash-merged, and the title becomes the commit subject on `main`. Add a `!` after the type for a breaking change.
 
+A ruleset on `main` requires the checks `check`, `lint`, `e2e (opentofu)`, and `e2e (terraform)`. A pull request merges after these checks pass.
+
 ## Releases
 
 [release-please](https://github.com/googleapis/release-please) reads the commit subjects on `main` and opens a release pull request. After the merge of that pull request, release-please creates a tag and a GitHub release. The repository has no 1.0 release yet, so release-please raises the minor version for a breaking change (`bump-minor-pre-major`).
+
+The release pull request has no workflow runs. The maintainer merges it with `gh pr merge --admin`. `CLAUDE.md` gives the reason.
 
 Only the release pull request has a change to `dist/`. The release workflow builds `dist/` and commits it to that pull request. After the merge, `main` has the build, and the release tag points to that commit. The workflow also moves the tag `v0` to the newest release.
 
