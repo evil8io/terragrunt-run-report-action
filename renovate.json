@@ -34,6 +34,12 @@
       "groupName": "mise",
       "matchDepNames": ["jdx/mise"],
       "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "Keep TypeScript below 7 until typescript-eslint supports it, see https://github.com/typescript-eslint/typescript-eslint/issues/10940.",
+      "allowedVersions": "<7",
+      "matchDepNames": ["typescript"],
+      "matchManagers": ["npm"]
     }
   ],
   "rebaseWhen": "behind-base-branch"
