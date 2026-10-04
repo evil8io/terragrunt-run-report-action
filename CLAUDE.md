@@ -24,6 +24,7 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 - Read no event payload in the action. Take the repository, the pull request number, and the token from inputs. A `push` or `issue_comment` event has no pull request in its payload.
 - Put the `run-url` link in the comment only, because the job summary is on the run page.
 - Do not fail the step for a failed unit. Set the output `failed`, because the workflow decides what a failed unit means for the job.
+- Write the markdown file in every mode, also with `summary: false` and `comment: false`, because a later step can need the file alone. Put it in a new directory under `RUNNER_TEMP`, so that two reports of one job do not overwrite one file.
 
 ## Report layout
 
@@ -35,6 +36,13 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 - The table has one row for each unit, sorted by name. In an apply report, a count cell shows `applied of planned` when the two differ.
 - A unit gets a section only with changes, diagnostics, or a failure. A section has the result line (when not succeeded), the diagnostics, the tofu summary line, the groups in this order: create, update, replace, destroy, read, import, forget, move, ephemeral, and then the changes to outputs.
 - In an apply report, each resource has its outcome: `✅` with the duration, `❌ failed`, or `⏳ not applied`.
+- Put the anchor of a unit section on its heading line as `<a id="ID"></a>`, before the code span. GitHub gives a markdown heading in a comment no `id`, but it keeps an explicit `<a id>` and renders it as `id="user-content-ID"`.
+- Link a table row to `#user-content-ID`, not to `#ID`. GitHub's own footnote links use this form, so the link works without the script of the page.
+- Make the ID from `trr-`, the slug of the `header`, and the slug of the unit name. One page can show more than one report, for example two reports on one pull request, or the plan and the apply summaries of one job.
+- Above 10 unit sections, put the groups and the outputs diff of each section in one `<details>` element, so that the table is the index. Keep the heading, the result line, and the diagnostics above that element, so that the error of a failed unit is readable without a click.
+- Escape the text of a `<summary>` element as HTML, not as markdown. GitHub renders an HTML block without markdown, so a markdown escape shows as a backslash.
+- Open a failed resource, its group, and the collapsed section of a failed unit, also without `expand`, because the reader of a failed run looks for the error first.
+- Show the Duration column only when at least one unit has a duration. Only the report file gives a duration, and a report without that file must not have an empty column.
 - The unit name of a `-json-into` file is its path relative to `working-directory`, cut before `/.terragrunt-cache/`. The unit name of a `tfplan.json` file is its directory relative to `plan-json-dir`. The unit name in the log is the terragrunt prefix. The three must be equal for one unit, so the README tells the user to pass the directory of the run as `working-directory`.
 - Match a unit name by its path suffix across the sources. Terragrunt gives a longer path in some runs, for example `live/unit2` and `unit2`, see [terragrunt issue 6602](https://github.com/gruntwork-io/terragrunt/issues/6602). The rank is the log, the report file, the plan files, and the `-json-into` files. A name takes the one matching name of a higher rank.
 - `empty` is `false` when the counts of a unit are unknown, for example with a report file alone, because a deleted comment must not hide a change.

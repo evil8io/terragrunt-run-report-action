@@ -3,16 +3,16 @@
 
 **Destroy: 6 units, 6 with changes.** 19 destroyed.
 
-| Unit | Result | Add | Change | Destroy |
-| --- | --- | ---: | ---: | ---: |
-| `.terragrunt-stack/alpha` | ✅ succeeded | 0 | 0 | 3 |
-| `.terragrunt-stack/beta` | ✅ succeeded | 0 | 0 | 3 |
-| `.terragrunt-stack/delta` | ✅ succeeded | 0 | 0 | 4 |
-| `.terragrunt-stack/epsilon` | ✅ succeeded | 0 | 0 | 3 |
-| `.terragrunt-stack/gamma` | ✅ succeeded | 0 | 0 | 3 |
-| `.terragrunt-stack/zeta` | ✅ succeeded | 0 | 0 | 3 |
+| Unit | Result | Add | Change | Destroy | Duration |
+| --- | --- | ---: | ---: | ---: | ---: |
+| [`.terragrunt-stack/alpha`](#user-content-trr-terragrunt-run-report-terragrunt-stack-alpha) | ✅ succeeded | 0 | 0 | 3 | 1s |
+| [`.terragrunt-stack/beta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-beta) | ✅ succeeded | 0 | 0 | 3 | 1s |
+| [`.terragrunt-stack/delta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-delta) | ✅ succeeded | 0 | 0 | 4 | 1s |
+| [`.terragrunt-stack/epsilon`](#user-content-trr-terragrunt-run-report-terragrunt-stack-epsilon) | ✅ succeeded | 0 | 0 | 3 | 1s |
+| [`.terragrunt-stack/gamma`](#user-content-trr-terragrunt-run-report-terragrunt-stack-gamma) | ✅ succeeded | 0 | 0 | 3 | 1s |
+| [`.terragrunt-stack/zeta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-zeta) | ✅ succeeded | 0 | 0 | 3 | 1s |
 
-### `.terragrunt-stack/alpha`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-alpha"></a>`.terragrunt-stack/alpha`
 
 Destroy complete! Resources: 3 destroyed.
 
@@ -70,7 +70,7 @@ Destroy complete! Resources: 3 destroyed.
 
 </details>
 
-### `.terragrunt-stack/beta`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-beta"></a>`.terragrunt-stack/beta`
 
 Destroy complete! Resources: 3 destroyed.
 
@@ -128,7 +128,7 @@ Destroy complete! Resources: 3 destroyed.
 
 </details>
 
-### `.terragrunt-stack/delta`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-delta"></a>`.terragrunt-stack/delta`
 
 Destroy complete! Resources: 4 destroyed.
 
@@ -196,7 +196,7 @@ Destroy complete! Resources: 4 destroyed.
 
 </details>
 
-### `.terragrunt-stack/epsilon`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-epsilon"></a>`.terragrunt-stack/epsilon`
 
 Destroy complete! Resources: 3 destroyed.
 
@@ -254,7 +254,7 @@ Destroy complete! Resources: 3 destroyed.
 
 </details>
 
-### `.terragrunt-stack/gamma`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-gamma"></a>`.terragrunt-stack/gamma`
 
 Destroy complete! Resources: 3 destroyed.
 
@@ -312,7 +312,7 @@ Destroy complete! Resources: 3 destroyed.
 
 </details>
 
-### `.terragrunt-stack/zeta`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-zeta"></a>`.terragrunt-stack/zeta`
 
 Destroy complete! Resources: 3 destroyed.
 

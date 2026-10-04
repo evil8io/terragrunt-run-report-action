@@ -3,16 +3,16 @@
 
 **Apply: 6 units, 5 with changes, 1 unchanged.** 7 added, 0 changed, 7 destroyed.
 
-| Unit | Result | Add | Change | Destroy |
-| --- | --- | ---: | ---: | ---: |
-| `.terragrunt-stack/alpha` | ✅ succeeded | 3 | 0 | 2 |
-| `.terragrunt-stack/beta` | ✅ succeeded | 1 | 0 | 2 |
-| `.terragrunt-stack/delta` | ✅ succeeded | 1 | 0 | 1 |
-| `.terragrunt-stack/epsilon` | ✅ succeeded | 1 | 0 | 1 |
-| `.terragrunt-stack/gamma` | ✅ no changes | 0 | 0 | 0 |
-| `.terragrunt-stack/zeta` | ✅ succeeded | 1 | 0 | 1 |
+| Unit | Result | Add | Change | Destroy | Duration |
+| --- | --- | ---: | ---: | ---: | ---: |
+| [`.terragrunt-stack/alpha`](#user-content-trr-terragrunt-run-report-terragrunt-stack-alpha) | ✅ succeeded | 3 | 0 | 2 | 1s |
+| [`.terragrunt-stack/beta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-beta) | ✅ succeeded | 1 | 0 | 2 | 1s |
+| [`.terragrunt-stack/delta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-delta) | ✅ succeeded | 1 | 0 | 1 | 1s |
+| [`.terragrunt-stack/epsilon`](#user-content-trr-terragrunt-run-report-terragrunt-stack-epsilon) | ✅ succeeded | 1 | 0 | 1 | 1s |
+| `.terragrunt-stack/gamma` | ✅ no changes | 0 | 0 | 0 | 1s |
+| [`.terragrunt-stack/zeta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-zeta) | ✅ succeeded | 1 | 0 | 1 | 1s |
 
-### `.terragrunt-stack/alpha`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-alpha"></a>`.terragrunt-stack/alpha`
 
 Apply complete! Resources: 3 added, 0 changed, 2 destroyed.
 
@@ -81,7 +81,7 @@ Apply complete! Resources: 3 added, 0 changed, 2 destroyed.
 
 </details>
 
-### `.terragrunt-stack/beta`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-beta"></a>`.terragrunt-stack/beta`
 
 Apply complete! Resources: 1 added, 0 changed, 2 destroyed.
 
@@ -143,7 +143,7 @@ _→ because index [0] is out of range for count_
 
 </details>
 
-### `.terragrunt-stack/delta`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-delta"></a>`.terragrunt-stack/delta`
 
 Apply complete! Resources: 1 added, 0 changed, 1 destroyed.
 
@@ -179,7 +179,7 @@ Apply complete! Resources: 1 added, 0 changed, 1 destroyed.
 
 </details>
 
-### `.terragrunt-stack/epsilon`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-epsilon"></a>`.terragrunt-stack/epsilon`
 
 Apply complete! Resources: 1 added, 0 changed, 1 destroyed.
 
@@ -215,7 +215,7 @@ Apply complete! Resources: 1 added, 0 changed, 1 destroyed.
 
 </details>
 
-### `.terragrunt-stack/zeta`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-zeta"></a>`.terragrunt-stack/zeta`
 
 Apply complete! Resources: 1 added, 0 changed, 1 destroyed.
 

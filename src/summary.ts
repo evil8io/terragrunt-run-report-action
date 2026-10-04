@@ -1,3 +1,5 @@
+import { mkdtempSync, writeFileSync } from "node:fs"
+import path from "node:path"
 import { stripAnsi } from "./log.ts"
 import { closeState, nextState, type MarkdownState } from "./render.ts"
 
@@ -86,4 +88,10 @@ export function buildSummary({
   const budget = maxBytes - bytes(base) - bytes(logSection("", ticks))
   if (budget < bytes(cutNotice(lines.length))) return markdown
   return base + logSection(cutLog(lines, budget), ticks)
+}
+
+export function writeMarkdownFile(markdown: string, baseDir: string): string {
+  const file = path.join(mkdtempSync(path.join(baseDir, "terragrunt-run-report-")), "report.md")
+  writeFileSync(file, markdown)
+  return file
 }

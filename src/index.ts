@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs"
+import { tmpdir } from "node:os"
 import * as core from "@actions/core"
 import * as github from "@actions/github"
 import { postComment } from "./comment.ts"
 import { readInputs, resolveApplyFiles } from "./inputs.ts"
 import { buildReport, loadSources } from "./model.ts"
 import { markerLine, renderMarkdown, renderRunLink, statusLine } from "./render.ts"
-import { buildSummary } from "./summary.ts"
+import { buildSummary, writeMarkdownFile } from "./summary.ts"
 
 async function run(): Promise<void> {
   const inputs = readInputs()
@@ -30,6 +31,7 @@ async function run(): Promise<void> {
   core.setOutput("summary", status)
   core.setOutput("empty", String(report.empty))
   core.setOutput("failed", String(report.failed))
+  core.setOutput("markdown-file", writeMarkdownFile(markdown, process.env.RUNNER_TEMP ?? tmpdir()))
 
   if (inputs.summary) {
     const rawLog =

@@ -3,16 +3,16 @@
 
 **Plan: 6 units, 3 with changes, 2 unchanged, 1 failed.** 6 to add, 0 to change, 6 to destroy.
 
-| Unit | Result | Add | Change | Destroy |
-| --- | --- | ---: | ---: | ---: |
-| `.terragrunt-stack/alpha` | ✅ succeeded | 2 | 0 | 3 |
-| `.terragrunt-stack/beta` | ✅ succeeded | 1 | 0 | 1 |
-| `.terragrunt-stack/delta` | ✅ succeeded | 2 | 0 | 1 |
-| `.terragrunt-stack/epsilon` | ✅ no changes | 0 | 0 | 0 |
-| `.terragrunt-stack/gamma` | ✅ no changes | 0 | 0 | 0 |
-| `.terragrunt-stack/zeta` | ❌ failed (run error) | 1 | 0 | 1 |
+| Unit | Result | Add | Change | Destroy | Duration |
+| --- | --- | ---: | ---: | ---: | ---: |
+| [`.terragrunt-stack/alpha`](#user-content-trr-terragrunt-run-report-terragrunt-stack-alpha) | ✅ succeeded | 2 | 0 | 3 | 1s |
+| [`.terragrunt-stack/beta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-beta) | ✅ succeeded | 1 | 0 | 1 | 1s |
+| [`.terragrunt-stack/delta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-delta) | ✅ succeeded | 2 | 0 | 1 | 1s |
+| `.terragrunt-stack/epsilon` | ✅ no changes | 0 | 0 | 0 | 1s |
+| `.terragrunt-stack/gamma` | ✅ no changes | 0 | 0 | 0 | 1s |
+| [`.terragrunt-stack/zeta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-zeta) | ❌ failed (run error) | 1 | 0 | 1 | 1s |
 
-### `.terragrunt-stack/alpha`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-alpha"></a>`.terragrunt-stack/alpha`
 
 Plan: 2 to add, 0 to change, 3 to destroy.
 
@@ -83,7 +83,7 @@ _→ because index [0] is out of range for count_
 
 </details>
 
-### `.terragrunt-stack/beta`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-beta"></a>`.terragrunt-stack/beta`
 
 Plan: 1 to add, 0 to change, 1 to destroy.
 
@@ -119,7 +119,7 @@ Plan: 1 to add, 0 to change, 1 to destroy.
 
 </details>
 
-### `.terragrunt-stack/delta`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-delta"></a>`.terragrunt-stack/delta`
 
 Plan: 2 to add, 0 to change, 1 to destroy.
 
@@ -169,7 +169,7 @@ Plan: 2 to add, 0 to change, 1 to destroy.
 
 </details>
 
-### `.terragrunt-stack/zeta`
+### <a id="trr-terragrunt-run-report-terragrunt-stack-zeta"></a>`.terragrunt-stack/zeta`
 
 ❌ failed (run error)
 

@@ -1,5 +1,8 @@
+import { mkdtempSync, readFileSync, rmSync } from "node:fs"
+import { tmpdir } from "node:os"
+import path from "node:path"
 import { describe, expect, it } from "vitest"
-import { buildSummary, CUT_NOTE } from "../src/summary.ts"
+import { buildSummary, CUT_NOTE, writeMarkdownFile } from "../src/summary.ts"
 
 const bytes = (text: string) => Buffer.byteLength(text, "utf8")
 
@@ -54,5 +57,20 @@ describe("buildSummary", () => {
     const text = buildSummary({ markdown: big, maxBytes: 1000 })
     expect(bytes(text)).toBeLessThanOrEqual(1000)
     expect(text.endsWith(`\n\`\`\`\n\n</details>\n\n</details>\n\n${CUT_NOTE}\n`)).toBe(true)
+  })
+})
+
+describe("writeMarkdownFile", () => {
+  it("writes report.md in a new directory under the base directory and returns its path", () => {
+    const base = mkdtempSync(path.join(tmpdir(), "summary-test-"))
+    try {
+      const file = writeMarkdownFile("## Report\n", base)
+      expect(path.basename(file)).toBe("report.md")
+      expect(path.dirname(path.dirname(file))).toBe(base)
+      expect(path.basename(path.dirname(file))).toMatch(/^terragrunt-run-report-/)
+      expect(readFileSync(file, "utf8")).toBe("## Report\n")
+    } finally {
+      rmSync(base, { recursive: true })
+    }
   })
 })
