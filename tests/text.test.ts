@@ -87,6 +87,23 @@ describe("extractBlocks", () => {
     expect(extractBlocks(lines)[0]?.body).toEqual(['        ami = "ami-1"'])
   })
 
+  it("reads the deposed key of a header into the address", () => {
+    const lines = [
+      "  # aws_instance.web (deposed object 1a2b3c4d) will be destroyed",
+      "  # (left over from a partially-failed replacement of this instance)",
+      '  - resource "aws_instance" "web" {',
+      '      - id = "i-old" -> null',
+      "    }",
+    ]
+    const expected = {
+      address: "aws_instance.web (deposed object 1a2b3c4d)",
+      phrase: "will be destroyed",
+      reasons: ["left over from a partially-failed replacement of this instance"],
+    }
+    expect(extractBlocks(lines, ["aws_instance.web"])[0]).toMatchObject(expected)
+    expect(extractBlocks(lines)[0]).toMatchObject(expected)
+  })
+
   it("skips a header without a resource line", () => {
     expect(extractBlocks(["  # local_file.a will be created", "Plan: 1 to add"])).toEqual([])
   })

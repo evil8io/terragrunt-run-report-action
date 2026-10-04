@@ -58,6 +58,7 @@ These facts were verified on terragrunt 1.1.6 and OpenTofu 1.13.1. The code or t
 - An early-exit unit writes no `-json-into` file.
 - The first message of a `-json-into` file is `version`, and its `@timestamp` is later than the `Started` time of the unit in the report file. A unit that does not run keeps the file of an earlier run.
 - A `-json-into` file has no `apply_start` or `apply_complete` hook for an import or a forget.
+- The `tfplan.json` file has the key of a deposed object in the field `deposed`, next to the live `address`. A `-json-into` file has no deposed key, so the messages and the hooks of a deposed object use the address of its live object.
 - For a `removed` block, the `planned_change` action is `remove`, and the `tfplan.json` file has the actions `["forget"]`. The resource line of the diff block has the marker `.`.
 - After a failed unit, terragrunt logs a top-level `ERROR` entry that starts with `Run failed`, and a last one that starts with `error occurred`.
 - After a configuration error, terragrunt writes the report file `[]` and no `--json-out-dir` directory. The log then has top-level `ERROR` entries, but no `Run failed` entry.

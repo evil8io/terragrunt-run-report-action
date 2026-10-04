@@ -200,6 +200,8 @@ const SKIPPED_RESULTS: ReadonlySet<UnitResult> = new Set(["early exit", "exclude
 
 const RUN_ERROR = /^(?:Run failed|error occurred)/
 
+const DEPOSED_ADDRESS = /^(.+) \(deposed object [0-9a-f]+\)$/
+
 type Draft = {
   address: string
   previousAddress?: string | undefined
@@ -321,6 +323,38 @@ function changeBlocks(stdout: readonly string[], known: Iterable<string>): Map<s
   return blocks
 }
 
+function liveAddress(address: string): string {
+  return DEPOSED_ADDRESS.exec(address)?.[1] ?? address
+}
+
+/**
+ * A -json-into file uses the live address for a deposed object. The live diff
+ * block gets the first draft of its address and its kind, and each deposed diff
+ * block gets the next draft.
+ */
+function assignDeposed(drafts: readonly Draft[], blocks: ReadonlyMap<string, DiffBlock>): Draft[] {
+  const result = [...drafts]
+  const taken = new Set<number>()
+  const take = (address: string, kind: ChangeKind | undefined) => {
+    const index = result.findIndex(
+      (draft, i) => !taken.has(i) && draft.address === address && draft.kind === kind,
+    )
+    if (index !== -1) taken.add(index)
+    return index
+  }
+  for (const [address, block] of blocks) {
+    if (!DEPOSED_ADDRESS.test(address)) take(address, phraseKind(block.phrase))
+  }
+  for (const [address, block] of blocks) {
+    if (!DEPOSED_ADDRESS.test(address) || result.some((draft) => draft.address === address))
+      continue
+    const index = take(liveAddress(address), phraseKind(block.phrase))
+    const draft = result[index]
+    if (draft) result[index] = { ...draft, address }
+  }
+  return result
+}
+
 function applyOutcome(kind: ChangeKind, hook: HookOutcome | undefined, apply: UnitApply) {
   if (hook?.outcome === "complete" || hook?.outcome === "errored") return hook.outcome
   return HOOKLESS_KINDS.has(kind) && apply.applyCounts !== undefined ? "complete" : "pending"
@@ -341,7 +375,7 @@ function toChange(draft: Draft, block: DiffBlock | undefined, apply: UnitApply |
     if (diff.length > 0) change.diff = diff.join("\n")
   }
   if (apply) {
-    const hook = apply.outcomes.get(draft.address)
+    const hook = apply.outcomes.get(liveAddress(draft.address))
     const outcome = applyOutcome(draft.kind, hook, apply)
     change.outcome = outcome
     if (outcome !== "pending" && hook?.elapsedSeconds !== undefined) {
@@ -369,8 +403,9 @@ function buildUnit(name: string, kind: RunKind, given: UnitSources): UnitReport 
       : given
   const stdout = sources.output?.stdout ?? []
   const stderr = stderrText(sources.output?.stderr ?? [])
-  const drafts = jsonChanges(kind, sources)
-  const blocks = changeBlocks(stdout, drafts?.map((draft) => draft.address) ?? [])
+  const found = jsonChanges(kind, sources)
+  const blocks = changeBlocks(stdout, found?.map((draft) => draft.address) ?? [])
+  const drafts = found && assignDeposed(found, blocks)
   const changes = (
     drafts ??
     [...blocks.values()].map((block): Draft => ({

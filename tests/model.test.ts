@@ -459,6 +459,91 @@ describe("freshApplies", () => {
   })
 })
 
+describe("buildReport for a deposed object", () => {
+  const deposed = "aws_instance.web (deposed object 1a2b3c4d)"
+  const reason = "left over from a partially-failed replacement of this instance"
+  const log = parseLog(
+    [
+      "OpenTofu will perform the following actions:",
+      "  # aws_instance.web will be updated in-place",
+      '  ~ resource "aws_instance" "web" {',
+      '        id            = "i-new"',
+      '      ~ instance_type = "t3.micro" -> "t3.small"',
+      "    }",
+      `  # ${deposed} will be destroyed`,
+      `  # (${reason})`,
+      '  - resource "aws_instance" "web" {',
+      '      - id            = "i-old" -> null',
+      '      - instance_type = "t3.micro" -> null',
+      "    }",
+      "Plan: 0 to add, 1 to change, 1 to destroy.",
+    ]
+      .map((text) => `12:00:00.000 STDOUT [u] tofu: ${text}`)
+      .join("\n"),
+  )
+  const live = {
+    address: "aws_instance.web",
+    kind: "update",
+    diff: '  id            = "i-new"\n! instance_type = "t3.micro" -> "t3.small"',
+  }
+  const old = {
+    address: deposed,
+    kind: "delete",
+    reason,
+    diff: '- id            = "i-old" -> null\n- instance_type = "t3.micro" -> null',
+  }
+
+  it("renders the deposed object of a plan JSON as its own change with its own diff", () => {
+    const plan = parsePlan(
+      JSON.stringify({
+        resource_changes: [
+          { address: "aws_instance.web", change: { actions: ["update"] } },
+          { address: "aws_instance.web", deposed: "1a2b3c4d", change: { actions: ["delete"] } },
+        ],
+      }),
+      "u",
+    )
+    const unit = buildReport({ log, plans: [plan] }).units[0]
+    expect(unit?.changes).toEqual([live, old])
+    expect(unit?.counts).toEqual({ add: 0, change: 1, remove: 1 })
+  })
+
+  it("gives the deposed address to the -json-into change of the deposed diff block", () => {
+    const addr = "aws_instance.web"
+    const hook = (type: string, action: string) => ({
+      type,
+      hook: { resource: { addr }, action, elapsed_seconds: 1 },
+    })
+    const apply = parseApply(
+      ndjson(
+        { type: "planned_change", change: { resource: { addr }, action: "delete" } },
+        { type: "planned_change", change: { resource: { addr }, action: "update" } },
+        { type: "change_summary", changes: { add: 0, change: 1, remove: 1, operation: "plan" } },
+        hook("apply_start", "delete"),
+        hook("apply_complete", "delete"),
+        hook("apply_start", "update"),
+        hook("apply_complete", "update"),
+        { type: "change_summary", changes: { add: 0, change: 1, remove: 1, operation: "apply" } },
+      ),
+      "u",
+    )
+    const unit = buildReport({ log, applies: [apply] }).units[0]
+    const applied = { outcome: "complete", elapsedSeconds: 2 }
+    expect(unit?.changes).toEqual([
+      { ...live, ...applied },
+      { ...old, ...applied },
+    ])
+  })
+
+  it("reads the deposed address and the reason from the log alone", () => {
+    const changes = buildReport({ log }).units[0]?.changes
+    expect(changes?.map((change) => [change.address, change.kind, change.reason])).toEqual([
+      ["aws_instance.web", "update", undefined],
+      [deposed, "delete", reason],
+    ])
+  })
+})
+
 describe("buildReport without counts", () => {
   it("counts a unit of a report file alone as a unit without counts", () => {
     const report = buildReport({

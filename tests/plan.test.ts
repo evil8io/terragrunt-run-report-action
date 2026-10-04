@@ -68,6 +68,20 @@ describe("parsePlan", () => {
     expect(plan.outputActions.size).toBe(0)
   })
 
+  it("adds the key of a deposed object to its address", () => {
+    const plan = parsePlan(
+      JSON.stringify({
+        resource_changes: [
+          { address: "a.b", deposed: "1a2b3c4d", change: { actions: ["delete"] } },
+        ],
+      }),
+      "u",
+    )
+    expect(plan.resourceChanges.map((change) => change.address)).toEqual([
+      "a.b (deposed object 1a2b3c4d)",
+    ])
+  })
+
   it("throws with the source for invalid JSON", () => {
     expect(() => parsePlan("{", "u", "x/tfplan.json")).toThrow(
       /^x\/tfplan.json: the file is not valid JSON/,

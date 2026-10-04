@@ -26,6 +26,7 @@ const PlanSchema = z.looseObject({
       z.looseObject({
         address: z.string(),
         previous_address: z.string().nullish(),
+        deposed: z.string().nullish(),
         action_reason: z.string().nullish(),
         change: z.looseObject({
           actions: z.array(z.string()),
@@ -59,7 +60,9 @@ export function parsePlan(text: string, unit: string, source = unit): UnitPlan {
   }
   const resourceChanges = (parsed.data.resource_changes ?? []).map((change) => {
     const result: PlanResourceChange = {
-      address: change.address,
+      address: change.deposed
+        ? `${change.address} (deposed object ${change.deposed})`
+        : change.address,
       actions: change.change.actions,
       importing: change.change.importing !== undefined && change.change.importing !== null,
     }

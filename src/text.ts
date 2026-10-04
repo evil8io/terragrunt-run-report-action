@@ -35,6 +35,7 @@ const PHRASE = new RegExp(`^(.+?) (${PHRASES.join("|")})$`)
 const HEADER = /^([^\s(].*?) ((?:will|must|is|has) .*)$/
 const MOVED = "has moved to "
 const COMMENT = /^ {2}# (.*)$/
+const DEPOSED = /^ \(deposed object [0-9a-f]+\)/
 const RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/
 const BLOCK_END = "    }"
 const MARKER = /^(\s*)([+~-])( .*)$/
@@ -56,7 +57,10 @@ function matchHeader(line: string, known: ReadonlySet<string>): Header | undefin
     const candidate = rest.slice(0, space)
     if (known.has(candidate)) address = candidate
   }
-  if (address !== undefined) return toHeader(address, rest.slice(address.length + 1))
+  if (address !== undefined) {
+    address += DEPOSED.exec(rest.slice(address.length))?.[0] ?? ""
+    return toHeader(address, rest.slice(address.length + 1))
+  }
   const moved = ` ${MOVED}`
   for (let at = rest.indexOf(moved); at !== -1; at = rest.indexOf(moved, at + 1)) {
     if (known.has(rest.slice(at + moved.length)))
