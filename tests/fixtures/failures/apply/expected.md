@@ -136,7 +136,7 @@ Plan: 2 to add, 0 to change, 1 to destroy.
 
 <details><summary>✨ Create (1)</summary>
 
-<details><summary><code>terraform_data.fail[0]</code> ❌ errored</summary>
+<details><summary><code>terraform_data.fail[0]</code> ❌ failed</summary>
 
 ```diff
 + id     = (known after apply)

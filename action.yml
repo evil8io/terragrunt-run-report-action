@@ -1,5 +1,7 @@
 name: Terragrunt run report
-description: Post one markdown report with one section per unit of a terragrunt run --all plan or apply.
+description: >-
+  Write one markdown report of a terragrunt run --all plan or apply to the job summary and to a pull request
+  comment. The report has one table row per unit and one section per unit with changes or a failure.
 author: evil8io
 branding:
   icon: file-text
@@ -11,22 +13,24 @@ inputs:
       or in `--log-format=json`. The diff of each resource comes from this file.
     required: false
   plan-json-dir:
-    description: The `--json-out-dir` of a plan run. It has one `tfplan.json` per unit.
+    description: The `--json-out-dir` of a plan run. It has one `tfplan.json` file per unit.
     required: false
   apply-json-files:
     description: >-
-      Glob patterns, one per line, of the `-json-into` files of an apply run. The unit label of a file is
-      its path relative to `working-directory`, cut before `.terragrunt-cache`.
+      Glob patterns, one per line, of the `-json-into` files of an apply run. The patterns are relative to
+      the workspace.
     required: false
   report-file:
     description: The `--report-file` of the run, in JSON format.
     required: false
   working-directory:
-    description: The directory of the run. The unit labels are relative to it.
+    description: >-
+      The base directory of the `-json-into` file paths. The unit label is the name of a unit in the report.
+      The unit label of a file is its path relative to this directory, cut before `.terragrunt-cache`.
     required: false
     default: .
   header:
-    description: The title of the report. It also identifies the sticky comment.
+    description: The title of the report. It is also the key of the sticky comment.
     required: false
     default: Terragrunt run report
   summary:
@@ -46,14 +50,16 @@ inputs:
     required: false
     default: ${{ github.repository }}
   pr-number:
-    description: The number of the pull request. Required when `comment` is `true`.
+    description: The number of the pull request. This input is required when `comment` is `true`.
     required: false
   token:
-    description: "The token that posts the comment. It needs `pull-requests: write`."
+    description: "The token for the comment requests. It needs `pull-requests: write`."
     required: false
     default: ${{ github.token }}
   skip-empty:
-    description: Delete the sticky comment instead of a post when the run has no changes and no failed unit.
+    description: >-
+      When no unit has a change, no unit failed, and no unit exited early, the action deletes the sticky
+      comment and posts no comment.
     required: false
     default: "false"
   expand:
@@ -64,9 +70,9 @@ outputs:
   summary:
     description: One line with the kind of run, the unit counts, and the resource totals.
   empty:
-    description: "`true` when no unit has a change and no unit failed."
+    description: The value is `true` when no unit has a change, no unit failed, and no unit exited early.
   failed:
-    description: "`true` when a unit failed or exited early."
+    description: The value is `true` when a unit failed or exited early.
 runs:
   using: node24
   main: dist/index.cjs

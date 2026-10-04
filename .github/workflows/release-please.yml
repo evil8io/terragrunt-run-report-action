@@ -21,9 +21,7 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # dist/ changes only in the release pull request, so every other pull
-      # request stays green without a rebuild, and the release tag on main has
-      # the build of its own sources.
+      # Build dist/ and commit it to the release pull request. CLAUDE.md has the reason.
       - if: steps.release.outputs.prs_created == 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

@@ -5,7 +5,7 @@ import { applyUnitLabel, type ApplyFile } from "./apply.ts"
 export type Inputs = {
   logFile: string | undefined
   planJsonDir: string | undefined
-  /** Glob patterns, one per line. */
+  /** The glob patterns, one for each line of the input. */
   applyJsonFiles: string[]
   reportFile: string | undefined
   workingDirectory: string

@@ -1,9 +1,8 @@
 import { stripAnsi } from "./log.ts"
+import { closeState, nextState, type MarkdownState } from "./render.ts"
 
-export const CUT_NOTE = "_Report cut at the summary size limit._"
-
-const FENCE = /^(`{3,}|~{3,})/
-const FENCE_RESERVE = 32
+export const CUT_NOTE =
+  "_The action cut the report here, because the job summary has a size limit._"
 
 function bytes(text: string): number {
   return Buffer.byteLength(text, "utf8")
@@ -20,27 +19,24 @@ function logSection(log: string, ticks: string): string {
 }
 
 function cutNotice(count: number): string {
-  return `[... ${count} lines cut ...]`
+  return `[The action removed ${count} lines here.]`
 }
 
+/** The cut closes the open fence and then the open details elements. */
 function cutMarkdown(markdown: string, maxBytes: number): string {
   const note = `\n\n${CUT_NOTE}\n`
   const kept: string[] = []
-  let open: string | undefined
-  let used = bytes(note) + FENCE_RESERVE
+  let state: MarkdownState = { details: 0 }
+  let used = bytes(note)
   for (const line of markdown.split("\n")) {
+    const next = nextState(state, line)
     const size = bytes(line) + 1
-    if (used + size > maxBytes) break
+    if (used + size + bytes(closeState(next)) > maxBytes) break
     kept.push(line)
     used += size
-    const run = FENCE.exec(line)?.[1]
-    if (run === undefined) continue
-    if (open === undefined) open = run
-    else if (run[0] === open[0] && run.length >= open.length && line.trim() === run)
-      open = undefined
+    state = next
   }
-  if (open !== undefined) kept.push(open)
-  return `${kept.join("\n").trimEnd()}${note}`
+  return `${kept.join("\n").trimEnd()}${closeState(state)}${note}`
 }
 
 function cutLog(lines: readonly string[], budget: number): string {
@@ -65,9 +61,10 @@ function cutLog(lines: readonly string[], budget: number): string {
 }
 
 /**
- * When the text is larger than maxBytes, the function cuts lines from the
- * middle of the raw log. When the markdown alone is larger than maxBytes, the
- * function cuts the end of the markdown and leaves out the raw log.
+ * When the markdown with the raw log is larger than maxBytes, the function
+ * cuts lines from the middle of the raw log. When the markdown alone is
+ * larger than maxBytes, the function cuts the end of the markdown and leaves
+ * out the raw log.
  */
 export function buildSummary({
   markdown,

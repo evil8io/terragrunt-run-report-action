@@ -1,5 +1,6 @@
 import {
   hasChanges,
+  hasCounts,
   type ChangeKind,
   type Counts,
   type ResourceChange,
@@ -20,10 +21,38 @@ const GROUPS: readonly [ChangeKind, string][] = [
   ["read", "📖 Read"],
   ["import", "📥 Import"],
   ["forget", "👋 Forget"],
+  ["move", "📦 Move"],
   ["open", "👻 Ephemeral"],
 ]
 
-const KIND_LABELS = { plan: "Plan", apply: "Apply", run: "Run" } as const
+const KIND_LABELS = { plan: "Plan", apply: "Apply", destroy: "Destroy", run: "Run" } as const
+
+const FENCE_RUN = /^(`{3,}|~{3,})/
+
+/** The open fence and the number of open details elements at a line of the report. */
+export type MarkdownState = {
+  fence?: { line: string; run: string }
+  details: number
+}
+
+export function nextState(state: MarkdownState, line: string): MarkdownState {
+  const run = FENCE_RUN.exec(line)?.[1]
+  if (state.fence) {
+    const { run: open } = state.fence
+    const closes =
+      run !== undefined && run[0] === open[0] && run.length >= open.length && line.trim() === run
+    return closes ? { details: state.details } : state
+  }
+  if (run !== undefined) return { fence: { line, run }, details: state.details }
+  if (line.startsWith("<details")) return { details: state.details + 1 }
+  if (line === "</details>") return { details: Math.max(0, state.details - 1) }
+  return state
+}
+
+/** Returns the text that closes the open fence and the open details elements. */
+export function closeState(state: MarkdownState): string {
+  return `${state.fence ? `\n${state.fence.run}` : ""}${"\n\n</details>".repeat(state.details)}`
+}
 
 export function markerLine(header: string): string {
   return `<!-- terragrunt-run-report: ${header.replaceAll("-->", "-- >")} -->`
@@ -78,6 +107,7 @@ function unitsPhrase(report: RunReport): string {
   const parts = [plural(report.units.length, "unit")]
   if (report.changedUnits > 0) parts.push(`${report.changedUnits} with changes`)
   if (report.unchangedUnits > 0) parts.push(`${report.unchangedUnits} unchanged`)
+  if (report.uncountedUnits > 0) parts.push(`${report.uncountedUnits} without counts`)
   if (report.failedUnits > 0) parts.push(`${report.failedUnits} failed`)
   if (report.earlyExitUnits > 0) parts.push(plural(report.earlyExitUnits, "early exit", "s"))
   if (report.excludedUnits > 0) parts.push(`${report.excludedUnits} excluded`)
@@ -86,6 +116,7 @@ function unitsPhrase(report: RunReport): string {
 
 function totalsPhrase(report: RunReport): string {
   const { add, change, remove, import: imports, forget } = report.totals
+  if (report.kind === "destroy") return `${remove} destroyed.`
   if (report.kind === "apply") {
     const parts = [`${add} added`, `${change} changed`, `${remove} destroyed`]
     if (imports > 0) parts.unshift(`${imports} imported`)
@@ -107,7 +138,7 @@ export function resultText(unit: UnitReport): string {
   switch (unit.result) {
     case "succeeded":
       if (reason) return `✅ succeeded (${reason})`
-      return hasChanges(unit) ? "✅ succeeded" : "✅ no changes"
+      return hasChanges(unit) || !hasCounts(unit) ? "✅ succeeded" : "✅ no changes"
     case "failed":
       return reason ? `❌ failed (${reason})` : "❌ failed"
     case "early exit": {
@@ -122,16 +153,19 @@ export function resultText(unit: UnitReport): string {
   }
 }
 
+/** A failed unit without applied counts applied nothing of its planned counts. */
 function countCell(unit: UnitReport, key: keyof Counts, apply: boolean): string {
   const planned = unit.counts?.[key]
-  const applied = apply ? unit.appliedCounts?.[key] : undefined
-  if (planned === undefined) return applied === undefined ? "" : String(applied)
-  if (applied === undefined || applied === planned) return String(planned)
+  if (!apply) return planned === undefined ? "" : String(planned)
+  const applied =
+    unit.appliedCounts?.[key] ?? (unit.result === "failed" && planned !== undefined ? 0 : undefined)
+  if (applied === undefined) return ""
+  if (planned === undefined || applied === planned) return String(applied)
   return `${applied} of ${planned}`
 }
 
 function table(report: RunReport): string {
-  const apply = report.kind === "apply"
+  const apply = report.kind === "apply" || report.kind === "destroy"
   const rows = report.units.map((unit) => {
     const cells = [
       cell(code(unit.name)),
@@ -154,7 +188,7 @@ function outcomeText(change: ResourceChange): string {
     case "complete":
       return change.elapsedSeconds === undefined ? " ✅" : ` ✅ ${change.elapsedSeconds}s`
     case "errored":
-      return " ❌ errored"
+      return " ❌ failed"
     case "pending":
       return " ⏳ not applied"
     default:
@@ -164,6 +198,11 @@ function outcomeText(change: ResourceChange): string {
 
 function reasonText(change: ResourceChange): string | undefined {
   return change.reason ? `_→ ${markdown(change.reason)}_` : undefined
+}
+
+function listName(change: ResourceChange): string {
+  if (change.kind !== "move" || change.previousAddress === undefined) return code(change.address)
+  return `<code>${html(change.previousAddress)}</code> → <code>${html(change.address)}</code>`
 }
 
 function changeBlocks(changes: readonly ResourceChange[], expand: boolean): string[] {
@@ -176,7 +215,7 @@ function changeBlocks(changes: readonly ResourceChange[], expand: boolean): stri
   for (const change of changes) {
     const reason = reasonText(change)
     if (change.diff === undefined) {
-      list.push(`- ${code(change.address)}${outcomeText(change)}${reason ? ` ${reason}` : ""}`)
+      list.push(`- ${listName(change)}${outcomeText(change)}${reason ? ` ${reason}` : ""}`)
       continue
     }
     flush()
@@ -239,6 +278,9 @@ export function renderMarkdown(report: RunReport, options: RenderOptions): strin
     `${markerLine(options.header)}\n## ${options.header}`,
     `**${unitsPhrase(report)}** ${totalsPhrase(report)}`,
   ]
+  if (report.runError !== undefined && report.failedUnits === 0) {
+    parts.push("❌ Run failed", fence(report.runError))
+  }
   if (report.units.length > 0) parts.push(table(report))
   for (const unit of report.units) {
     if (hasSection(unit)) parts.push(section(unit, options.expand))

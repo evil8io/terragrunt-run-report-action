@@ -11,6 +11,7 @@ import {
   type UnitReport,
 } from "../src/model.ts"
 import { markerLine, renderMarkdown, resultText, statusLine } from "../src/render.ts"
+import { parseReport } from "../src/report.ts"
 
 const FIXTURES = fileURLToPath(new URL("./fixtures", import.meta.url))
 const OPTIONS = { header: "Terragrunt run report", expand: false }
@@ -48,6 +49,7 @@ function runReport(units: UnitReport[], kind: RunReport["kind"] = "plan"): RunRe
     excludedUnits: 0,
     changedUnits: 0,
     unchangedUnits: units.length,
+    uncountedUnits: 0,
     empty: false,
     failed: false,
   }
@@ -189,8 +191,30 @@ describe("renderMarkdown options and details", () => {
       OPTIONS,
     )
     expect(md).toContain("<summary><code>a.a</code> ✅ 3s</summary>")
-    expect(md).toContain("<summary><code>a.b</code> ❌ errored</summary>")
+    expect(md).toContain("<summary><code>a.b</code> ❌ failed</summary>")
     expect(md).toContain("- `a.c` ⏳ not applied")
+  })
+
+  it("renders a move as a list item with the previous and the new address", () => {
+    const md = renderMarkdown(
+      runReport([
+        unitReport({ changes: [{ address: "a.new", previousAddress: "a.old", kind: "move" }] }),
+      ]),
+      OPTIONS,
+    )
+    expect(md).toContain(
+      "<details><summary>📦 Move (1)</summary>\n\n- <code>a.old</code> → <code>a.new</code>\n\n</details>",
+    )
+  })
+
+  it("renders the run error under the status line when no unit failed", () => {
+    const report = runReport([], "run")
+    report.runError = "error occurred:\n\n* boom"
+    const md = renderMarkdown(report, OPTIONS)
+    expect(md).toContain(
+      "**Run: 0 units.** 0 to add, 0 to change, 0 to destroy.\n\n❌ Run failed\n\n```\nerror occurred:\n\n* boom\n```\n",
+    )
+    checkStructure(md)
   })
 })
 
@@ -232,6 +256,32 @@ describe("the unit table", () => {
     )
     expect(md).toContain("| `u` | ❌ failed | 1 of 2 | 0 | 1 |")
     expect(md).toContain("| `v` | ⏭️ early exit |  |  |  |")
+  })
+
+  it("shows no applied count of a unit without the apply line, and 0 when it failed", () => {
+    const md = renderMarkdown(
+      runReport(
+        [
+          unitReport({ result: "failed", counts: { add: 2, change: 0, remove: 0 } }),
+          unitReport({ name: "v", counts: { add: 1, change: 0, remove: 0 } }),
+        ],
+        "apply",
+      ),
+      OPTIONS,
+    )
+    expect(md).toContain("| `u` | ❌ failed | 0 of 2 | 0 | 0 |")
+    expect(md).toContain("| `v` | ✅ succeeded |  |  |  |")
+  })
+
+  it("renders a unit without counts as succeeded with empty count cells", () => {
+    const report = buildReport({
+      report: parseReport(JSON.stringify([{ Name: "u", Result: "succeeded", Cmd: "plan" }])),
+    })
+    const md = renderMarkdown(report, OPTIONS)
+    expect(md).toContain("| `u` | ✅ succeeded |  |  |  |")
+    expect(statusLine(report)).toBe(
+      "Plan: 1 unit, 1 without counts. 0 to add, 0 to change, 0 to destroy.",
+    )
   })
 })
 
@@ -284,6 +334,12 @@ describe("statusLine", () => {
     expect(statusLine(buildReport(sources("changes", "plan")))).toBe(
       "Plan: 6 units, 4 with changes, 2 unchanged. 6 to add, 0 to change, 6 to destroy.",
     )
+  })
+
+  it("names a destroy and its destroyed total", () => {
+    const report = runReport([], "destroy")
+    report.totals = { add: 0, change: 0, remove: 3, import: 0, forget: 0 }
+    expect(statusLine(report)).toBe("Destroy: 0 units. 3 destroyed.")
   })
 
   it("adds import and forget only when they are not zero", () => {

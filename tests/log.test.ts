@@ -54,6 +54,38 @@ describe("parseLog with the text format", () => {
     ])
   })
 
+  it("strips the binary name of --tf-path from STDOUT and STDERR lines only", () => {
+    const entries = parseLog(
+      [
+        "12:00:00.000 STDOUT [u] opentofu: terraform_data.a: Refreshing state...",
+        "12:00:00.000 STDERR [u] opentofu: Error: x",
+        "12:00:00.000 STDOUT [u] opentofu:",
+        "12:00:00.000 INFO   [u] opentofu: Initializing the backend...",
+      ].join("\n"),
+    )
+    expect(entries.map((e) => [e.unit, e.lines[0]])).toEqual([
+      ["u", "terraform_data.a: Refreshing state..."],
+      ["u", "Error: x"],
+      ["u", ""],
+      ["u", "opentofu: Initializing the backend..."],
+    ])
+  })
+
+  it("reads a unit name with brackets", () => {
+    const entries = parseLog(
+      [
+        "12:00:00.000 STDOUT [brkt[1]] tofu: Plan: 0 to add, 1 to change, 0 to destroy.",
+        "12:00:00.000 STDOUT [a] b] tofu: x",
+        "12:00:00.000 INFO   [brkt[1]] Downloading",
+      ].join("\n"),
+    )
+    expect(entries.map((e) => [e.unit, e.lines[0]])).toEqual([
+      ["brkt[1]", "Plan: 0 to add, 1 to change, 0 to destroy."],
+      ["a] b", "x"],
+      ["brkt[1]", "Downloading"],
+    ])
+  })
+
   it("accepts the terraform prefix", () => {
     const [entry] = parseLog(
       "12:00:00.000 STDOUT [u] terraform: Plan: 1 to add, 0 to change, 0 to destroy.",

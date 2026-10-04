@@ -91,7 +91,7 @@ jobs:
           comment: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
           pr-number: ${{ github.event.pull_request.number }}
 
-      - name: Remove the apply files of phase 2
+      - name: Remove the -json-into files of phase 2
         run: find .terragrunt-stack -name apply.json -path '*/.terragrunt-cache/*' -delete
 
       - name: Phase 3, plan

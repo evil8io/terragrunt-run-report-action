@@ -1,8 +1,8 @@
-import { readFileSync } from "node:fs"
-import { readApplyFiles, type ApplyFile, type UnitApply } from "./apply.ts"
+import { existsSync, readFileSync } from "node:fs"
+import { readApplyFiles, type ApplyFile, type HookOutcome, type UnitApply } from "./apply.ts"
 import { linesByUnit, parseLog, type LogEntry, type UnitOutput } from "./log.ts"
 import { readPlanDir, type UnitPlan } from "./plan.ts"
-import { readReportFile, type ReportEntry } from "./report.ts"
+import { parseReport, type ReportEntry } from "./report.ts"
 import {
   extractBlocks,
   extractOutputs,
@@ -14,9 +14,9 @@ import {
 } from "./text.ts"
 
 export type ChangeKind =
-  "create" | "update" | "replace" | "delete" | "read" | "import" | "forget" | "open"
+  "create" | "update" | "replace" | "delete" | "read" | "import" | "forget" | "move" | "open"
 
-/** "pending": the change was planned, but the apply never ran it to the end. */
+/** "pending": the plan has the change, but the apply did not complete it. */
 export type ApplyOutcome = "complete" | "errored" | "pending"
 
 export type Counts = {
@@ -29,9 +29,11 @@ export type Counts = {
 
 export type ResourceChange = {
   address: string
+  /** The address before the move. Only a move has it. */
+  previousAddress?: string
   kind: ChangeKind
   reason?: string
-  /** Diff lines for a fenced diff block, joined by newlines. */
+  /** The diff lines of a fenced diff block, joined by newlines. */
   diff?: string
   outcome?: ApplyOutcome
   elapsedSeconds?: number
@@ -66,7 +68,7 @@ export type UnitReport = {
 
 export type Totals = Required<Counts>
 
-export type RunKind = "plan" | "apply" | "run"
+export type RunKind = "plan" | "apply" | "destroy" | "run"
 
 export type RunReport = {
   kind: RunKind
@@ -77,6 +79,10 @@ export type RunReport = {
   excludedUnits: number
   changedUnits: number
   unchangedUnits: number
+  /** The units without changes and without counts, other than failed, early-exit, and excluded units. */
+  uncountedUnits: number
+  /** The text of the run error in the log. */
+  runError?: string
   empty: boolean
   failed: boolean
 }
@@ -87,6 +93,8 @@ export type Sources = {
   plans?: UnitPlan[] | undefined
   applies?: UnitApply[] | undefined
   report?: ReportEntry[] | undefined
+  /** The problems with the inputs that do not stop the report. */
+  warnings?: string[] | undefined
 }
 
 export type SourceFiles = {
@@ -96,24 +104,52 @@ export type SourceFiles = {
   reportFile?: string | undefined
 }
 
+function readInput(input: string, file: string): string {
+  try {
+    return readFileSync(file, "utf8")
+  } catch (error) {
+    throw new Error(`The action cannot read the input ${input}: ${(error as Error).message}`, {
+      cause: error,
+    })
+  }
+}
+
+/**
+ * A run that fails before the first unit writes no plan directory and no
+ * -json-into file, so a missing directory and an empty file list are warnings.
+ */
 export function loadSources(files: SourceFiles): Sources {
-  const sources: Sources = {}
-  if (files.logFile !== undefined) sources.log = parseLog(readFileSync(files.logFile, "utf8"))
-  if (files.planJsonDir !== undefined) sources.plans = readPlanDir(files.planJsonDir)
-  if (files.applyJsonFiles !== undefined) sources.applies = readApplyFiles(files.applyJsonFiles)
-  if (files.reportFile !== undefined) sources.report = readReportFile(files.reportFile)
+  const warnings: string[] = []
+  const sources: Sources = { warnings }
+  if (files.logFile !== undefined) sources.log = parseLog(readInput("log-file", files.logFile))
+  const { planJsonDir, applyJsonFiles } = files
+  if (planJsonDir !== undefined && existsSync(planJsonDir)) {
+    sources.plans = readPlanDir(planJsonDir)
+  } else if (planJsonDir !== undefined) {
+    warnings.push(`The directory of the input plan-json-dir does not exist: ${planJsonDir}`)
+  }
+  if (applyJsonFiles !== undefined && applyJsonFiles.length > 0) {
+    sources.applies = readApplyFiles(applyJsonFiles)
+  } else if (applyJsonFiles !== undefined) {
+    warnings.push("The patterns of the input apply-json-files match no file.")
+  }
+  if (files.reportFile !== undefined) {
+    sources.report = parseReport(readInput("report-file", files.reportFile), files.reportFile)
+  }
   return sources
 }
 
-const APPLY_KINDS: ReadonlySet<string> = new Set<ChangeKind>([
-  "create",
-  "update",
-  "replace",
-  "delete",
-  "read",
-  "import",
-  "forget",
-  "open",
+const APPLY_ACTIONS: ReadonlyMap<string, ChangeKind> = new Map<string, ChangeKind>([
+  ["create", "create"],
+  ["update", "update"],
+  ["replace", "replace"],
+  ["delete", "delete"],
+  ["read", "read"],
+  ["import", "import"],
+  ["remove", "forget"],
+  ["forget", "forget"],
+  ["move", "move"],
+  ["open", "open"],
 ])
 
 /** The header phrase of a tofu diff block already states these reasons. */
@@ -126,9 +162,25 @@ const IMPLIED_REASONS: ReadonlySet<string> = new Set([
   "requested",
 ])
 
+/** The header phrase of a forget already states this reason. */
+const FORGET_REASON = "delete_because_no_resource_config"
+
+/** Tofu writes no apply hooks for these kinds. */
+const HOOKLESS_KINDS: ReadonlySet<ChangeKind> = new Set(["import", "forget", "move"])
+
 const TERMINAL_RESULTS: ReadonlySet<UnitResult> = new Set(["failed", "early exit", "excluded"])
 
-type Draft = { address: string; kind: ChangeKind; jsonReason?: string | undefined }
+/** Tofu did not run in these units, so a -json-into file or a plan file of the unit is stale. */
+const SKIPPED_RESULTS: ReadonlySet<UnitResult> = new Set(["early exit", "excluded"])
+
+const RUN_ERROR = /^(?:Run failed|error occurred)/
+
+type Draft = {
+  address: string
+  previousAddress?: string | undefined
+  kind: ChangeKind
+  jsonReason?: string | undefined
+}
 
 type UnitSources = {
   output: UnitOutput | undefined
@@ -141,7 +193,11 @@ function compare(a: string, b: string): number {
   return a < b ? -1 : a > b ? 1 : 0
 }
 
-function planKind(actions: readonly string[], importing: boolean): ChangeKind | undefined {
+function planKind(
+  actions: readonly string[],
+  importing: boolean,
+  moved: boolean,
+): ChangeKind | undefined {
   switch (actions.join(",")) {
     case "create":
       return "create"
@@ -160,7 +216,7 @@ function planKind(actions: readonly string[], importing: boolean): ChangeKind | 
     case "open":
       return "open"
     case "no-op":
-      return importing ? "import" : undefined
+      return importing ? "import" : moved ? "move" : undefined
     default:
       return undefined
   }
@@ -205,24 +261,31 @@ function planSummaryLine(counts: Counts): string {
   return `Plan: ${imports}${counts.add} to add, ${counts.change} to change, ${counts.remove} to destroy${forgets}.`
 }
 
-function humanReason(reason: string | undefined): string | undefined {
+function humanReason(reason: string | undefined, kind: ChangeKind): string | undefined {
   if (!reason || IMPLIED_REASONS.has(reason)) return undefined
+  if (kind === "forget" && reason === FORGET_REASON) return undefined
   return reason.replaceAll("_", " ")
+}
+
+function isApply(kind: RunKind): boolean {
+  return kind === "apply" || kind === "destroy"
 }
 
 function jsonChanges(kind: RunKind, sources: UnitSources): Draft[] | undefined {
   const fromPlan = sources.plan?.resourceChanges.flatMap((change): Draft[] => {
-    const changeKind = planKind(change.actions, change.importing)
-    return changeKind
-      ? [{ address: change.address, kind: changeKind, jsonReason: change.actionReason }]
-      : []
+    const moved = change.previousAddress !== undefined
+    const changeKind = planKind(change.actions, change.importing, moved)
+    if (!changeKind) return []
+    const { address, previousAddress, actionReason: jsonReason } = change
+    return [{ address, previousAddress, kind: changeKind, jsonReason }]
   })
-  const fromApply = sources.apply?.planned.flatMap((change): Draft[] =>
-    APPLY_KINDS.has(change.action)
-      ? [{ address: change.address, kind: change.action as ChangeKind, jsonReason: change.reason }]
-      : [],
-  )
-  return kind === "apply" ? (fromApply ?? fromPlan) : (fromPlan ?? fromApply)
+  const fromApply = sources.apply?.planned.flatMap((change): Draft[] => {
+    const changeKind = APPLY_ACTIONS.get(change.action)
+    if (!changeKind) return []
+    const { address, previousAddress, reason: jsonReason } = change
+    return [{ address, previousAddress, kind: changeKind, jsonReason }]
+  })
+  return isApply(kind) ? (fromApply ?? fromPlan) : (fromPlan ?? fromApply)
 }
 
 function changeBlocks(stdout: readonly string[], known: Iterable<string>): Map<string, DiffBlock> {
@@ -233,17 +296,28 @@ function changeBlocks(stdout: readonly string[], known: Iterable<string>): Map<s
   return blocks
 }
 
+function applyOutcome(kind: ChangeKind, hook: HookOutcome | undefined, apply: UnitApply) {
+  if (hook?.outcome === "complete" || hook?.outcome === "errored") return hook.outcome
+  return HOOKLESS_KINDS.has(kind) && apply.applyCounts !== undefined ? "complete" : "pending"
+}
+
 function toChange(draft: Draft, block: DiffBlock | undefined, apply: UnitApply | undefined) {
   const change: ResourceChange = { address: draft.address, kind: draft.kind }
   const reason =
-    block && block.reasons.length > 0 ? block.reasons.join("; ") : humanReason(draft.jsonReason)
+    block && block.reasons.length > 0
+      ? block.reasons.join("; ")
+      : humanReason(draft.jsonReason, draft.kind)
   if (reason) change.reason = reason
-  const diff = block ? formatDiff(block.body) : []
-  if (diff.length > 0) change.diff = diff.join("\n")
+  if (draft.kind === "move") {
+    const previousAddress = draft.previousAddress ?? block?.previousAddress
+    if (previousAddress !== undefined) change.previousAddress = previousAddress
+  } else {
+    const diff = block ? formatDiff(block.body) : []
+    if (diff.length > 0) change.diff = diff.join("\n")
+  }
   if (apply) {
     const hook = apply.outcomes.get(draft.address)
-    const outcome =
-      hook?.outcome === "complete" || hook?.outcome === "errored" ? hook.outcome : "pending"
+    const outcome = applyOutcome(draft.kind, hook, apply)
     change.outcome = outcome
     if (outcome !== "pending" && hook?.elapsedSeconds !== undefined) {
       change.elapsedSeconds = hook.elapsedSeconds
@@ -261,7 +335,13 @@ function outputNamesDiff(actions: ReadonlyMap<string, string> | undefined): stri
   return lines.length > 0 ? lines.join("\n") : undefined
 }
 
-function buildUnit(name: string, kind: RunKind, sources: UnitSources): UnitReport {
+function buildUnit(name: string, kind: RunKind, given: UnitSources): UnitReport {
+  const entry =
+    given.entries.find((candidate) => candidate.result === "failed") ?? given.entries.at(-1)
+  const sources =
+    entry && SKIPPED_RESULTS.has(entry.result)
+      ? { ...given, plan: undefined, apply: undefined }
+      : given
   const stdout = sources.output?.stdout ?? []
   const stderr = stderrText(sources.output?.stderr ?? [])
   const drafts = jsonChanges(kind, sources)
@@ -270,6 +350,7 @@ function buildUnit(name: string, kind: RunKind, sources: UnitSources): UnitRepor
     drafts ??
     [...blocks.values()].map((block): Draft => ({
       address: block.address,
+      previousAddress: block.previousAddress,
       kind: phraseKind(block.phrase) ?? "update",
     }))
   )
@@ -284,10 +365,9 @@ function buildUnit(name: string, kind: RunKind, sources: UnitSources): UnitRepor
     (sources.plan && planCounts(sources.plan)) ??
     logPlanCounts ??
     (changes.length > 0 ? kindCounts(changes) : undefined)
-  const appliedCounts =
-    kind === "apply"
-      ? (sources.apply?.applyCounts ?? sources.apply?.hookCounts ?? logApplyCounts)
-      : undefined
+  const appliedCounts = isApply(kind)
+    ? (sources.apply?.applyCounts ?? sources.apply?.hookCounts ?? logApplyCounts)
+    : undefined
   const summaryLine =
     summaries.at(-1)?.line ??
     sources.apply?.lastSummary ??
@@ -300,8 +380,6 @@ function buildUnit(name: string, kind: RunKind, sources: UnitSources): UnitRepor
   const diagnostics = sources.apply?.diagnostics ?? []
 
   const unit: UnitReport = { name, result: "succeeded", changes, diagnostics }
-  const entry =
-    sources.entries.find((candidate) => candidate.result === "failed") ?? sources.entries.at(-1)
   if (entry) {
     unit.result = entry.result
     if (entry.reason) unit.reason = entry.reason
@@ -322,12 +400,27 @@ function buildUnit(name: string, kind: RunKind, sources: UnitSources): UnitRepor
   return unit
 }
 
-function runKind(sources: Sources): RunKind {
-  const cmd = sources.report?.[0]?.cmd
-  if (cmd === "plan" || cmd === "apply") return cmd
+function runKind(sources: Sources, outputs: ReadonlyMap<string, UnitOutput>): RunKind {
+  const cmd = sources.report?.find((entry) => entry.cmd !== undefined)?.cmd
+  if (cmd === "plan" || cmd === "apply" || cmd === "destroy") return cmd
   if (sources.plans) return "plan"
   if (sources.applies) return "apply"
+  const stdout = [...outputs.values()].flatMap((output) => output.stdout)
+  if (stdout.some((line) => line.startsWith("Destroy complete! "))) return "destroy"
+  if (stdout.some((line) => line.startsWith("Apply complete! "))) return "apply"
   return "run"
+}
+
+/**
+ * Returns the last top-level error of a failed run. Without units, any
+ * top-level error is a run error, because the run failed before the first unit.
+ */
+function runError(log: readonly LogEntry[] | undefined, noUnits: boolean): string | undefined {
+  const errors = (log ?? []).filter((entry) => entry.unit === null && entry.level === "ERROR")
+  const entry =
+    errors.findLast((candidate) => RUN_ERROR.test(candidate.lines[0] ?? "")) ??
+    (noUnits ? errors.at(-1) : undefined)
+  return entry ? stderrText(entry.lines) : undefined
 }
 
 function countsAreZero(counts: Counts | undefined): boolean {
@@ -335,7 +428,16 @@ function countsAreZero(counts: Counts | undefined): boolean {
 }
 
 export function hasChanges(unit: UnitReport): boolean {
-  return unit.changes.length > 0 || unit.outputsDiff !== undefined || !countsAreZero(unit.counts)
+  return (
+    unit.changes.length > 0 ||
+    unit.outputsDiff !== undefined ||
+    !countsAreZero(unit.counts) ||
+    !countsAreZero(unit.appliedCounts)
+  )
+}
+
+export function hasCounts(unit: UnitReport): boolean {
+  return unit.counts !== undefined || unit.appliedCounts !== undefined
 }
 
 export function buildReport(sources: Sources): RunReport {
@@ -346,7 +448,7 @@ export function buildReport(sources: Sources): RunReport {
   for (const entry of sources.report ?? []) {
     entries.set(entry.name, [...(entries.get(entry.name) ?? []), entry])
   }
-  const kind = runKind(sources)
+  const kind = runKind(sources, outputs)
   const names = [
     ...new Set([...entries.keys(), ...plans.keys(), ...applies.keys(), ...outputs.keys()]),
   ].sort(compare)
@@ -361,7 +463,7 @@ export function buildReport(sources: Sources): RunReport {
 
   const totals: Totals = { add: 0, change: 0, remove: 0, import: 0, forget: 0 }
   for (const unit of units) {
-    const counts = (kind === "apply" ? unit.appliedCounts : undefined) ?? unit.counts
+    const counts = isApply(kind) ? unit.appliedCounts : unit.counts
     if (!counts) continue
     totals.add += counts.add
     totals.change += counts.change
@@ -370,19 +472,25 @@ export function buildReport(sources: Sources): RunReport {
     totals.forget += counts.forget ?? 0
   }
   const count = (predicate: (unit: UnitReport) => boolean) => units.filter(predicate).length
+  const nonTerminal = (unit: UnitReport) => !TERMINAL_RESULTS.has(unit.result)
   const failedUnits = count((unit) => unit.result === "failed")
   const earlyExitUnits = count((unit) => unit.result === "early exit")
-  const failed = failedUnits + earlyExitUnits > 0
-  return {
+  const uncountedUnits = count((unit) => nonTerminal(unit) && !hasChanges(unit) && !hasCounts(unit))
+  const error = runError(sources.log, units.length === 0)
+  const failed = failedUnits + earlyExitUnits > 0 || error !== undefined
+  const report: RunReport = {
     kind,
     units,
     totals,
     failedUnits,
     earlyExitUnits,
     excludedUnits: count((unit) => unit.result === "excluded"),
-    changedUnits: count((unit) => !TERMINAL_RESULTS.has(unit.result) && hasChanges(unit)),
-    unchangedUnits: count((unit) => !TERMINAL_RESULTS.has(unit.result) && !hasChanges(unit)),
-    empty: !failed && !units.some(hasChanges),
+    changedUnits: count((unit) => nonTerminal(unit) && hasChanges(unit)),
+    unchangedUnits: count((unit) => nonTerminal(unit) && !hasChanges(unit) && hasCounts(unit)),
+    uncountedUnits,
+    empty: !failed && uncountedUnits === 0 && !units.some(hasChanges),
     failed,
   }
+  if (error !== undefined) report.runError = error
+  return report
 }

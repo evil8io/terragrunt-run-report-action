@@ -69,7 +69,7 @@ describe("parseApply", () => {
     expect(delta.skippedLines).toBe(0)
   })
 
-  it("reads a unit that failed in its plan step", () => {
+  it("reads a unit that failed at plan time", () => {
     const zeta = unitApply("failures", "zeta")
     expect(zeta.planned).toHaveLength(1)
     expect(zeta.outcomes.size).toBe(0)

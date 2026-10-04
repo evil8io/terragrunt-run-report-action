@@ -1,5 +1,7 @@
-// The chunking is a port of borchero/terraform-plan-comment (MIT license).
+// The code that splits the report into comments comes from
+// borchero/terraform-plan-comment (MIT license).
 import type { getOctokit } from "@actions/github"
+import { closeState, nextState, type MarkdownState } from "./render.ts"
 
 export type Octokit = ReturnType<typeof getOctokit>
 
@@ -12,40 +14,82 @@ export type CommentTarget = {
   marker: string
 }
 
-const CONTINUATION = "\n\n*(continued in next comment)*"
-const DETAILS_END = "</details>"
+const CONTINUATION = "\n\n*(The report continues in the next comment.)*"
+const PART_ONE = " (Part 1)"
 
+type Cut = { end: number; state: MarkdownState }
+
+function isBlank(line: string | undefined): boolean {
+  return line !== undefined && line.trim() === ""
+}
+
+/**
+ * Returns the last line of the part. The preferred cut is after a closing
+ * details tag, then before a blank line, then after any line.
+ */
+function findCut(
+  lines: readonly string[],
+  start: number,
+  initial: MarkdownState,
+  budget: number,
+): Cut | undefined {
+  const best: (Cut | undefined)[] = [undefined, undefined, undefined]
+  let state = initial
+  let length = -1
+  for (let i = start; i < lines.length; i++) {
+    const line = lines[i] ?? ""
+    const before = state
+    state = nextState(before, line)
+    length += line.length + 1
+    if (length > budget) break
+    if (length + closeState(state).length > budget) continue
+    const cut = { end: i, state }
+    if (!before.fence && line === "</details>") best[0] = cut
+    else if (!state.fence && isBlank(lines[i + 1])) best[1] = cut
+    else best[2] = cut
+  }
+  return best[0] ?? best[1] ?? best[2]
+}
+
+/**
+ * Splits the report into comments at line boundaries. A part closes the open
+ * fence and the open details elements. The next part opens the fence again,
+ * but not the details elements.
+ */
 export function chunkComment(content: string, marker: string, maxChunkSize = 65000): string[] {
-  const heading = content.split("\n").find((line) => line.startsWith("## ")) ?? "##"
-  const firstPrefix = `${marker}\n${heading}`
-  const partOneSuffix = " (Part 1)"
+  if (content.length <= maxChunkSize) return [content]
+  const lines = content.split("\n")
+  const heading = lines.find((line) => line.startsWith("## ")) ?? "##"
+  const first = `${marker}\n${heading}`
+  const labelled = content.startsWith(first)
   const chunks: string[] = []
-  let remaining = content
-  for (let part = 1; remaining.length > 0; part++) {
-    const prefix = part > 1 ? `${marker}\n${heading} (Part ${part})\n\n` : ""
-    let max = maxChunkSize - prefix.length
-    if (remaining.length <= max) {
-      chunks.push(prefix + remaining)
+  let start = 0
+  let fence: MarkdownState["fence"]
+  for (let part = 1; start < lines.length; part++) {
+    const reopen = fence ? `${fence.line}\n` : ""
+    const prefix = part === 1 ? "" : `${marker}\n${heading} (Part ${part})\n\n${reopen}`
+    if (part > 1 && prefix.length + lines.slice(start).join("\n").length <= maxChunkSize) {
+      chunks.push(prefix + lines.slice(start).join("\n"))
       break
     }
-    max -= CONTINUATION.length
-    if (part === 1) max -= partOneSuffix.length
-
-    let split = remaining.lastIndexOf(DETAILS_END, max - DETAILS_END.length)
-    if (split !== -1) {
-      split += DETAILS_END.length
-    } else {
-      split = remaining.lastIndexOf("\n\n", max - 2)
-      if (split === -1) split = max
+    const initial: MarkdownState = fence ? { fence, details: 0 } : { details: 0 }
+    const label = part === 1 && labelled ? PART_ONE.length : 0
+    const budget = maxChunkSize - prefix.length - label - CONTINUATION.length
+    let cut = findCut(lines, start, initial, budget)
+    if (!cut) {
+      const line = lines[start] ?? ""
+      const size = Math.max(1, budget - closeState(initial).length)
+      lines.splice(start, 1, line.slice(0, size), line.slice(size))
+      cut = { end: start, state: nextState(initial, lines[start] ?? "") }
     }
-    if (split <= 0) split = Math.max(1, max)
-
-    let chunk = prefix + remaining.slice(0, split) + CONTINUATION
-    if (part === 1 && chunk.startsWith(firstPrefix)) {
-      chunk = firstPrefix + partOneSuffix + chunk.slice(firstPrefix.length)
-    }
+    let body = lines.slice(start, cut.end + 1).join("\n")
+    if (!cut.state.fence) body = body.trimEnd()
+    let chunk = prefix + body + closeState(cut.state) + CONTINUATION
+    if (part === 1 && labelled) chunk = first + PART_ONE + chunk.slice(first.length)
     chunks.push(chunk)
-    remaining = remaining.slice(split).trimStart()
+    fence = cut.state.fence
+    start = cut.end + 1
+    while (!fence && isBlank(lines[start])) start++
   }
   return chunks
 }

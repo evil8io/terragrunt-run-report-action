@@ -44,7 +44,7 @@ export function parseReport(text: string, source = "report"): ReportEntry[] {
   const parsed = ReportSchema.safeParse(value)
   if (!parsed.success) {
     throw new Error(
-      `${source}: the file is not a terragrunt run report:\n${z.prettifyError(parsed.error)}`,
+      `${source}: the file is not a terragrunt report file:\n${z.prettifyError(parsed.error)}`,
     )
   }
   return parsed.data.map((raw) => {

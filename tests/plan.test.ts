@@ -6,7 +6,7 @@ const dir = (scenario: string) =>
   fileURLToPath(new URL(`./fixtures/${scenario}/plan/plans`, import.meta.url))
 
 describe("readPlanDir", () => {
-  it("labels each tfplan.json with its parent directory", () => {
+  it("labels each tfplan.json file with its parent directory", () => {
     expect(readPlanDir(dir("changes")).map((plan) => plan.unit)).toEqual([
       ".terragrunt-stack/alpha",
       ".terragrunt-stack/beta",
@@ -76,7 +76,7 @@ describe("parsePlan", () => {
 
   it("throws with the source for a file that is not a plan", () => {
     expect(() => parsePlan('{"resource_changes": [{}]}', "u", "x/tfplan.json")).toThrow(
-      /x\/tfplan.json: the file is not a tofu plan JSON/,
+      /x\/tfplan.json: the file is not a tofu plan in JSON format/,
     )
   })
 })

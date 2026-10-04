@@ -44,7 +44,7 @@ describe("extractBlocks", () => {
       '      + key = "this is it"',
       "    }",
     ]
-    expect(extractBlocks(lines)[0]?.address).toBe('aws_s3_object.this["this')
+    expect(extractBlocks(lines)[0]?.address).toBe('aws_s3_object.this["this is it"]')
     expect(extractBlocks(lines, ['aws_s3_object.this["this is it"]'])[0]).toEqual({
       address: 'aws_s3_object.this["this is it"]',
       phrase: "will be created",
@@ -53,7 +53,7 @@ describe("extractBlocks", () => {
     })
   })
 
-  it("falls back to the header pattern when no known address matches", () => {
+  it("uses the header pattern when no known address matches", () => {
     const lines = [
       "  # null_resource.a will be created",
       '  + resource "null_resource" "a" {',
@@ -89,6 +89,51 @@ describe("extractBlocks", () => {
 
   it("skips a header without a resource line", () => {
     expect(extractBlocks(["  # local_file.a will be created", "Plan: 1 to add"])).toEqual([])
+  })
+
+  it.each([
+    ['a.b["x will be y"]', "will be created"],
+    ['a.b["it is here"]', "must be replaced"],
+    ['a.b["k has v"]', "will be destroyed"],
+    ['a.b["you must"]', "will be updated in-place"],
+    ['a.b["x is y"]', "will be removed from the Terraform state but will not be destroyed"],
+  ])("reads the address %s before the phrase %j without known addresses", (address, phrase) => {
+    const lines = [`  # ${address} ${phrase}`, '  ~ resource "a" "b" {', "    }"]
+    expect(extractBlocks(lines)[0]).toMatchObject({ address, phrase })
+  })
+
+  it("reads a removed block with the dot marker and the closing brace in column 0", () => {
+    const lines = [
+      "  # terraform_data.gone[0] will be removed from the OpenTofu state but will not be destroyed",
+      '  . resource "terraform_data" "gone" {',
+      '    id     = "a"',
+      "}",
+      "  # terraform_data.next will be created",
+      '  + resource "terraform_data" "next" {',
+      "    }",
+    ]
+    const blocks = extractBlocks(lines)
+    expect(blocks.map((b) => [b.address, phraseKind(b.phrase)])).toEqual([
+      ["terraform_data.gone[0]", "forget"],
+      ["terraform_data.next", "create"],
+    ])
+    expect(blocks[0]?.body).toEqual(['    id     = "a"'])
+  })
+
+  it("reads the new address and the previous address of a move", () => {
+    const lines = [
+      "  # terraform_data.old[0] has moved to terraform_data.new[0]",
+      '    resource "terraform_data" "new" {',
+      '        id = "a"',
+      "    }",
+    ]
+    const expected = {
+      address: "terraform_data.new[0]",
+      previousAddress: "terraform_data.old[0]",
+      phrase: "has moved to terraform_data.new[0]",
+    }
+    expect(extractBlocks(lines)[0]).toMatchObject(expected)
+    expect(extractBlocks(lines, ["terraform_data.new[0]"])[0]).toMatchObject(expected)
   })
 
   it("ends a block without a closing brace at the next line in column 0", () => {
@@ -128,6 +173,36 @@ describe("formatDiff", () => {
       '      "c" = "d"',
       "  }",
       "  # (3 unchanged attributes hidden)",
+    ])
+  })
+
+  it("keeps the YAML list items of a heredoc as context lines", () => {
+    expect(
+      formatDiff([
+        "      ~ content = <<-EOT # forces replacement",
+        "            containers:",
+        "              - name: app",
+        "          -     image: app:1",
+        "          +     image: app:2",
+        "            args:",
+        "              - --flag",
+        "              ~ tilde",
+        "              + plus",
+        "        EOT",
+        '      ~ id      = "a" -> (known after apply)',
+      ]),
+    ).toEqual([
+      "! content = <<-EOT # forces replacement",
+      "      containers:",
+      "        - name: app",
+      "-         image: app:1",
+      "+         image: app:2",
+      "      args:",
+      "        - --flag",
+      "        ~ tilde",
+      "        + plus",
+      "  EOT",
+      '! id      = "a" -> (known after apply)',
     ])
   })
 
@@ -212,6 +287,9 @@ describe("phraseKind", () => {
     ["will be read during apply", "read"],
     ["will be imported", "import"],
     ["will no longer be managed by OpenTofu, but will not be destroyed", "forget"],
+    ["will be removed from the OpenTofu state but will not be destroyed", "forget"],
+    ["has moved to a.b", "move"],
+    ["has moved to a.replaced", "move"],
     ["has changed", undefined],
     ["has been deleted", undefined],
   ])("maps %j to %s", (phrase, kind) => {

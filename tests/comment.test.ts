@@ -5,9 +5,11 @@ import {
   deleteComments,
   type Octokit,
 } from "../src/comment.ts"
+import type { RunReport, UnitReport } from "../src/model.ts"
+import { markerLine, renderMarkdown } from "../src/render.ts"
 
 const MARKER = "<!-- terragrunt-run-report: Report -->"
-const CONTINUED = "*(continued in next comment)*"
+const CONTINUED = "*(The report continues in the next comment.)*"
 
 function content(sections: number, size: number): string {
   const section = (n: number) =>
@@ -45,10 +47,54 @@ describe("chunkComment", () => {
 
   it("splits at a paragraph boundary without a details tag", () => {
     const text = `${MARKER}\n## Report\n\n${"a".repeat(200)}\n\n${"b".repeat(200)}`
-    const chunks = chunkComment(text, MARKER, 300)
+    const chunks = chunkComment(text, MARKER, 320)
     expect(chunks).toHaveLength(2)
     expect(chunks[0]?.endsWith(`${"a".repeat(200)}\n\n${CONTINUED}`)).toBe(true)
     expect(chunks[1]).toBe(`${MARKER}\n## Report (Part 2)\n\n${"b".repeat(200)}`)
+  })
+
+  it("splits a diff larger than one comment at line boundaries with balanced fences", () => {
+    const diff = Array.from({ length: 2500 }, (_, i) => `+ "key${i}" = "${"v".repeat(20)}"`)
+    const unit = (name: string, lines: string[]): UnitReport => ({
+      name,
+      result: "succeeded",
+      changes: [{ address: "helm_release.big", kind: "update", diff: lines.join("\n") }],
+      diagnostics: [],
+      counts: { add: 0, change: 1, remove: 0 },
+    })
+    const report: RunReport = {
+      kind: "plan",
+      units: [unit("a", diff), unit("b", ["! small = 1 -> 2"])],
+      totals: { add: 0, change: 2, remove: 0, import: 0, forget: 0 },
+      failedUnits: 0,
+      earlyExitUnits: 0,
+      excludedUnits: 0,
+      changedUnits: 2,
+      unchangedUnits: 0,
+      uncountedUnits: 0,
+      empty: false,
+      failed: false,
+    }
+    const markdown = renderMarkdown(report, { header: "Report", expand: false })
+    const chunks = chunkComment(markdown, markerLine("Report"))
+    expect(chunks.length).toBeGreaterThan(1)
+    const lines = new Set<string>()
+    let headings = 0
+    for (const chunk of chunks) {
+      expect(chunk.length).toBeLessThanOrEqual(65000)
+      let open = false
+      for (const line of chunk.split("\n")) {
+        lines.add(line)
+        if (line.startsWith("```")) open = !open
+        if (line === "### `b`") {
+          expect(open).toBe(false)
+          headings++
+        }
+      }
+      expect(open).toBe(false)
+    }
+    expect(headings).toBe(1)
+    for (const line of diff) expect(lines.has(line)).toBe(true)
   })
 
   it("splits inside a paragraph that is larger than a chunk", () => {

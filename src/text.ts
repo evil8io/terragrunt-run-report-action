@@ -2,6 +2,8 @@ import type { ChangeKind, Counts } from "./model.ts"
 
 export type DiffBlock = {
   address: string
+  /** The address before a move. */
+  previousAddress?: string
   phrase: string
   reasons: string[]
   body: string[]
@@ -13,16 +15,40 @@ export type SummaryLine = {
   counts?: Counts
 }
 
-const HEADER = /^ {2}# ([^\s(].*?) ((?:will|must|is|has) .*)$/
+const PRODUCT = "(?:OpenTofu|Terraform)"
+const PHRASES = [
+  "will be created",
+  "will be destroyed",
+  "will be updated in-place",
+  "must be replaced",
+  "is tainted, so must be replaced",
+  "will be replaced, as requested",
+  "will be replaced due to changes in replace_triggered_by",
+  "will be read during apply",
+  "will be imported",
+  `will be removed from the ${PRODUCT} state but will not be destroyed`,
+  `will no longer be managed by ${PRODUCT}, but will not be destroyed`,
+  "has moved to \\S.*",
+  "will be opened during apply",
+]
+const PHRASE = new RegExp(`^(.+?) (${PHRASES.join("|")})$`)
+const HEADER = /^([^\s(].*?) ((?:will|must|is|has) .*)$/
+const MOVED = "has moved to "
 const COMMENT = /^ {2}# (.*)$/
-const RESOURCE = /^\s*(?:(?:\+|-|~|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/
+const RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/
 const BLOCK_END = "    }"
 const MARKER = /^(\s*)([+~-])( .*)$/
+const HEREDOC_START = /^( *)(?:([+~-]) )?\S.*= <<-?EOT(?: #.*)?$/
 
-function matchHeader(
-  line: string,
-  known: ReadonlySet<string>,
-): { address: string; phrase: string } | undefined {
+type Header = { address: string; previousAddress?: string; phrase: string }
+
+/** A move header names the old address first and the new address in the phrase. */
+function toHeader(before: string, phrase: string): Header {
+  if (!phrase.startsWith(MOVED)) return { address: before, phrase }
+  return { address: phrase.slice(MOVED.length), previousAddress: before, phrase }
+}
+
+function matchHeader(line: string, known: ReadonlySet<string>): Header | undefined {
   if (!line.startsWith("  # ") || line.startsWith("  # (")) return undefined
   const rest = line.slice(4)
   let address: string | undefined
@@ -30,9 +56,14 @@ function matchHeader(
     const candidate = rest.slice(0, space)
     if (known.has(candidate)) address = candidate
   }
-  if (address !== undefined) return { address, phrase: rest.slice(address.length + 1) }
-  const match = HEADER.exec(line)
-  return match ? { address: match[1] ?? "", phrase: match[2] ?? "" } : undefined
+  if (address !== undefined) return toHeader(address, rest.slice(address.length + 1))
+  const moved = ` ${MOVED}`
+  for (let at = rest.indexOf(moved); at !== -1; at = rest.indexOf(moved, at + 1)) {
+    if (known.has(rest.slice(at + moved.length)))
+      return toHeader(rest.slice(0, at), rest.slice(at + 1))
+  }
+  const match = PHRASE.exec(rest) ?? HEADER.exec(rest)
+  return match ? toHeader(match[1] ?? "", match[2] ?? "") : undefined
 }
 
 function endsBody(line: string): boolean {
@@ -85,30 +116,63 @@ export function extractBlocks(
 }
 
 export function phraseKind(phrase: string): ChangeKind | undefined {
+  if (phrase.startsWith("has moved to ")) return "move"
   if (phrase.includes("replaced")) return "replace"
   if (phrase.startsWith("will be created")) return "create"
   if (phrase.startsWith("will be destroyed")) return "delete"
   if (phrase.startsWith("will be updated in-place")) return "update"
   if (phrase.startsWith("will be read during apply")) return "read"
   if (phrase.startsWith("will be imported")) return "import"
+  if (phrase.startsWith("will be removed from the")) return "forget"
   if (phrase.startsWith("will no longer be managed")) return "forget"
   if (phrase.startsWith("will be opened")) return "open"
   return undefined
 }
 
+function moveMarker(spaces: string, marker: string, rest: string): string {
+  return `${marker === "~" ? "!" : marker}${spaces}${rest}`
+}
+
+type Heredoc = { changed: RegExp; end: RegExp }
+
+/**
+ * Tofu prints the content of a heredoc at 6 columns right of the attribute
+ * marker, the marker of a changed content line at 4 columns, and the
+ * terminator at 2 columns.
+ */
+function heredoc(line: string): Heredoc | undefined {
+  const match = HEREDOC_START.exec(line)
+  if (!match) return undefined
+  const [, spaces = "", marker] = match
+  const column = Math.max(0, marker === undefined ? spaces.length - 2 : spaces.length)
+  return {
+    changed: new RegExp(`^( {${column + 4}})([+~-])( .*)$`),
+    end: new RegExp(`^ {0,${column + 2}}EOT\\b`),
+  }
+}
+
+// The diff format comes from borchero/terraform-plan-comment (MIT license).
 /**
  * Formats tofu diff lines for a fenced diff block. Tofu indents resource
- * attributes by 6 and output values by 2. GitHub colours only a marker in
- * column 0, and it has no colour for "~", so "~" becomes "!".
+ * attributes by 6 spaces and output values by 2 spaces. GitHub colours only a
+ * marker in column 0, and it has no colour for "~", so "~" becomes "!".
  */
 export function formatDiff(lines: readonly string[], indent = 6): string[] {
   const prefix = " ".repeat(indent)
+  let open: Heredoc | undefined
   return lines.map((raw) => {
     const line = raw.startsWith(prefix) ? raw.slice(indent) : raw
+    if (open) {
+      if (open.end.test(line)) {
+        open = undefined
+        return line
+      }
+      const changed = open.changed.exec(line)
+      return changed ? moveMarker(changed[1] ?? "", changed[2] ?? "", changed[3] ?? "") : line
+    }
+    open = heredoc(line)
     const match = MARKER.exec(line)
-    if (!match) return line
-    const [, spaces = "", marker = "", rest = ""] = match
-    return `${marker === "~" ? "!" : marker}${spaces}${rest}`
+    return match ? moveMarker(match[1] ?? "", match[2] ?? "", match[3] ?? "") : line
   })
 }
 

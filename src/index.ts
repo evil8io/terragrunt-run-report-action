@@ -13,16 +13,16 @@ async function run(): Promise<void> {
     inputs.applyJsonFiles.length > 0
       ? await resolveApplyFiles(inputs.applyJsonFiles, inputs.workingDirectory)
       : undefined
-  if (applyJsonFiles) core.info(`Found ${applyJsonFiles.length} apply JSON files.`)
+  if (applyJsonFiles) core.info(`The action found ${applyJsonFiles.length} -json-into files.`)
 
-  const report = buildReport(
-    loadSources({
-      logFile: inputs.logFile,
-      planJsonDir: inputs.planJsonDir,
-      applyJsonFiles,
-      reportFile: inputs.reportFile,
-    }),
-  )
+  const sources = loadSources({
+    logFile: inputs.logFile,
+    planJsonDir: inputs.planJsonDir,
+    applyJsonFiles,
+    reportFile: inputs.reportFile,
+  })
+  for (const warning of sources.warnings ?? []) core.warning(warning)
+  const report = buildReport(sources)
   const status = statusLine(report)
   core.info(status)
 
@@ -49,11 +49,13 @@ async function run(): Promise<void> {
     }
     if (inputs.skipEmpty && report.empty) {
       const deleted = await deleteComments(target)
-      core.info(`The report has no changes. Deleted ${deleted} comments.`)
+      core.info(
+        `The run has no changes, no failed unit, and no early exit. The action deleted ${deleted} comments.`,
+      )
     } else {
       const result = await createOrUpdateComment({ ...target, content: markdown })
       core.info(
-        `Posted ${result.chunks} comments: ${result.updated} updated, ${result.created} created, ${result.deleted} deleted.`,
+        `The report has ${result.chunks} comments. The action updated ${result.updated}, created ${result.created}, and deleted ${result.deleted} comments.`,
       )
     }
   }

@@ -19,12 +19,12 @@
   },
   "packageRules": [
     {
-      "description": "package.json pins exact versions",
+      "description": "Pin exact versions in package.json",
       "matchManagers": ["npm"],
       "rangeStrategy": "pin"
     },
     {
-      "description": "Keep mise in its own group, and let a release age before the pin moves",
+      "description": "Put mise in its own group. Wait 3 days after a mise release before the update.",
       "groupName": "mise",
       "matchDepNames": ["jdx/mise"],
       "minimumReleaseAge": "3 days"

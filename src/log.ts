@@ -9,8 +9,12 @@ export type UnitOutput = {
   stderr: string[]
 }
 
-const LINE =
-  /^(\d\d:\d\d:\d\d\.\d{3}) (STDOUT|STDERR|ERROR|WARN|INFO|DEBUG|TRACE)\s+(?:\[([^\]]+)\] )?(?:(?:tofu|terraform):(?: |$))?(.*)$/
+const LINE = /^(\d\d:\d\d:\d\d\.\d{3}) (STDOUT|STDERR|ERROR|WARN|INFO|DEBUG|TRACE)\s+(.*)$/
+/** A unit name can contain "] ", so the binary token after the prefix marks its end. */
+const OUTPUT_PREFIX = /^\[(.+?)\] (?=\S+:(?: |$))/
+const PREFIX = /^\[(.+?)\] /
+/** The base name of the tofu or terraform binary, for example "tofu: ". */
+const BINARY = /^\S+:(?: |$)/
 
 // eslint-disable-next-line no-control-regex
 const ANSI = /\u001b(?:\[[0-?]*[ -/]*[@-~]|\][^\u0007\u001b]*(?:\u0007|\u001b\\)|[@-Z\\-_])/g
@@ -43,6 +47,14 @@ function parseJsonEntry(line: string): LogEntry | undefined {
   return { level: level.toUpperCase(), unit, lines }
 }
 
+function textEntry(level: string, rest: string): LogEntry {
+  const output = isUnitOutput(level)
+  const prefix = (output ? OUTPUT_PREFIX.exec(rest) : undefined) ?? PREFIX.exec(rest)
+  let message = prefix ? rest.slice(prefix[0].length) : rest
+  if (output) message = message.replace(BINARY, "")
+  return { level, unit: prefix?.[1] ?? null, lines: [message] }
+}
+
 /**
  * A text line that does not match the line grammar continues the previous
  * terragrunt message. Terragrunt prints the run summary block without a
@@ -63,7 +75,7 @@ export function parseLog(text: string): LogEntry[] {
     const match = LINE.exec(line)
     if (match) {
       const level = match[2] ?? ""
-      entries.push({ level, unit: match[3] ?? null, lines: [match[4] ?? ""] })
+      entries.push(textEntry(level, match[3] ?? ""))
       continuable = !isUnitOutput(level)
       continue
     }

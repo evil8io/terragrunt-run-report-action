@@ -5,16 +5,16 @@ import { renderMarkdown } from "./render.ts"
 
 const USAGE = `Usage: node src/cli.ts [options]
 
-Renders the terragrunt run report as markdown to stdout.
+Writes the markdown report of a terragrunt run to stdout.
 
 Options:
   --log-file <path>            The terragrunt log.
   --plan-json-dir <path>       The --json-out-dir directory of a plan run.
-  --apply-json-files <glob>    Glob pattern of the -json-into files. Repeat for more patterns.
+  --apply-json-files <glob>    A glob pattern of the -json-into files. Repeat the option for more patterns.
   --report-file <path>         The terragrunt --report-file in JSON format.
-  --working-directory <path>   The base of the unit labels of the apply JSON files. Default: .
-  --header <text>              The report heading. Default: Terragrunt run report
-  --expand                     Open every details element.
+  --working-directory <path>   The base directory of the unit labels of the -json-into files. Default: .
+  --header <text>              The title of the report. Default: Terragrunt run report
+  --expand                     Open every collapsed section of the report.
   -h, --help                   Show this help.
 `
 
@@ -62,14 +62,14 @@ async function main(): Promise<void> {
   }
   const applyJsonFiles =
     patterns.length > 0 ? await resolveQuietly(patterns, values["working-directory"]) : undefined
-  const report = buildReport(
-    loadSources({
-      logFile: values["log-file"],
-      planJsonDir: values["plan-json-dir"],
-      applyJsonFiles,
-      reportFile: values["report-file"],
-    }),
-  )
+  const sources = loadSources({
+    logFile: values["log-file"],
+    planJsonDir: values["plan-json-dir"],
+    applyJsonFiles,
+    reportFile: values["report-file"],
+  })
+  for (const warning of sources.warnings ?? []) process.stderr.write(`Warning: ${warning}\n`)
+  const report = buildReport(sources)
   process.stdout.write(renderMarkdown(report, { header: values.header, expand: values.expand }))
 }
 

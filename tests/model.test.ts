@@ -1,11 +1,13 @@
-import { readdirSync } from "node:fs"
+import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs"
+import { tmpdir } from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
-import { applyUnitLabel } from "../src/apply.ts"
+import { applyUnitLabel, parseApply } from "../src/apply.ts"
 import { parseLog } from "../src/log.ts"
 import { buildReport, loadSources, type RunReport, type Sources } from "../src/model.ts"
 import { parsePlan } from "../src/plan.ts"
+import { parseReport } from "../src/report.ts"
 
 const FIXTURES = fileURLToPath(new URL("./fixtures", import.meta.url))
 
@@ -121,7 +123,7 @@ describe("buildReport for failures/plan", () => {
     expect(report.failed).toBe(true)
   })
 
-  it("takes the changes of zeta from the log blocks, without a tfplan.json", () => {
+  it("takes the changes of zeta from the log blocks, without a tfplan.json file", () => {
     expect(sources("failures", "plan").plans?.map((p) => p.unit)).not.toContain(
       ".terragrunt-stack/zeta",
     )
@@ -201,7 +203,7 @@ describe("buildReport for failures/apply", () => {
 })
 
 describe("buildReport with one source", () => {
-  it("works from the log alone", () => {
+  it("builds the report from the log alone", () => {
     const report = buildReport({ log: sources("failures", "plan").log })
     expect(report.kind).toBe("run")
     expect(report.units).toHaveLength(6)
@@ -215,7 +217,7 @@ describe("buildReport with one source", () => {
     expect(unit(report, "alpha").counts).toEqual({ add: 2, change: 0, remove: 3 })
   })
 
-  it("works from the plan JSON alone", () => {
+  it("builds the report from the tfplan.json files alone", () => {
     const report = buildReport({ plans: sources("changes", "plan").plans })
     expect(report.kind).toBe("plan")
     const beta = unit(report, "beta")
@@ -228,7 +230,7 @@ describe("buildReport with one source", () => {
     expect(beta.summaryLine).toBe("Plan: 1 to add, 0 to change, 2 to destroy.")
   })
 
-  it("works from the apply JSON alone", () => {
+  it("builds the report from the -json-into files alone", () => {
     const report = buildReport({ applies: sources("failures", "apply").applies })
     expect(report.kind).toBe("apply")
     expect(unit(report, "delta").result).toBe("failed")
@@ -242,7 +244,7 @@ describe("buildReport with one source", () => {
     ])
   })
 
-  it("works from the report alone", () => {
+  it("builds the report from the report file alone", () => {
     const report = buildReport({ report: sources("failures", "apply").report })
     expect(report.kind).toBe("apply")
     expect(report.units.map((u) => [u.name.split("/")[1], u.result])).toEqual([
@@ -287,6 +289,36 @@ describe("buildReport plan action kinds", () => {
     expect(buildReport({ plans: [plan] }).units[0]?.changes[0]?.kind).toBe(kind)
   })
 
+  it("maps a no-op change with a previous address to a move without counts", () => {
+    const change = {
+      address: "a.new",
+      previous_address: "a.old",
+      change: { actions: ["no-op"] },
+    }
+    const report = buildReport({
+      plans: [parsePlan(JSON.stringify({ resource_changes: [change] }), "u")],
+    })
+    expect(report.units[0]?.changes).toEqual([
+      { address: "a.new", previousAddress: "a.old", kind: "move" },
+    ])
+    expect(report).toMatchObject({
+      changedUnits: 1,
+      totals: { add: 0, change: 0, remove: 0, import: 0, forget: 0 },
+    })
+  })
+
+  it("leaves out the reason of a forget that the header phrase states", () => {
+    const change = {
+      address: "a.b",
+      action_reason: "delete_because_no_resource_config",
+      change: { actions: ["forget"] },
+    }
+    const plan = parsePlan(JSON.stringify({ resource_changes: [change] }), "u")
+    expect(buildReport({ plans: [plan] }).units[0]?.changes).toEqual([
+      { address: "a.b", kind: "forget" },
+    ])
+  })
+
   it("leaves out a no-op change", () => {
     const change = { address: "a.b", change: { actions: ["no-op"] } }
     const plan = parsePlan(JSON.stringify({ resource_changes: [change] }), "u")
@@ -294,8 +326,198 @@ describe("buildReport plan action kinds", () => {
   })
 })
 
+const ndjson = (...messages: object[]) => messages.map((m) => JSON.stringify(m)).join("\n")
+
+const summary = (operation: string) => ({
+  type: "change_summary",
+  changes: { add: 0, change: 0, remove: 0, import: 1, forget: 1, operation },
+})
+
+const hooklessChanges = [
+  {
+    type: "planned_change",
+    change: { resource: { addr: "a.imp" }, action: "import", importing: { id: "x" } },
+  },
+  {
+    type: "planned_change",
+    change: {
+      resource: { addr: "a.gone" },
+      action: "remove",
+      reason: "delete_because_no_resource_config",
+    },
+  },
+  {
+    type: "planned_change",
+    change: { resource: { addr: "a.new" }, previous_resource: { addr: "a.old" }, action: "move" },
+  },
+]
+
+describe("buildReport for changes without apply hooks", () => {
+  it("marks an import, a forget, and a move as complete after the apply summary", () => {
+    const apply = parseApply(ndjson(...hooklessChanges, summary("plan"), summary("apply")), "u")
+    expect(buildReport({ applies: [apply] }).units[0]?.changes).toEqual([
+      { address: "a.gone", kind: "forget", outcome: "complete" },
+      { address: "a.imp", kind: "import", outcome: "complete" },
+      { address: "a.new", previousAddress: "a.old", kind: "move", outcome: "complete" },
+    ])
+  })
+
+  it("marks them as not applied without the apply summary", () => {
+    const apply = parseApply(ndjson(...hooklessChanges, summary("plan")), "u")
+    const outcomes = buildReport({ applies: [apply] }).units[0]?.changes.map((c) => c.outcome)
+    expect(outcomes).toEqual(["pending", "pending", "pending"])
+  })
+})
+
+describe("buildReport for a unit that tofu did not run", () => {
+  it("ignores a stale -json-into file of an early-exit unit", () => {
+    const stale = parseApply(
+      ndjson(
+        {
+          type: "planned_change",
+          change: { resource: { addr: "a.b" }, action: "create" },
+        },
+        { type: "change_summary", changes: { add: 1, change: 0, remove: 0, operation: "plan" } },
+        { type: "change_summary", changes: { add: 1, change: 0, remove: 0, operation: "apply" } },
+      ),
+      "u",
+    )
+    const report = buildReport({
+      applies: [stale],
+      report: parseReport(JSON.stringify([{ Name: "u", Result: "early exit", Cmd: "apply" }])),
+    })
+    expect(report.units[0]).toMatchObject({ result: "early exit", changes: [] })
+    expect(report.units[0]?.counts).toBeUndefined()
+    expect(report.units[0]?.appliedCounts).toBeUndefined()
+    expect(report.totals).toEqual({ add: 0, change: 0, remove: 0, import: 0, forget: 0 })
+  })
+})
+
+describe("buildReport without counts", () => {
+  it("counts a unit of a report file alone as a unit without counts", () => {
+    const report = buildReport({
+      report: parseReport(JSON.stringify([{ Name: "u", Result: "succeeded", Cmd: "plan" }])),
+    })
+    expect(report).toMatchObject({
+      changedUnits: 0,
+      unchangedUnits: 0,
+      uncountedUnits: 1,
+      empty: false,
+      failed: false,
+    })
+  })
+})
+
+describe("buildReport for an apply or a destroy from the log alone", () => {
+  const line = (unit: string, text: string) => `12:00:00.000 STDOUT [${unit}] tofu: ${text}`
+
+  it("takes the applied counts from the apply line of each unit", () => {
+    const log = parseLog(
+      [
+        line("a", "Plan: 1 to add, 0 to change, 0 to destroy."),
+        line("a", "Apply complete! Resources: 1 added, 0 changed, 0 destroyed."),
+        line("b", "Plan: 2 to add, 0 to change, 0 to destroy."),
+        "12:00:00.000 STDERR [b] tofu: Error: boom",
+      ].join("\n"),
+    )
+    const report = buildReport({ log })
+    expect(report.kind).toBe("apply")
+    expect(report.units.map((u) => [u.name, u.result, u.appliedCounts])).toEqual([
+      ["a", "succeeded", { add: 1, change: 0, remove: 0 }],
+      ["b", "failed", undefined],
+    ])
+    expect(report.totals).toMatchObject({ add: 1, change: 0, remove: 0 })
+  })
+
+  it("reads a destroy from the destroy line", () => {
+    const log = parseLog(
+      [
+        line("a", "Plan: 0 to add, 0 to change, 1 to destroy."),
+        line("a", "Destroy complete! Resources: 1 destroyed."),
+      ].join("\n"),
+    )
+    const report = buildReport({ log })
+    expect(report.kind).toBe("destroy")
+    expect(report.totals).toMatchObject({ add: 0, change: 0, remove: 1 })
+  })
+
+  it("takes the destroy kind from the report file", () => {
+    const report = parseReport(JSON.stringify([{ Name: "u", Result: "succeeded", Cmd: "destroy" }]))
+    expect(buildReport({ report }).kind).toBe("destroy")
+  })
+})
+
+describe("buildReport for a run error", () => {
+  it("marks the run as failed for a top-level run error without a failed unit", () => {
+    const log = parseLog(
+      [
+        "12:00:00.000 STDOUT [u] tofu: No changes. Your infrastructure matches the configuration.",
+        "12:00:00.000 ERROR  error occurred:",
+        "",
+        "* boom",
+      ].join("\n"),
+    )
+    expect(buildReport({ log })).toMatchObject({
+      failed: true,
+      empty: false,
+      failedUnits: 0,
+      runError: "error occurred:\n\n* boom",
+    })
+  })
+
+  it("ignores another top-level error when units ran", () => {
+    const log = parseLog(
+      [
+        "12:00:00.000 STDOUT [u] tofu: No changes. Your infrastructure matches the configuration.",
+        "12:00:00.000 ERROR  something else",
+      ].join("\n"),
+    )
+    expect(buildReport({ log })).toMatchObject({ failed: false, empty: true })
+    expect(buildReport({ log }).runError).toBeUndefined()
+  })
+})
+
 describe("loadSources", () => {
-  it("throws for a named file that does not exist", () => {
-    expect(() => loadSources({ logFile: path.join(FIXTURES, "missing.log") })).toThrow(/ENOENT/)
+  it("names the input in the error for a file that does not exist", () => {
+    expect(() => loadSources({ logFile: path.join(FIXTURES, "missing.log") })).toThrow(
+      /^The action cannot read the input log-file: ENOENT/,
+    )
+    expect(() => loadSources({ reportFile: path.join(FIXTURES, "missing.json") })).toThrow(
+      /^The action cannot read the input report-file: ENOENT/,
+    )
+  })
+
+  it("warns about a missing plan directory and reports a run that failed before any unit", () => {
+    const dir = mkdtempSync(path.join(tmpdir(), "sources-"))
+    try {
+      const logFile = path.join(dir, "plan.log")
+      const reportFile = path.join(dir, "report.json")
+      writeFileSync(
+        logFile,
+        [
+          "12:00:00.000 INFO   Start Terragrunt Cache server",
+          "12:00:00.000 ERROR  Error: Argument definition required",
+          "12:00:00.000 ERROR  a/terragrunt.hcl:11,11-18: Argument definition required",
+        ].join("\n"),
+      )
+      writeFileSync(reportFile, "[]")
+      const planJsonDir = path.join(dir, "plans")
+      const loaded = loadSources({ logFile, planJsonDir, applyJsonFiles: [], reportFile })
+      expect(loaded.warnings).toEqual([
+        `The directory of the input plan-json-dir does not exist: ${planJsonDir}`,
+        "The patterns of the input apply-json-files match no file.",
+      ])
+      expect(loaded.plans).toBeUndefined()
+      expect(loaded.applies).toBeUndefined()
+      expect(buildReport(loaded)).toMatchObject({
+        kind: "run",
+        units: [],
+        failed: true,
+        empty: false,
+        runError: "a/terragrunt.hcl:11,11-18: Argument definition required",
+      })
+    } finally {
+      rmSync(dir, { recursive: true })
+    }
   })
 })

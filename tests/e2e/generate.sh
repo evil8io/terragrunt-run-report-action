@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Regenerate tests/fixtures from the e2e stack. Phase 1 is the baseline apply,
-# phase 2 produces the "changes" scenario, and phase 3 the "failures" scenario.
+# Regenerate the input files in tests/fixtures from the e2e stack. Phase 1 is the baseline apply.
+# Phase 2 produces the "changes" scenario. Phase 3 produces the "failures" scenario.
 set -euo pipefail
 
 cd "$(dirname "$0")"
@@ -78,7 +78,10 @@ run_apply() {
   rm -rf "$tmp"
 }
 
-rm -rf "$E2E/.state" "$STACK/.terragrunt-stack" "$E2E/modules/demo/.out" "$FIXTURES/changes" "$FIXTURES/failures"
+rm -rf "$E2E/.state" "$STACK/.terragrunt-stack" "$E2E/modules/demo/.out"
+for scenario in "$FIXTURES"/{changes,failures}/{plan,apply}; do
+  rm -rf "$scenario"/{plan.log,apply.log,report.json,plans,apply-json}
+done
 cd "$STACK"
 terragrunt stack generate > /dev/null 2>&1
 

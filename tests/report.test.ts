@@ -27,19 +27,19 @@ describe("readReportFile", () => {
 })
 
 describe("parseReport", () => {
-  it("maps an unknown result to unknown and keeps unknown fields out", () => {
+  it("maps an unknown result to unknown and drops unknown fields", () => {
     expect(
       parseReport(JSON.stringify([{ Name: "u", Result: "skipped", Ref: "x", Future: 1 }])),
     ).toEqual([{ name: "u", result: "unknown" }])
   })
 
-  it("throws for a CSV report", () => {
+  it("throws for a CSV report file", () => {
     expect(() => parseReport("Name,Started\n", "r.csv")).toThrow(
       /^r.csv: the file is not valid JSON/,
     )
   })
 
   it("throws for JSON that is not a list of runs", () => {
-    expect(() => parseReport('{"Name":"u"}', "r.json")).toThrow(/not a terragrunt run report/)
+    expect(() => parseReport('{"Name":"u"}', "r.json")).toThrow(/not a terragrunt report file/)
   })
 })

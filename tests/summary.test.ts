@@ -21,14 +21,14 @@ describe("buildSummary", () => {
     expect(text).toContain("``````text\nred\n`````\n``````")
   })
 
-  it("cuts the raw log in the middle when the text is too large", () => {
+  it("cuts the raw log in the middle when the summary is larger than maxBytes", () => {
     const lines = Array.from({ length: 1000 }, (_, i) => `log line ${i}`)
     const text = buildSummary({ markdown, rawLog: lines.join("\n"), maxBytes: 2000 })
     expect(bytes(text)).toBeLessThanOrEqual(2000)
     expect(text.startsWith(markdown)).toBe(true)
     expect(text).toContain("````text\nlog line 0\nlog line 1\n")
     expect(text).toContain("log line 999\n````")
-    const cut = /\[\.\.\. (\d+) lines cut \.\.\.\]/.exec(text)
+    const cut = /\[The action removed (\d+) lines here\.\]/.exec(text)
     expect(cut).not.toBeNull()
     const kept = lines.filter((line) => text.includes(`${line}\n`)).length
     expect(kept + Number(cut?.[1])).toBe(1000)
@@ -46,5 +46,13 @@ describe("buildSummary", () => {
     expect(bytes(text)).toBeLessThanOrEqual(1000)
     expect(text.endsWith(`\n\`\`\`\n\n${CUT_NOTE}\n`)).toBe(true)
     expect(text).not.toContain("<summary>Log</summary>")
+  })
+
+  it("closes the open details elements after the open fence at the cut", () => {
+    const diff = Array.from({ length: 500 }, (_, i) => `+ line ${i}`).join("\n")
+    const big = `## Report\n\n<details><summary>a</summary>\n\n<details><summary>b</summary>\n\n\`\`\`diff\n${diff}\n\`\`\`\n\n</details>\n\n</details>\n`
+    const text = buildSummary({ markdown: big, maxBytes: 1000 })
+    expect(bytes(text)).toBeLessThanOrEqual(1000)
+    expect(text.endsWith(`\n\`\`\`\n\n</details>\n\n</details>\n\n${CUT_NOTE}\n`)).toBe(true)
   })
 })

@@ -10,6 +10,7 @@ export type ApplyFile = {
 
 export type PlannedChange = {
   address: string
+  previousAddress?: string
   action: string
   reason?: string
 }
@@ -23,7 +24,7 @@ export type UnitApply = {
   unit: string
   version?: string
   planned: PlannedChange[]
-  /** The change_summary of the plan phase. */
+  /** The change_summary with the operation "plan". */
   planCounts?: Counts
   /** The change_summary after the apply. */
   applyCounts?: Counts
@@ -33,8 +34,8 @@ export type UnitApply = {
   lastSummary?: string
   outcomes: Map<string, HookOutcome>
   /**
-   * Output name to the planned action. The parser never reads output values,
-   * because they can be sensitive.
+   * A map from the output name to the planned action. The parser does not keep
+   * the output values, because they can be sensitive.
    */
   outputActions: Map<string, string>
   diagnostics: Diagnostic[]
@@ -48,6 +49,7 @@ const Version = z.looseObject({ tofu: z.string().optional(), terraform: z.string
 const PlannedChangeMessage = z.looseObject({
   change: z.looseObject({
     resource: Resource,
+    previous_resource: Resource.nullish(),
     action: z.string(),
     reason: z.string().optional(),
   }),
@@ -139,7 +141,7 @@ function recordHook(
   if (key) counts[key] = (counts[key] ?? 0) + 1
 }
 
-/** Parses the NDJSON of the tofu machine-readable UI that -json-into writes. */
+/** Parses a -json-into file, in the NDJSON format of the tofu machine-readable UI. */
 export function parseApply(text: string, unit: string): UnitApply {
   const result: UnitApply = {
     unit,
@@ -200,6 +202,7 @@ function handleMessage(
       if (!parsed.success) return false
       const { change } = parsed.data
       const planned: PlannedChange = { address: change.resource.addr, action: change.action }
+      if (change.previous_resource) planned.previousAddress = change.previous_resource.addr
       if (change.reason) planned.reason = change.reason
       result.planned.push(planned)
       return true
@@ -253,7 +256,7 @@ export function applyUnitLabel(file: string, workingDirectory: string): string {
 
 /**
  * When more than one file has the same unit, for example from a stale
- * terragrunt cache directory, only the newest file is read.
+ * terragrunt cache directory, the function reads only the newest file.
  */
 export function readApplyFiles(files: readonly ApplyFile[]): UnitApply[] {
   const newest = new Map<string, { path: string; mtime: number }>()
