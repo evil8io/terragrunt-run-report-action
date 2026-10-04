@@ -18,46 +18,44 @@ Your workflow runs terragrunt and keeps its files. The action reads those files.
 
 The report starts with a status line and a table with one row for each unit. Then it has one section for each unit with changes or a failure. A section has one collapsed diff for each resource, in groups by kind of change, then the changes to the outputs. The section of a failed unit starts with the error. A unit without changes, a unit that exited early, and an excluded unit have a table row only.
 
-An apply with one failed unit renders like this:
+The report starts with the `header` as a heading. An apply with one failed unit then looks like this:
 
-````markdown
-## Apply (production)
+> **Apply: 4 units, 2 with changes, 1 unchanged, 1 failed.** 3 added, 0 changed, 2 destroyed.
+>
+> | Unit      | Result                                  |    Add | Change | Destroy |
+> | --------- | --------------------------------------- | -----: | -----: | ------: |
+> | `network` | ✅ succeeded                            |      2 |      0 |       1 |
+> | `dns`     | ✅ no changes                           |      0 |      0 |       0 |
+> | `cluster` | ❌ failed (run error)                   | 1 of 2 |      0 |       1 |
+> | `apps`    | ⏭️ early exit (ancestor error: cluster) |        |        |         |
+>
+> **`cluster`**
+>
+> ❌ failed (run error)
+>
+> ```
+> Error: creating EKS Node Group: operation error ...
+> ```
+>
+> Plan: 2 to add, 0 to change, 1 to destroy.
+>
+> <details><summary>✨ Create (1)</summary>
+>
+> <details><summary><code>aws_eks_node_group.workers</code> ❌ failed</summary>
+>
+> ```diff
+> + cluster_name    = "cluster"
+> + node_group_name = "workers"
+> + scaling_config {
+> +     desired_size = 3
+>   }
+> ```
+>
+> </details>
+>
+> </details>
 
-**Apply: 4 units, 2 with changes, 1 unchanged, 1 failed.** 3 added, 0 changed, 2 destroyed.
-
-| Unit      | Result                                  |    Add | Change | Destroy |
-| --------- | --------------------------------------- | -----: | -----: | ------: |
-| `network` | ✅ succeeded                            |      2 |      0 |       1 |
-| `dns`     | ✅ no changes                           |      0 |      0 |       0 |
-| `cluster` | ❌ failed (run error)                   | 1 of 2 |      0 |       1 |
-| `apps`    | ⏭️ early exit (ancestor error: cluster) |        |        |         |
-
-### `cluster`
-
-❌ failed (run error)
-
-```
-Error: creating EKS Node Group: operation error ...
-```
-
-Plan: 2 to add, 0 to change, 1 to destroy.
-
-<details><summary>✨ Create (1)</summary>
-
-<details><summary><code>aws_eks_node_group.workers</code> ❌ failed</summary>
-
-```diff
-+ cluster_name    = "cluster"
-+ node_group_name = "workers"
-+ scaling_config {
-+     desired_size = 3
-  }
-```
-
-</details>
-
-</details>
-````
+In the pull request, the name of each unit section is a heading, and the groups are collapsed.
 
 ## Usage
 
