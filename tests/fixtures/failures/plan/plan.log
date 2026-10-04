@@ -1,0 +1,197 @@
+00:00:00.000 INFO   Terragrunt Cache server is listening on 127.0.0.1:44525
+00:00:00.000 INFO   Start Terragrunt Cache server
+00:00:00.000 INFO   Generating unit zeta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit beta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit alpha from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit delta from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit gamma from ./terragrunt.stack.hcl
+00:00:00.000 INFO   Generating unit epsilon from ./terragrunt.stack.hcl
+00:00:00.000 INFO   The following units will be run, starting with dependencies and then their dependents:
+.
+├── .terragrunt-stack/gamma
+├── .terragrunt-stack/zeta
+├── .terragrunt-stack/alpha
+│   ╰── .terragrunt-stack/beta
+╰── .terragrunt-stack/delta
+    ╰── .terragrunt-stack/epsilon
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: OpenTofu used the selected providers to generate the following execution
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: plan. Resource actions are indicated with the following symbols:
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: -/+ destroy and then create replacement
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: OpenTofu planned the following actions, but then encountered a problem:
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   # local_file.main must be replaced
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: -/+ resource "local_file" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       ~ content              = <<-EOT # forces replacement
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:           - zeta phase 2
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:           + zeta phase 3
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:             replace=1e85d1df-8d55-30a4-2787-21e01b8f02f2
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:         EOT
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       ~ content_base64sha256 = "MTP+GTbcmL5MBJqTo3Ggtmfj448vvS44tTm+yTwJDHs=" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       ~ content_base64sha512 = "7M/u+fuVTjq7ASGbXy2dNxiWhFtSWu7AuvLrwMoNU54uylzKme7BdDOJotnNS83c/ToEV+/5owSj4TS4BghCYQ==" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       ~ content_md5          = "ea02e13c859220ce4a66488b8b5bf8bf" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       ~ content_sha1         = "6058285194f293844d932d6b9c8670c94283a4ca" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       ~ content_sha256       = "3133fe1936dc98be4c049a93a371a0b667e3e38f2fbd2e38b539bec93c090c7b" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       ~ content_sha512       = "eccfeef9fb954e3abb01219b5f2d9d371896845b525aeec0baf2ebc0ca0d539e2eca5cca99eec1743389a2d9cd4bcddcfd3a0457eff9a304a3e134b806084261" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:       ~ id                   = "6058285194f293844d932d6b9c8670c94283a4ca" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:         # (3 unchanged attributes hidden)
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: Plan: 1 to add, 0 to change, 1 to destroy.
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu: Changes to Outputs:
+00:00:00.000 STDOUT [.terragrunt-stack/zeta] tofu:   ~ content    = "zeta phase 2" -> "zeta phase 3"
+00:00:00.000 STDERR [.terragrunt-stack/zeta] tofu: Error: Resource precondition failed
+00:00:00.000 STDERR [.terragrunt-stack/zeta] tofu:   on main.tf line 43, in resource "terraform_data" "main":
+00:00:00.000 STDERR [.terragrunt-stack/zeta] tofu:   43:       condition     = !var.fail_plan
+00:00:00.000 STDERR [.terragrunt-stack/zeta] tofu:     ├────────────────
+00:00:00.000 STDERR [.terragrunt-stack/zeta] tofu:     │ var.fail_plan is true
+00:00:00.000 STDERR [.terragrunt-stack/zeta] tofu: The unit zeta is configured to fail at plan time.
+00:00:00.000 STDOUT [.terragrunt-stack/gamma] tofu: No changes. Your infrastructure matches the configuration.
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: OpenTofu used the selected providers to generate the following execution
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: plan. Resource actions are indicated with the following symbols:
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   - destroy
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: -/+ destroy and then create replacement
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: OpenTofu will perform the following actions:
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   # local_file.extra[0] will be destroyed
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   # (because index [0] is out of range for count)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   - resource "local_file" "extra" {
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content              = <<-EOT
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:             extra file of alpha
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:         EOT -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_base64sha256 = "tOdAO1fIo+Vyw/MQfTzArXVouon/T9R9E9ndLgX/+gY=" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_base64sha512 = "tGFQ0qui6uv3xmyqXWlg4SLEc4Fag6HpQxJnQItL+BlUAY8loqDGI70P0A8938PWABo41Pkp+hu3P6WdzPiByQ==" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_md5          = "f7a574d51faadb5b973a32cd96e2d692" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_sha1         = "7358b17d760059a231a1813c267848540b8f592f" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_sha256       = "b4e7403b57c8a3e572c3f3107d3cc0ad7568ba89ff4fd47d13d9dd2e05fffa06" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - content_sha512       = "b46150d2aba2eaebf7c66caa5d6960e122c473815a83a1e9431267408b4bf81954018f25a2a0c623bd0fd00f3ddfc3d6001a38d4f929fa1bb73fa59dccf881c9" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - directory_permission = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - file_permission      = "0777" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - filename             = "./.out/alpha-extra.txt" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       - id                   = "7358b17d760059a231a1813c267848540b8f592f" -> null
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   # local_file.main must be replaced
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: -/+ resource "local_file" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       ~ content              = <<-EOT # forces replacement
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:             alpha phase 2
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:             replace=2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:         EOT -> (known after apply) # forces replacement
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       ~ content_base64sha256 = "KBl/np1qitfugafcsXSIoG9tTrf765zFxcfMBAubGvQ=" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       ~ content_base64sha512 = "MKzSUbFky+PYDi6VU/vOdqt4ua6BR91G9wMkqeGL3xMd3NmZADhkM1giP8ym8KQRUMOf3VsdBycU7xiLkX2tZA==" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       ~ content_md5          = "5871d8a447904de6c57a6ea51f62ad61" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       ~ content_sha1         = "26555dfe7ffdbc57c82b418bada6af961704ca64" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       ~ content_sha256       = "28197f9e9d6a8ad7ee81a7dcb17488a06f6d4eb7fbeb9cc5c5c7cc040b9b1af4" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       ~ content_sha512       = "30acd251b164cbe3d80e2e9553fbce76ab78b9ae8147dd46f70324a9e18bdf131ddcd9990038643358223fcca6f0a41150c39fdd5b1d072714ef188b917dad64" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       ~ id                   = "26555dfe7ffdbc57c82b418bada6af961704ca64" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:         # (3 unchanged attributes hidden)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   # terraform_data.replace must be replaced
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: -/+ resource "terraform_data" "replace" {
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       ~ id               = "2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:       ~ triggers_replace = "phase-2" -> "phase-3"
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Plan: 2 to add, 0 to change, 3 to destroy.
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Changes to Outputs:
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   ~ content    = "alpha phase 2" -> "alpha phase 3"
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:   ~ replace_id = "2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: ─────────────────────────────────────────────────────────────────────────────
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: Saved the plan to: tfplan.tfplan
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu: To perform exactly these actions, run the following command to apply:
+00:00:00.000 STDOUT [.terragrunt-stack/alpha] tofu:     tofu apply "tfplan.tfplan"
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: OpenTofu used the selected providers to generate the following execution
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: plan. Resource actions are indicated with the following symbols:
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   + create
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: -/+ destroy and then create replacement
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: OpenTofu will perform the following actions:
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   # local_file.main must be replaced
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: -/+ resource "local_file" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       ~ content              = <<-EOT # forces replacement
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:           - delta phase 2
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:           + delta phase 3
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:             replace=650b754c-2e08-8e9f-c911-55279363ab36
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:         EOT
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       ~ content_base64sha256 = "Z+JqfKlzwT44ZdoD7quIXlZ1PnTgEhihwsMuVMbHeT0=" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       ~ content_base64sha512 = "EVAYZ33Q0PQLq86H9CFuqaH4ZqCsF2x5zM/YuiHuKYmnXIh7h1pm6zikpWpfwnJP0r7xwpEly9Bg9HWGr3FKUg==" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       ~ content_md5          = "4caf1d7d3f54faa695f0e18517a6863b" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       ~ content_sha1         = "3152083e061c771c0afd6cf2682379613af1aed7" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       ~ content_sha256       = "67e26a7ca973c13e3865da03eeab885e56753e74e01218a1c2c32e54c6c7793d" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       ~ content_sha512       = "115018677dd0d0f40babce87f4216ea9a1f866a0ac176c79cccfd8ba21ee2989a75c887b875a66eb38a4a56a5fc2724fd2bef1c29125cbd060f47586af714a52" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       ~ id                   = "3152083e061c771c0afd6cf2682379613af1aed7" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:         # (3 unchanged attributes hidden)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   # terraform_data.fail[0] will be created
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   + resource "terraform_data" "fail" {
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       + id     = (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       + input  = "delta phase 3"
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:       + output = (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Plan: 2 to add, 0 to change, 1 to destroy.
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Changes to Outputs:
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:   ~ content    = "delta phase 2" -> "delta phase 3"
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: ─────────────────────────────────────────────────────────────────────────────
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: Saved the plan to: tfplan.tfplan
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu: To perform exactly these actions, run the following command to apply:
+00:00:00.000 STDOUT [.terragrunt-stack/delta] tofu:     tofu apply "tfplan.tfplan"
+00:00:00.000 STDOUT [.terragrunt-stack/epsilon] tofu: No changes. Your infrastructure matches the configuration.
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: OpenTofu used the selected providers to generate the following execution
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: plan. Resource actions are indicated with the following symbols:
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: -/+ destroy and then create replacement
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: OpenTofu will perform the following actions:
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   # local_file.main must be replaced
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: -/+ resource "local_file" "main" {
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       ~ content              = <<-EOT # forces replacement
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:           - beta after alpha, phase 2
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:           + beta after alpha, phase 3
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:             replace=5e83c6c9-38ce-04d5-252d-34c6d2e67038
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:         EOT
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       ~ content_base64sha256 = "ZQRgNm/urGyCkPvG+EG/4SNmQetU66rFhtfD2RL9ZZ0=" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       ~ content_base64sha512 = "MnXDJEr/yU6V6+6VBfGQwPUf7hmMng3ucUAKhD+D6RJJI+Jv4RWxyAgGiC4OvKQEsfN+k37InVRm8yfDtp2x8A==" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       ~ content_md5          = "ce79a84c83710e0937ba965ce73586e9" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       ~ content_sha1         = "3c37c9426a5de407eb7adc77dbe535c33dc71335" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       ~ content_sha256       = "650460366feeac6c8290fbc6f841bfe1236641eb54ebaac586d7c3d912fd659d" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       ~ content_sha512       = "3275c3244affc94e95ebee9505f190c0f51fee198c9e0dee71400a843f83e9124923e26fe115b1c80806882e0ebca404b1f37e937ec89d5466f327c3b69db1f0" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:       ~ id                   = "3c37c9426a5de407eb7adc77dbe535c33dc71335" -> (known after apply)
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:         # (3 unchanged attributes hidden)
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:     }
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Plan: 1 to add, 0 to change, 1 to destroy.
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Changes to Outputs:
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:   ~ content    = "beta after alpha, phase 2" -> "beta after alpha, phase 3"
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: ─────────────────────────────────────────────────────────────────────────────
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: Saved the plan to: tfplan.tfplan
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu: To perform exactly these actions, run the following command to apply:
+00:00:00.000 STDOUT [.terragrunt-stack/beta] tofu:     tofu apply "tfplan.tfplan"
+00:00:00.000 ERROR  Run failed: error occurred:
+
+* Failed to execute "tofu plan -no-color -compact-warnings -concise -no-color -input=false -out=tfplan.tfplan" in ./.terragrunt-stack/zeta/.terragrunt-cache/x/y
+  
+  Error: Resource precondition failed
+  
+    on main.tf line 43, in resource "terraform_data" "main":
+    43:       condition     = !var.fail_plan
+      ├────────────────
+      │ var.fail_plan is true
+  
+  The unit zeta is configured to fail at plan time.
+  
+  exit status 1
+
+
+❯❯ Run Summary  6 units  0ms
+   ────────────────────────────
+   Succeeded    5
+   Failed       1
+
+00:00:00.000 INFO   Shutting down Terragrunt Cache server...
+00:00:00.000 INFO   Terragrunt Cache server stopped
+00:00:00.000 INFO   TIP (debugging-docs): For help troubleshooting errors, visit https://docs.terragrunt.com/troubleshooting/debugging
+00:00:00.000 ERROR  error occurred:
+
+* Failed to execute "tofu plan -no-color -compact-warnings -concise -no-color -input=false -out=tfplan.tfplan" in ./.terragrunt-stack/zeta/.terragrunt-cache/x/y
+  
+  Error: Resource precondition failed
+  
+    on main.tf line 43, in resource "terraform_data" "main":
+    43:       condition     = !var.fail_plan
+      ├────────────────
+      │ var.fail_plan is true
+  
+  The unit zeta is configured to fail at plan time.
+  
+  exit status 1
+

@@ -1,0 +1,227 @@
+import { readFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
+import { describe, expect, it } from "vitest"
+import { linesByUnit, parseLog } from "../src/log.ts"
+import {
+  extractBlocks,
+  extractOutputs,
+  findSummaries,
+  formatDiff,
+  phraseKind,
+  stderrText,
+} from "../src/text.ts"
+
+function stdout(file: string, unit: string): string[] {
+  const text = readFileSync(fileURLToPath(new URL(`./fixtures/${file}`, import.meta.url)), "utf8")
+  return linesByUnit(parseLog(text)).get(`.terragrunt-stack/${unit}`)?.stdout ?? []
+}
+
+describe("extractBlocks", () => {
+  const beta = stdout("changes/plan/plan.log", "beta")
+
+  it("finds each diff block with its reason lines and its verbatim body", () => {
+    const blocks = extractBlocks(beta)
+    expect(blocks.map((b) => [b.address, b.phrase])).toEqual([
+      ["local_file.extra[0]", "will be destroyed"],
+      ["local_file.main", "must be replaced"],
+    ])
+    const [extra] = blocks
+    expect(extra?.reasons).toEqual(["because index [0] is out of range for count"])
+    expect(extra?.body.slice(0, 3)).toEqual([
+      "      - content              = <<-EOT",
+      "            extra file of beta",
+      "        EOT -> null",
+    ])
+    expect(extra?.body.at(-1)).toBe(
+      '      - id                   = "69294b4f0f99b5bba224256e9931e2a0cd13ae43" -> null',
+    )
+  })
+
+  it("prefers a known address that contains spaces and a verb", () => {
+    const lines = [
+      '  # aws_s3_object.this["this is it"] will be created',
+      '  + resource "aws_s3_object" "this" {',
+      '      + key = "this is it"',
+      "    }",
+    ]
+    expect(extractBlocks(lines)[0]?.address).toBe('aws_s3_object.this["this')
+    expect(extractBlocks(lines, ['aws_s3_object.this["this is it"]'])[0]).toEqual({
+      address: 'aws_s3_object.this["this is it"]',
+      phrase: "will be created",
+      reasons: [],
+      body: ['      + key = "this is it"'],
+    })
+  })
+
+  it("falls back to the header pattern when no known address matches", () => {
+    const lines = [
+      "  # null_resource.a will be created",
+      '  + resource "null_resource" "a" {',
+      "    }",
+    ]
+    expect(extractBlocks(lines, ["null_resource.b"])[0]?.address).toBe("null_resource.a")
+  })
+
+  it("reads a data source block with a reason", () => {
+    const lines = [
+      "  # data.local_file.x will be read during apply",
+      "  # (config refers to values not yet known)",
+      ' <= data "local_file" "x" {',
+      "      + content = (known after apply)",
+      "    }",
+    ]
+    expect(extractBlocks(lines)[0]).toMatchObject({
+      address: "data.local_file.x",
+      phrase: "will be read during apply",
+      reasons: ["config refers to values not yet known"],
+    })
+  })
+
+  it("reads an import block without an action marker", () => {
+    const lines = [
+      "  # aws_instance.web will be imported",
+      '    resource "aws_instance" "web" {',
+      '        ami = "ami-1"',
+      "    }",
+    ]
+    expect(extractBlocks(lines)[0]?.body).toEqual(['        ami = "ami-1"'])
+  })
+
+  it("skips a header without a resource line", () => {
+    expect(extractBlocks(["  # local_file.a will be created", "Plan: 1 to add"])).toEqual([])
+  })
+
+  it("ends a block without a closing brace at the next line in column 0", () => {
+    const lines = [
+      "  # local_file.a will be created",
+      '  + resource "local_file" "a" {',
+      '      + content = "x"',
+      "Plan: 1 to add, 0 to change, 0 to destroy.",
+    ]
+    expect(extractBlocks(lines)[0]?.body).toEqual(['      + content = "x"'])
+  })
+})
+
+describe("formatDiff", () => {
+  it("moves the markers of a heredoc diff to column 0", () => {
+    const zeta = extractBlocks(stdout("changes/plan/plan.log", "zeta"))[0]
+    expect(formatDiff(zeta?.body ?? []).slice(0, 4)).toEqual([
+      "! content              = <<-EOT # forces replacement",
+      "-     zeta phase 1",
+      "+     zeta phase 2",
+      "      replace=1e85d1df-8d55-30a4-2787-21e01b8f02f2",
+    ])
+  })
+
+  it("keeps nested markers aligned and context lines unchanged", () => {
+    expect(
+      formatDiff([
+        "      ~ tags = {",
+        '          + "a" = "b"',
+        '            "c" = "d"',
+        "        }",
+        "        # (3 unchanged attributes hidden)",
+      ]),
+    ).toEqual([
+      "! tags = {",
+      '+     "a" = "b"',
+      '      "c" = "d"',
+      "  }",
+      "  # (3 unchanged attributes hidden)",
+    ])
+  })
+
+  it("leaves a line with less indentation in place", () => {
+    expect(formatDiff(["  ~ x = 1 -> 2"])).toEqual(["!   x = 1 -> 2"])
+  })
+})
+
+describe("extractOutputs", () => {
+  it("reads the output lines after the plan line", () => {
+    expect(extractOutputs(stdout("changes/plan/plan.log", "alpha"))).toEqual([
+      '  ~ content    = "alpha phase 1" -> "alpha phase 2"',
+      '  ~ replace_id = "25bebadf-87d5-5ca0-4682-b2264c71b4b1" -> (known after apply)',
+    ])
+  })
+
+  it("stops at the first apply progress line", () => {
+    expect(extractOutputs(stdout("changes/apply/apply.log", "zeta"))).toEqual([
+      '  ~ content    = "zeta phase 1" -> "zeta phase 2"',
+    ])
+  })
+
+  it("formats the output lines with an indentation of 2", () => {
+    const lines = extractOutputs(stdout("changes/plan/plan.log", "alpha")) ?? []
+    expect(formatDiff(lines, 2)[0]).toBe('! content    = "alpha phase 1" -> "alpha phase 2"')
+  })
+
+  it("returns undefined without the header", () => {
+    expect(extractOutputs(stdout("changes/plan/plan.log", "gamma"))).toBeUndefined()
+  })
+})
+
+describe("findSummaries", () => {
+  it("parses the plan line and the apply line in order", () => {
+    expect(findSummaries(stdout("changes/apply/apply.log", "alpha"))).toEqual([
+      {
+        line: "Plan: 3 to add, 0 to change, 2 to destroy.",
+        operation: "plan",
+        counts: { add: 3, change: 0, remove: 2 },
+      },
+      {
+        line: "Apply complete! Resources: 3 added, 0 changed, 2 destroyed.",
+        operation: "apply",
+        counts: { add: 3, change: 0, remove: 2 },
+      },
+    ])
+  })
+
+  it("parses the variants with import and forget", () => {
+    expect(
+      findSummaries([
+        "Plan: 1 to import, 2 to add, 0 to change, 0 to destroy.",
+        "Plan: 0 to add, 0 to change, 0 to destroy, 1 to forget.",
+        "Apply complete! Resources: 1 imported, 2 added, 0 changed, 0 destroyed.",
+        "Destroy complete! Resources: 4 destroyed.",
+        "No changes. Your infrastructure matches the configuration.",
+      ]).map((s) => s.counts),
+    ).toEqual([
+      { add: 2, change: 0, remove: 0, import: 1 },
+      { add: 0, change: 0, remove: 0, forget: 1 },
+      { add: 2, change: 0, remove: 0, import: 1 },
+      { add: 0, change: 0, remove: 4 },
+      { add: 0, change: 0, remove: 0 },
+    ])
+  })
+
+  it("returns the line without counts when the format does not match", () => {
+    expect(findSummaries(["Plan: something else."])).toEqual([
+      { line: "Plan: something else.", operation: "plan" },
+    ])
+  })
+})
+
+describe("phraseKind", () => {
+  it.each([
+    ["will be created", "create"],
+    ["will be destroyed", "delete"],
+    ["will be updated in-place", "update"],
+    ["must be replaced", "replace"],
+    ["is tainted, so must be replaced", "replace"],
+    ["will be replaced, as requested", "replace"],
+    ["will be read during apply", "read"],
+    ["will be imported", "import"],
+    ["will no longer be managed by OpenTofu, but will not be destroyed", "forget"],
+    ["has changed", undefined],
+    ["has been deleted", undefined],
+  ])("maps %j to %s", (phrase, kind) => {
+    expect(phraseKind(phrase)).toBe(kind)
+  })
+})
+
+describe("stderrText", () => {
+  it("joins the lines and drops the trailing empty lines", () => {
+    expect(stderrText(["Error: x", "  detail", ""])).toBe("Error: x\n  detail")
+    expect(stderrText([])).toBeUndefined()
+  })
+})

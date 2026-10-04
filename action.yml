@@ -1,0 +1,72 @@
+name: Terragrunt run report
+description: Post one markdown report with one section per unit of a terragrunt run --all plan or apply.
+author: evil8io
+branding:
+  icon: file-text
+  color: green
+inputs:
+  log-file:
+    description: >-
+      The log of the run: stdout and stderr of `terragrunt run --all`, in the default terragrunt log format
+      or in `--log-format=json`. The diff of each resource comes from this file.
+    required: false
+  plan-json-dir:
+    description: The `--json-out-dir` of a plan run. It has one `tfplan.json` per unit.
+    required: false
+  apply-json-files:
+    description: >-
+      Glob patterns, one per line, of the `-json-into` files of an apply run. The unit label of a file is
+      its path relative to `working-directory`, cut before `.terragrunt-cache`.
+    required: false
+  report-file:
+    description: The `--report-file` of the run, in JSON format.
+    required: false
+  working-directory:
+    description: The directory of the run. The unit labels are relative to it.
+    required: false
+    default: .
+  header:
+    description: The title of the report. It also identifies the sticky comment.
+    required: false
+    default: Terragrunt run report
+  summary:
+    description: Write the report to the job summary.
+    required: false
+    default: "true"
+  raw-log:
+    description: Add the log file to the job summary in a collapsed section.
+    required: false
+    default: "true"
+  comment:
+    description: Post the report as a sticky pull request comment.
+    required: false
+    default: "false"
+  repository:
+    description: The `owner/name` of the repository of the pull request.
+    required: false
+    default: ${{ github.repository }}
+  pr-number:
+    description: The number of the pull request. Required when `comment` is `true`.
+    required: false
+  token:
+    description: "The token that posts the comment. It needs `pull-requests: write`."
+    required: false
+    default: ${{ github.token }}
+  skip-empty:
+    description: Delete the sticky comment instead of a post when the run has no changes and no failed unit.
+    required: false
+    default: "false"
+  expand:
+    description: Open every collapsed section of the report.
+    required: false
+    default: "false"
+outputs:
+  summary:
+    description: One line with the kind of run, the unit counts, and the resource totals.
+  empty:
+    description: "`true` when no unit has a change and no unit failed."
+  failed:
+    description: "`true` when a unit failed or exited early."
+runs:
+  using: node24
+  main: dist/index.cjs

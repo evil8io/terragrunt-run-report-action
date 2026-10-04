@@ -1,0 +1,228 @@
+<!-- terragrunt-run-report: Terragrunt run report -->
+## Terragrunt run report
+
+**Apply: 6 units, 2 with changes, 1 unchanged, 2 failed, 1 early exit.** 4 added, 0 changed, 5 destroyed.
+
+| Unit | Result | Add | Change | Destroy |
+| --- | --- | ---: | ---: | ---: |
+| `.terragrunt-stack/alpha` | ✅ succeeded | 2 | 0 | 3 |
+| `.terragrunt-stack/beta` | ✅ succeeded | 1 | 0 | 1 |
+| `.terragrunt-stack/delta` | ❌ failed (run error) | 1 of 2 | 0 | 1 |
+| `.terragrunt-stack/epsilon` | ⏭️ early exit (ancestor error: delta) |  |  |  |
+| `.terragrunt-stack/gamma` | ✅ no changes | 0 | 0 | 0 |
+| `.terragrunt-stack/zeta` | ❌ failed (run error) | 0 of 1 | 0 | 0 of 1 |
+
+### `.terragrunt-stack/alpha`
+
+Apply complete! Resources: 2 added, 0 changed, 3 destroyed.
+
+<details><summary>⚙️ Replace (2)</summary>
+
+<details><summary><code>local_file.main</code> ✅ 0s</summary>
+
+```diff
+! content              = <<-EOT # forces replacement
+      alpha phase 2
+      replace=2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f
+  EOT -> (known after apply) # forces replacement
+! content_base64sha256 = "KBl/np1qitfugafcsXSIoG9tTrf765zFxcfMBAubGvQ=" -> (known after apply)
+! content_base64sha512 = "MKzSUbFky+PYDi6VU/vOdqt4ua6BR91G9wMkqeGL3xMd3NmZADhkM1giP8ym8KQRUMOf3VsdBycU7xiLkX2tZA==" -> (known after apply)
+! content_md5          = "5871d8a447904de6c57a6ea51f62ad61" -> (known after apply)
+! content_sha1         = "26555dfe7ffdbc57c82b418bada6af961704ca64" -> (known after apply)
+! content_sha256       = "28197f9e9d6a8ad7ee81a7dcb17488a06f6d4eb7fbeb9cc5c5c7cc040b9b1af4" -> (known after apply)
+! content_sha512       = "30acd251b164cbe3d80e2e9553fbce76ab78b9ae8147dd46f70324a9e18bdf131ddcd9990038643358223fcca6f0a41150c39fdd5b1d072714ef188b917dad64" -> (known after apply)
+! id                   = "26555dfe7ffdbc57c82b418bada6af961704ca64" -> (known after apply)
+  # (3 unchanged attributes hidden)
+```
+
+</details>
+
+<details><summary><code>terraform_data.replace</code> ✅ 0s</summary>
+
+```diff
+! id               = "2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f" -> (known after apply)
+! triggers_replace = "phase-2" -> "phase-3"
+```
+
+</details>
+
+</details>
+
+<details><summary>🗑️ Destroy (1)</summary>
+
+<details><summary><code>local_file.extra[0]</code> ✅ 0s</summary>
+
+```diff
+- content              = <<-EOT
+      extra file of alpha
+  EOT -> null
+- content_base64sha256 = "tOdAO1fIo+Vyw/MQfTzArXVouon/T9R9E9ndLgX/+gY=" -> null
+- content_base64sha512 = "tGFQ0qui6uv3xmyqXWlg4SLEc4Fag6HpQxJnQItL+BlUAY8loqDGI70P0A8938PWABo41Pkp+hu3P6WdzPiByQ==" -> null
+- content_md5          = "f7a574d51faadb5b973a32cd96e2d692" -> null
+- content_sha1         = "7358b17d760059a231a1813c267848540b8f592f" -> null
+- content_sha256       = "b4e7403b57c8a3e572c3f3107d3cc0ad7568ba89ff4fd47d13d9dd2e05fffa06" -> null
+- content_sha512       = "b46150d2aba2eaebf7c66caa5d6960e122c473815a83a1e9431267408b4bf81954018f25a2a0c623bd0fd00f3ddfc3d6001a38d4f929fa1bb73fa59dccf881c9" -> null
+- directory_permission = "0777" -> null
+- file_permission      = "0777" -> null
+- filename             = "./.out/alpha-extra.txt" -> null
+- id                   = "7358b17d760059a231a1813c267848540b8f592f" -> null
+```
+
+_→ because index [0] is out of range for count_
+
+</details>
+
+</details>
+
+<details><summary>Changes to Outputs</summary>
+
+```diff
+! content    = "alpha phase 2" -> "alpha phase 3"
+! replace_id = "2565bbc6-6e68-f4a8-cb9d-ba2db2f4e39f" -> (known after apply)
+```
+
+</details>
+
+### `.terragrunt-stack/beta`
+
+Apply complete! Resources: 1 added, 0 changed, 1 destroyed.
+
+<details><summary>⚙️ Replace (1)</summary>
+
+<details><summary><code>local_file.main</code> ✅ 0s</summary>
+
+```diff
+! content              = <<-EOT # forces replacement
+-     beta after alpha, phase 2
++     beta after alpha, phase 3
+      replace=5e83c6c9-38ce-04d5-252d-34c6d2e67038
+  EOT
+! content_base64sha256 = "ZQRgNm/urGyCkPvG+EG/4SNmQetU66rFhtfD2RL9ZZ0=" -> (known after apply)
+! content_base64sha512 = "MnXDJEr/yU6V6+6VBfGQwPUf7hmMng3ucUAKhD+D6RJJI+Jv4RWxyAgGiC4OvKQEsfN+k37InVRm8yfDtp2x8A==" -> (known after apply)
+! content_md5          = "ce79a84c83710e0937ba965ce73586e9" -> (known after apply)
+! content_sha1         = "3c37c9426a5de407eb7adc77dbe535c33dc71335" -> (known after apply)
+! content_sha256       = "650460366feeac6c8290fbc6f841bfe1236641eb54ebaac586d7c3d912fd659d" -> (known after apply)
+! content_sha512       = "3275c3244affc94e95ebee9505f190c0f51fee198c9e0dee71400a843f83e9124923e26fe115b1c80806882e0ebca404b1f37e937ec89d5466f327c3b69db1f0" -> (known after apply)
+! id                   = "3c37c9426a5de407eb7adc77dbe535c33dc71335" -> (known after apply)
+  # (3 unchanged attributes hidden)
+```
+
+</details>
+
+</details>
+
+<details><summary>Changes to Outputs</summary>
+
+```diff
+! content    = "beta after alpha, phase 2" -> "beta after alpha, phase 3"
+```
+
+</details>
+
+### `.terragrunt-stack/delta`
+
+❌ failed (run error)
+
+```
+Error: local-exec provisioner error
+  with terraform_data.fail[0],
+  on main.tf line 68, in resource "terraform_data" "fail":
+  68:   provisioner "local-exec" {
+Error running command 'echo 'simulated failure in delta' >&2; exit 1': exit
+status 1. Output: simulated failure in delta
+```
+
+Plan: 2 to add, 0 to change, 1 to destroy.
+
+<details><summary>✨ Create (1)</summary>
+
+<details><summary><code>terraform_data.fail[0]</code> ❌ errored</summary>
+
+```diff
++ id     = (known after apply)
++ input  = "delta phase 3"
++ output = (known after apply)
+```
+
+</details>
+
+</details>
+
+<details><summary>⚙️ Replace (1)</summary>
+
+<details><summary><code>local_file.main</code> ✅ 0s</summary>
+
+```diff
+! content              = <<-EOT # forces replacement
+-     delta phase 2
++     delta phase 3
+      replace=650b754c-2e08-8e9f-c911-55279363ab36
+  EOT
+! content_base64sha256 = "Z+JqfKlzwT44ZdoD7quIXlZ1PnTgEhihwsMuVMbHeT0=" -> (known after apply)
+! content_base64sha512 = "EVAYZ33Q0PQLq86H9CFuqaH4ZqCsF2x5zM/YuiHuKYmnXIh7h1pm6zikpWpfwnJP0r7xwpEly9Bg9HWGr3FKUg==" -> (known after apply)
+! content_md5          = "4caf1d7d3f54faa695f0e18517a6863b" -> (known after apply)
+! content_sha1         = "3152083e061c771c0afd6cf2682379613af1aed7" -> (known after apply)
+! content_sha256       = "67e26a7ca973c13e3865da03eeab885e56753e74e01218a1c2c32e54c6c7793d" -> (known after apply)
+! content_sha512       = "115018677dd0d0f40babce87f4216ea9a1f866a0ac176c79cccfd8ba21ee2989a75c887b875a66eb38a4a56a5fc2724fd2bef1c29125cbd060f47586af714a52" -> (known after apply)
+! id                   = "3152083e061c771c0afd6cf2682379613af1aed7" -> (known after apply)
+  # (3 unchanged attributes hidden)
+```
+
+</details>
+
+</details>
+
+<details><summary>Changes to Outputs</summary>
+
+```diff
+! content    = "delta phase 2" -> "delta phase 3"
+```
+
+</details>
+
+### `.terragrunt-stack/zeta`
+
+❌ failed (run error)
+
+```
+Error: Resource precondition failed
+  on main.tf line 43, in resource "terraform_data" "main":
+  43:       condition     = !var.fail_plan
+    ├────────────────
+    │ var.fail_plan is true
+The unit zeta is configured to fail at plan time.
+```
+
+Plan: 1 to add, 0 to change, 1 to destroy.
+
+<details><summary>⚙️ Replace (1)</summary>
+
+<details><summary><code>local_file.main</code> ⏳ not applied</summary>
+
+```diff
+! content              = <<-EOT # forces replacement
+-     zeta phase 2
++     zeta phase 3
+      replace=1e85d1df-8d55-30a4-2787-21e01b8f02f2
+  EOT
+! content_base64sha256 = "MTP+GTbcmL5MBJqTo3Ggtmfj448vvS44tTm+yTwJDHs=" -> (known after apply)
+! content_base64sha512 = "7M/u+fuVTjq7ASGbXy2dNxiWhFtSWu7AuvLrwMoNU54uylzKme7BdDOJotnNS83c/ToEV+/5owSj4TS4BghCYQ==" -> (known after apply)
+! content_md5          = "ea02e13c859220ce4a66488b8b5bf8bf" -> (known after apply)
+! content_sha1         = "6058285194f293844d932d6b9c8670c94283a4ca" -> (known after apply)
+! content_sha256       = "3133fe1936dc98be4c049a93a371a0b667e3e38f2fbd2e38b539bec93c090c7b" -> (known after apply)
+! content_sha512       = "eccfeef9fb954e3abb01219b5f2d9d371896845b525aeec0baf2ebc0ca0d539e2eca5cca99eec1743389a2d9cd4bcddcfd3a0457eff9a304a3e134b806084261" -> (known after apply)
+! id                   = "6058285194f293844d932d6b9c8670c94283a4ca" -> (known after apply)
+  # (3 unchanged attributes hidden)
+```
+
+</details>
+
+</details>
+
+<details><summary>Changes to Outputs</summary>
+
+```diff
+! content    = "zeta phase 2" -> "zeta phase 3"
+```
+
+</details>

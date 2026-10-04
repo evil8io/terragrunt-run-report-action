@@ -1,0 +1,69 @@
+name: release-please
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: release-please
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # dist/ changes only in the release pull request, so every other pull
+      # request stays green without a rebuild, and the release tag on main has
+      # the build of its own sources.
+      - if: steps.release.outputs.prs_created == 'true'
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+
+      - if: steps.release.outputs.prs_created == 'true'
+        id: mise
+        run: echo "version=$(cat .mise-version)" >> "$GITHUB_OUTPUT"
+
+      - if: steps.release.outputs.prs_created == 'true'
+        uses: jdx/mise-action@7a4e45a543138629540c9a1616d08632b893e492 # v5.0.1
+        with:
+          version: ${{ steps.mise.outputs.version }}
+          install_args: node pnpm
+          cache: true
+
+      - if: steps.release.outputs.prs_created == 'true'
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm build
+
+      - if: steps.release.outputs.prs_created == 'true'
+        env:
+          BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f dist
+          if git diff --cached --quiet; then
+            echo "dist is up to date"
+            exit 0
+          fi
+          git commit -m "chore: build dist"
+          git push origin "HEAD:$BRANCH"
+
+      - if: steps.release.outputs.release_created == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MAJOR: ${{ steps.release.outputs.major }}
+          SHA: ${{ steps.release.outputs.sha }}
+        run: |
+          gh api -X PATCH "repos/$GITHUB_REPOSITORY/git/refs/tags/v$MAJOR" -f sha="$SHA" -F force=true \
+            || gh api -X POST "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/v$MAJOR" -f sha="$SHA"
