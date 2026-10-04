@@ -14,7 +14,7 @@
 
 ## Report
 
-The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes, warnings, or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error. In an apply, the warnings of a unit follow the error in one collapsed element, grouped by message, with the location of each warning. A unit without changes or warnings, a unit that exited early, and an excluded unit have a table row only.
+The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes, warnings, or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error. In an apply, the warnings of a unit follow the error in one collapsed element, grouped by message, with the location of each warning. When the run has warnings, the status line ends with the count of the warnings and the count of the units with warnings. A unit without changes or warnings, a unit that exited early, and an excluded unit have a table row only.
 
 An apply with one failed unit looks like this:
 
@@ -197,7 +197,7 @@ The action does not fail the step when a unit failed. Use the output `failed` to
 
 | Output          | Description                                                                                                                                    |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| `summary`       | One line with the kind of run, the unit counts, and the resource totals.                                                                       |
+| `summary`       | One line with the kind of run, the unit counts, the resource totals, and the count of the warnings when the run has warnings.                  |
 | `empty`         | The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit exited early.                              |
 | `failed`        | The value is `true` when a unit failed, a unit exited early, or the run failed.                                                                |
 | `markdown-file` | The path of a file with the report in markdown, without the log. A later step can read it, for example to send a message after a failed apply. |

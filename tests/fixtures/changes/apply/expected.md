@@ -1,7 +1,7 @@
 <!-- terragrunt-run-report: Terragrunt run report -->
 ## Terragrunt run report
 
-**Apply: 6 units, 5 with changes, 1 unchanged.** 7 added, 0 changed, 7 destroyed.
+**Apply: 6 units, 5 with changes, 1 unchanged.** 7 added, 0 changed, 7 destroyed. ⚠️ 18 warnings in 6 units.
 
 | Unit | Result | Add | Change | Destroy | Duration |
 | --- | --- | ---: | ---: | ---: | ---: |

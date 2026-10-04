@@ -85,7 +85,7 @@ inputs:
     default: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
 outputs:
   summary:
-    description: One line with the kind of run, the unit counts, and the resource totals.
+    description: One line with the kind of run, the unit counts, the resource totals, and the count of the warnings when the run has warnings.
   empty:
     description: >-
       The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit
