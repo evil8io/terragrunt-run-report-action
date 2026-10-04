@@ -197,6 +197,7 @@ jobs:
           PLAN_3_JSON_EMPTY: ${{ steps.plan-3-json.outputs.empty }}
           DESTROY_4_FAILED: ${{ steps.destroy-4.outputs.failed }}
           DESTROY_4_EMPTY: ${{ steps.destroy-4.outputs.empty }}
+          PLAN_2_MARKDOWN_FILE: ${{ steps.plan-2.outputs.markdown-file }}
         run: |
           test "$PLAN_2_FAILED" = false
           test "$APPLY_2_FAILED" = false
@@ -210,3 +211,5 @@ jobs:
           test "$APPLY_3_EMPTY" = false
           test "$PLAN_3_JSON_EMPTY" = false
           test "$DESTROY_4_EMPTY" = false
+          test -s "$PLAN_2_MARKDOWN_FILE"
+          grep -q '^## Plan (changes)$' "$PLAN_2_MARKDOWN_FILE"

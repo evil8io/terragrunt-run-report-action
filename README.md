@@ -20,12 +20,12 @@ An apply with one failed unit looks like this:
 
 > **Apply: 4 units, 2 with changes, 1 unchanged, 1 failed.** 3 added, 0 changed, 2 destroyed.
 >
-> | Unit      | Result                                  |    Add | Change | Destroy |
-> | --------- | --------------------------------------- | -----: | -----: | ------: |
-> | `network` | ✅ succeeded                            |      2 |      0 |       1 |
-> | `dns`     | ✅ no changes                           |      0 |      0 |       0 |
-> | `cluster` | ❌ failed (run error)                   | 1 of 2 |      0 |       1 |
-> | `apps`    | ⏭️ early exit (ancestor error: cluster) |        |        |         |
+> | Unit      | Result                                  |    Add | Change | Destroy | Duration |
+> | --------- | --------------------------------------- | -----: | -----: | ------: | -------: |
+> | `network` | ✅ succeeded                            |      2 |      0 |       1 |      12s |
+> | `dns`     | ✅ no changes                           |      0 |      0 |       0 |       3s |
+> | `cluster` | ❌ failed (run error)                   | 1 of 2 |      0 |       1 |      45s |
+> | `apps`    | ⏭️ early exit (ancestor error: cluster) |        |        |         |          |
 >
 > **`cluster`**
 >
@@ -37,9 +37,9 @@ An apply with one failed unit looks like this:
 >
 > Plan: 2 to add, 0 to change, 1 to destroy.
 >
-> <details><summary>✨ Create (1)</summary>
+> <details open><summary>✨ Create (1)</summary>
 >
-> <details><summary><code>aws_eks_node_group.workers</code> ❌ failed</summary>
+> <details open><summary><code>aws_eks_node_group.workers</code> ❌ failed</summary>
 >
 > ```diff
 > + cluster_name    = "cluster"
@@ -53,7 +53,7 @@ An apply with one failed unit looks like this:
 >
 > </details>
 
-In the pull request, the name of each unit section is a heading, and the groups are collapsed. The comment ends with a link to the workflow run that produced it.
+In the pull request, the name of each unit section is a heading, and each table row links to the section of its unit. The groups are collapsed, but a failed resource and its group are open. In a report with more than 10 unit sections, the changes of each section are also collapsed, and the table is the index. The result and the error of a unit stay visible, and the changes of a failed unit are open. The comment ends with a link to the workflow run that produced it.
 
 ## Usage
 
@@ -192,13 +192,14 @@ Each file adds a part of the report. The action needs at least one of them. The 
 
 ## Outputs
 
-The action does not fail the step when a unit failed. Use the output `failed` to react to a failure.
+The action does not fail the step when a unit failed. Use the output `failed` to react to a failure. A later step can read the report from the file in the output `markdown-file`.
 
-| Output    | Description                                                                                                       |
-| --------- | ----------------------------------------------------------------------------------------------------------------- |
-| `summary` | One line with the kind of run, the unit counts, and the resource totals.                                          |
-| `empty`   | The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit exited early. |
-| `failed`  | The value is `true` when a unit failed, a unit exited early, or the run failed.                                   |
+| Output          | Description                                                                                                                                                                     |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `summary`       | One line with the kind of run, the unit counts, and the resource totals.                                                                                                        |
+| `empty`         | The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit exited early.                                                               |
+| `failed`        | The value is `true` when a unit failed, a unit exited early, or the run failed.                                                                                                 |
+| `markdown-file` | The path of a file with the report in markdown, the same text as the job summary without the log. A later step can read it, for example to send a message after a failed apply. |
 
 ## Contributing
 

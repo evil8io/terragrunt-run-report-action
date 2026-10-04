@@ -27,6 +27,8 @@ const GROUPS: readonly [ChangeKind, string][] = [
 
 const KIND_LABELS = { plan: "Plan", apply: "Apply", destroy: "Destroy", run: "Run" } as const
 
+const COLLAPSED_SECTIONS_ABOVE = 10
+
 const FENCE_RUN = /^(`{3,}|~{3,})/
 
 /** The open fence and the number of open details elements at a line of the report. */
@@ -91,9 +93,9 @@ function cell(text: string): string {
   return text.replaceAll("|", "\\|")
 }
 
-function details(summary: string, body: readonly string[], expand: boolean): string {
+function details(summary: string, body: readonly string[], open: boolean): string {
   return [
-    `<details${expand ? " open" : ""}><summary>${summary}</summary>`,
+    `<details${open ? " open" : ""}><summary>${summary}</summary>`,
     ...body,
     "</details>",
   ].join("\n\n")
@@ -164,23 +166,54 @@ function countCell(unit: UnitReport, key: keyof Counts, apply: boolean): string 
   return `${applied} of ${planned}`
 }
 
-function table(report: RunReport): string {
+function slug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-|-$/g, "")
+}
+
+function anchorIds(header: string, units: readonly UnitReport[]): Map<UnitReport, string> {
+  const ids = new Map<UnitReport, string>()
+  const used = new Set<string>()
+  for (const unit of units) {
+    const base = `trr-${slug(header)}-${slug(unit.name)}`
+    let id = base
+    for (let n = 2; used.has(id); n++) id = `${base}-${n}`
+    used.add(id)
+    ids.set(unit, id)
+  }
+  return ids
+}
+
+function durationCell(unit: UnitReport): string {
+  return unit.durationSeconds === undefined ? "" : `${Math.round(unit.durationSeconds)}s`
+}
+
+function table(report: RunReport, ids: ReadonlyMap<UnitReport, string>): string {
   const apply = report.kind === "apply" || report.kind === "destroy"
+  const duration = report.units.some((unit) => unit.durationSeconds !== undefined)
   const rows = report.units.map((unit) => {
+    const id = ids.get(unit)
+    // GitHub renders the id of an element in a comment with the prefix user-content-.
+    const name = id === undefined ? code(unit.name) : `[${code(unit.name)}](#user-content-${id})`
     const cells = [
-      cell(code(unit.name)),
+      cell(name),
       resultText(unit),
       countCell(unit, "add", apply),
       countCell(unit, "change", apply),
       countCell(unit, "remove", apply),
     ]
+    if (duration) cells.push(durationCell(unit))
     return `| ${cells.join(" | ")} |`
   })
-  return [
-    "| Unit | Result | Add | Change | Destroy |",
-    "| --- | --- | ---: | ---: | ---: |",
-    ...rows,
-  ].join("\n")
+  const titles = ["Unit", "Result", "Add", "Change", "Destroy"]
+  const aligns = ["---", "---", "---:", "---:", "---:"]
+  if (duration) {
+    titles.push("Duration")
+    aligns.push("---:")
+  }
+  return [`| ${titles.join(" | ")} |`, `| ${aligns.join(" | ")} |`, ...rows].join("\n")
 }
 
 function outcomeText(change: ResourceChange): string {
@@ -221,7 +254,8 @@ function changeBlocks(changes: readonly ResourceChange[], expand: boolean): stri
     flush()
     const body = [fence(change.diff, "diff")]
     if (reason) body.push(reason)
-    blocks.push(details(`<code>${html(change.address)}</code>${outcomeText(change)}`, body, expand))
+    const summary = `<code>${html(change.address)}</code>${outcomeText(change)}`
+    blocks.push(details(summary, body, expand || change.outcome === "errored"))
   }
   flush()
   return blocks
@@ -256,19 +290,34 @@ function hasSection(unit: UnitReport): boolean {
   )
 }
 
-function section(unit: UnitReport, expand: boolean): string {
-  const parts = [`### ${code(unit.name)}`]
-  if (unit.result !== "succeeded") parts.push(resultText(unit))
-  const diagnostics = diagnosticsText(unit)
-  if (diagnostics !== undefined) parts.push(fence(diagnostics))
-  if (unit.summaryLine !== undefined) parts.push(markdown(unit.summaryLine))
+function groupBlocks(unit: UnitReport, expand: boolean): string[] {
+  const blocks: string[] = []
   for (const [kind, label] of GROUPS) {
     const changes = unit.changes.filter((change) => change.kind === kind)
     if (changes.length === 0) continue
-    parts.push(details(`${label} (${changes.length})`, changeBlocks(changes, expand), expand))
+    const open = expand || changes.some((change) => change.outcome === "errored")
+    blocks.push(details(`${label} (${changes.length})`, changeBlocks(changes, expand), open))
   }
   if (unit.outputsDiff !== undefined) {
-    parts.push(details("Changes to Outputs", [fence(unit.outputsDiff, "diff")], expand))
+    blocks.push(details("Changes to Outputs", [fence(unit.outputsDiff, "diff")], expand))
+  }
+  return blocks
+}
+
+type SectionOptions = { id: string; expand: boolean; collapse: boolean }
+
+function section(unit: UnitReport, { id, expand, collapse }: SectionOptions): string {
+  const parts = [`### <a id="${id}"></a>${code(unit.name)}`]
+  if (unit.result !== "succeeded") parts.push(resultText(unit))
+  const diagnostics = diagnosticsText(unit)
+  if (diagnostics !== undefined) parts.push(fence(diagnostics))
+  const blocks = groupBlocks(unit, expand)
+  if (collapse && blocks.length > 0) {
+    const summary = unit.summaryLine === undefined ? "Changes" : html(unit.summaryLine)
+    parts.push(details(summary, blocks, expand || unit.result === "failed"))
+  } else {
+    if (unit.summaryLine !== undefined) parts.push(markdown(unit.summaryLine))
+    parts.push(...blocks)
   }
   return parts.join("\n\n")
 }
@@ -281,10 +330,11 @@ export function renderMarkdown(report: RunReport, options: RenderOptions): strin
   if (report.runError !== undefined && report.failedUnits === 0) {
     parts.push("❌ Run failed", fence(report.runError))
   }
-  if (report.units.length > 0) parts.push(table(report))
-  for (const unit of report.units) {
-    if (hasSection(unit)) parts.push(section(unit, options.expand))
-  }
+  const sectioned = report.units.filter(hasSection)
+  const ids = anchorIds(options.header, sectioned)
+  if (report.units.length > 0) parts.push(table(report, ids))
+  const collapse = sectioned.length > COLLAPSED_SECTIONS_ABOVE
+  for (const [unit, id] of ids) parts.push(section(unit, { id, expand: options.expand, collapse }))
   return `${parts.join("\n\n")}\n`
 }
 

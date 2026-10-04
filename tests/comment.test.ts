@@ -87,7 +87,7 @@ describe("chunkComment", () => {
       for (const line of chunk.split("\n")) {
         lines.add(line)
         if (line.startsWith("```")) open = !open
-        if (line === "### `b`") {
+        if (line === '### <a id="trr-report-b"></a>`b`') {
           expect(open).toBe(false)
           headings++
         }
