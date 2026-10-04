@@ -14,7 +14,9 @@
 
 ## Report
 
-The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes, warnings, or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error. In a plan with `plan-json-files` and in an apply, the warnings of a unit follow the error in one collapsed element, grouped by message, with the location of each warning. When the run has warnings, the status line ends with the count of the warnings and the count of the units with warnings. A unit without changes or warnings, a unit that exited early, and an excluded unit have a table row only.
+The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes, warnings, or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error.
+
+In a plan with `plan-json-files` and in an apply, the warnings of a unit follow the error in one collapsed element, grouped by message, with the location of each warning. When the run has warnings, the status line ends with the count of the warnings and the count of the units with warnings. The count is the number of warnings in the `-json-into` files. The log of a run with `-compact-warnings` has fewer lines, because tofu prints one location for each distinct warning message and the count of the other locations. A unit without changes or warnings, a unit that exited early, and an excluded unit have a table row only.
 
 An apply with one failed unit looks like this:
 

@@ -85,6 +85,7 @@ These facts were verified on terragrunt 1.1.6 and OpenTofu 1.13.1. The code or t
 - The `Cause` of an early exit in the report file is the base name of the failed ancestor, not its path.
 - The `outputs` message of a `-json-into` file has the values of the outputs. Do not render these values, because they can be sensitive.
 - Tofu writes a warning to STDOUT and an error to STDERR. The stderr fence of a unit thus has no warning, and the warnings element shows each warning of the `-json-into` file once. A `tfplan.json` file has no diagnostics. The `-json-into` file of a plan has the diagnostics of the plan, so a plan report has a warnings element only with `plan-json-files`.
+- With `-compact-warnings`, tofu prints one line for each distinct warning summary, with the first location and the count of the other locations, for example `on main.tf line 38 (and 2 more)`. The `-json-into` file has every warning, so the element count is higher than the number of lines in the compact log.
 
 ## Docs
 
