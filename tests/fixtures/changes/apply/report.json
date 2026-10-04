@@ -2,6 +2,19 @@
   {
     "Started": "2026-01-01T00:00:00Z",
     "Ended": "2026-01-01T00:00:01Z",
+    "Name": ".terragrunt-stack/delta",
+    "Result": "succeeded",
+    "Cmd": "apply",
+    "Args": [
+      "-no-color",
+      "-compact-warnings",
+      "-json-into=apply.json",
+      "-no-color"
+    ]
+  },
+  {
+    "Started": "2026-01-01T00:00:00Z",
+    "Ended": "2026-01-01T00:00:01Z",
     "Name": ".terragrunt-stack/alpha",
     "Result": "succeeded",
     "Cmd": "apply",
@@ -41,7 +54,7 @@
   {
     "Started": "2026-01-01T00:00:00Z",
     "Ended": "2026-01-01T00:00:01Z",
-    "Name": ".terragrunt-stack/delta",
+    "Name": ".terragrunt-stack/epsilon",
     "Result": "succeeded",
     "Cmd": "apply",
     "Args": [
@@ -55,19 +68,6 @@
     "Started": "2026-01-01T00:00:00Z",
     "Ended": "2026-01-01T00:00:01Z",
     "Name": ".terragrunt-stack/beta",
-    "Result": "succeeded",
-    "Cmd": "apply",
-    "Args": [
-      "-no-color",
-      "-compact-warnings",
-      "-json-into=apply.json",
-      "-no-color"
-    ]
-  },
-  {
-    "Started": "2026-01-01T00:00:00Z",
-    "Ended": "2026-01-01T00:00:01Z",
-    "Name": ".terragrunt-stack/epsilon",
     "Result": "succeeded",
     "Cmd": "apply",
     "Args": [

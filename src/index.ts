@@ -3,22 +3,28 @@ import { tmpdir } from "node:os"
 import * as core from "@actions/core"
 import * as github from "@actions/github"
 import { postComment } from "./comment.ts"
-import { readInputs, resolveApplyFiles } from "./inputs.ts"
+import { readInputs, resolveJsonIntoFiles } from "./inputs.ts"
 import { buildReport, loadSources } from "./model.ts"
 import { markerLine, renderMarkdown, renderRunLink, statusLine } from "./render.ts"
 import { buildSummary, writeMarkdownFile } from "./summary.ts"
 
 async function run(): Promise<void> {
   const inputs = readInputs()
+  const planJsonFiles =
+    inputs.planJsonFiles.length > 0
+      ? await resolveJsonIntoFiles(inputs.planJsonFiles, inputs.workingDirectory)
+      : undefined
+  if (planJsonFiles) core.info(`The action found ${planJsonFiles.length} plan -json-into files.`)
   const applyJsonFiles =
     inputs.applyJsonFiles.length > 0
-      ? await resolveApplyFiles(inputs.applyJsonFiles, inputs.workingDirectory)
+      ? await resolveJsonIntoFiles(inputs.applyJsonFiles, inputs.workingDirectory)
       : undefined
   if (applyJsonFiles) core.info(`The action found ${applyJsonFiles.length} -json-into files.`)
 
   const sources = loadSources({
     logFile: inputs.logFile,
     planJsonDir: inputs.planJsonDir,
+    planJsonFiles,
     applyJsonFiles,
     reportFile: inputs.reportFile,
   })

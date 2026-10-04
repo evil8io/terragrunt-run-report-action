@@ -2,19 +2,6 @@
   {
     "Started": "2026-01-01T00:00:00Z",
     "Ended": "2026-01-01T00:00:01Z",
-    "Name": ".terragrunt-stack/gamma",
-    "Result": "succeeded",
-    "Cmd": "plan",
-    "Args": [
-      "-no-color",
-      "-compact-warnings",
-      "-concise",
-      "-no-color"
-    ]
-  },
-  {
-    "Started": "2026-01-01T00:00:00Z",
-    "Ended": "2026-01-01T00:00:01Z",
     "Name": ".terragrunt-stack/zeta",
     "Result": "succeeded",
     "Cmd": "plan",
@@ -22,6 +9,21 @@
       "-no-color",
       "-compact-warnings",
       "-concise",
+      "-json-into=plan.json",
+      "-no-color"
+    ]
+  },
+  {
+    "Started": "2026-01-01T00:00:00Z",
+    "Ended": "2026-01-01T00:00:01Z",
+    "Name": ".terragrunt-stack/gamma",
+    "Result": "succeeded",
+    "Cmd": "plan",
+    "Args": [
+      "-no-color",
+      "-compact-warnings",
+      "-concise",
+      "-json-into=plan.json",
       "-no-color"
     ]
   },
@@ -35,6 +37,7 @@
       "-no-color",
       "-compact-warnings",
       "-concise",
+      "-json-into=plan.json",
       "-no-color"
     ]
   },
@@ -48,19 +51,7 @@
       "-no-color",
       "-compact-warnings",
       "-concise",
-      "-no-color"
-    ]
-  },
-  {
-    "Started": "2026-01-01T00:00:00Z",
-    "Ended": "2026-01-01T00:00:01Z",
-    "Name": ".terragrunt-stack/epsilon",
-    "Result": "succeeded",
-    "Cmd": "plan",
-    "Args": [
-      "-no-color",
-      "-compact-warnings",
-      "-concise",
+      "-json-into=plan.json",
       "-no-color"
     ]
   },
@@ -74,6 +65,21 @@
       "-no-color",
       "-compact-warnings",
       "-concise",
+      "-json-into=plan.json",
+      "-no-color"
+    ]
+  },
+  {
+    "Started": "2026-01-01T00:00:00Z",
+    "Ended": "2026-01-01T00:00:01Z",
+    "Name": ".terragrunt-stack/epsilon",
+    "Result": "succeeded",
+    "Cmd": "plan",
+    "Args": [
+      "-no-color",
+      "-compact-warnings",
+      "-concise",
+      "-json-into=plan.json",
       "-no-color"
     ]
   }

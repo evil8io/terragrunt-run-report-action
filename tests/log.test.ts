@@ -22,7 +22,7 @@ describe("parseLog with the text format", () => {
     expect(entries[0]).toEqual({
       level: "INFO",
       unit: null,
-      lines: ["Terragrunt Cache server is listening on 127.0.0.1:46345"],
+      lines: ["Terragrunt Cache server is listening on 127.0.0.1:34179"],
     })
   })
 

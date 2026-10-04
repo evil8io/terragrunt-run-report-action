@@ -91,6 +91,8 @@ export type RunReport = {
 export type Sources = {
   log?: LogEntry[] | undefined
   plans?: UnitPlan[] | undefined
+  /** The -json-into files of a plan. The report takes only the diagnostics from them. */
+  planJson?: UnitApply[] | undefined
   applies?: UnitApply[] | undefined
   report?: ReportEntry[] | undefined
   /** The problems with the inputs that do not stop the report. */
@@ -100,6 +102,7 @@ export type Sources = {
 export type SourceFiles = {
   logFile?: string | undefined
   planJsonDir?: string | undefined
+  planJsonFiles?: readonly ApplyFile[] | undefined
   applyJsonFiles?: readonly ApplyFile[] | undefined
   reportFile?: string | undefined
 }
@@ -150,7 +153,7 @@ export function loadSources(files: SourceFiles): Sources {
   if (files.reportFile !== undefined) {
     sources.report = parseReport(readInput("report-file", files.reportFile), files.reportFile)
   }
-  const { planJsonDir, applyJsonFiles } = files
+  const { planJsonDir, planJsonFiles, applyJsonFiles } = files
   if (planJsonDir !== undefined && existsSync(planJsonDir)) {
     const plans = readPlanDir(planJsonDir)
     const { fresh, stale } = freshSources(plans, sources.report, PLAN_TIME_PRECISION)
@@ -162,6 +165,17 @@ export function loadSources(files: SourceFiles): Sources {
     }
   } else if (planJsonDir !== undefined) {
     warnings.push(`The directory of the input plan-json-dir does not exist: ${planJsonDir}`)
+  }
+  if (planJsonFiles !== undefined && planJsonFiles.length > 0) {
+    const { fresh, stale } = freshSources(readApplyFiles(planJsonFiles), sources.report)
+    sources.planJson = fresh
+    for (const file of stale) {
+      warnings.push(
+        `The -json-into file of the unit ${file.unit} is from an earlier run, so the action ignored it: ${file.path}`,
+      )
+    }
+  } else if (planJsonFiles !== undefined) {
+    warnings.push("The patterns of the input plan-json-files match no file.")
   }
   if (applyJsonFiles !== undefined && applyJsonFiles.length > 0) {
     const { fresh, stale } = freshSources(readApplyFiles(applyJsonFiles), sources.report)
@@ -226,6 +240,7 @@ type UnitSources = {
   output: UnitOutput | undefined
   plan: UnitPlan | undefined
   apply: UnitApply | undefined
+  planJson: UnitApply | undefined
   entries: ReportEntry[]
 }
 
@@ -435,11 +450,11 @@ function buildUnit(name: string, kind: RunKind, given: UnitSources): UnitReport 
     given.entries.find((candidate) => candidate.result === "failed") ?? given.entries.at(-1)
   const sources =
     entry && SKIPPED_RESULTS.has(entry.result)
-      ? { ...given, plan: undefined, apply: undefined }
+      ? { ...given, plan: undefined, apply: undefined, planJson: undefined }
       : given
   const stdout = sources.output?.stdout ?? []
   const stderr = stderrText(sources.output?.stderr ?? [])
-  const diagnostics = sources.apply?.diagnostics ?? []
+  const diagnostics = sources.apply?.diagnostics ?? sources.planJson?.diagnostics ?? []
   const errored =
     diagnostics.some((diagnostic) => diagnostic.severity === "error") ||
     (stderr !== undefined && /^(?:│ )?Error: /m.test(stderr))
@@ -501,7 +516,7 @@ function buildUnit(name: string, kind: RunKind, given: UnitSources): UnitReport 
 function runKind(sources: Sources, outputs: ReadonlyMap<string, UnitOutput>): RunKind {
   const cmd = sources.report?.find((entry) => entry.cmd !== undefined)?.cmd
   if (cmd === "plan" || cmd === "apply" || cmd === "destroy") return cmd
-  if (sources.plans) return "plan"
+  if (sources.plans || sources.planJson) return "plan"
   if (sources.applies) return "apply"
   const stdout = [...outputs.values()].flatMap((output) => output.stdout)
   if (stdout.some((line) => line.startsWith("Destroy complete! "))) return "destroy"
@@ -574,11 +589,13 @@ export function buildReport(sources: Sources): RunReport {
     (sources.report ?? []).map((entry) => entry.name),
     (sources.plans ?? []).map((plan) => plan.unit),
     (sources.applies ?? []).map((apply) => apply.unit),
+    (sources.planJson ?? []).map((file) => file.unit),
   ])
   const canonical = (name: string) => mapping.get(name) ?? name
   const outputs = new Map([...logOutputs].map(([name, output]) => [canonical(name), output]))
   const plans = new Map((sources.plans ?? []).map((plan) => [canonical(plan.unit), plan]))
   const applies = new Map((sources.applies ?? []).map((apply) => [canonical(apply.unit), apply]))
+  const planJsons = new Map((sources.planJson ?? []).map((file) => [canonical(file.unit), file]))
   const entries = new Map<string, ReportEntry[]>()
   for (const entry of sources.report ?? []) {
     const name = canonical(entry.name)
@@ -586,13 +603,20 @@ export function buildReport(sources: Sources): RunReport {
   }
   const kind = runKind(sources, outputs)
   const names = [
-    ...new Set([...entries.keys(), ...plans.keys(), ...applies.keys(), ...outputs.keys()]),
+    ...new Set([
+      ...entries.keys(),
+      ...plans.keys(),
+      ...applies.keys(),
+      ...planJsons.keys(),
+      ...outputs.keys(),
+    ]),
   ].sort(compare)
   const units = names.map((name) =>
     buildUnit(name, kind, {
       output: outputs.get(name),
       plan: plans.get(name),
       apply: applies.get(name),
+      planJson: planJsons.get(name),
       entries: entries.get(name) ?? [],
     }),
   )

@@ -18,6 +18,12 @@ inputs:
       The directory of the `--json-out-dir` option of `terragrunt run --all -- plan`. It has one
       `tfplan.json` file per unit.
     required: false
+  plan-json-files:
+    description: >-
+      Glob patterns, one per line, of the files that `terragrunt run --all -- plan -json-into=plan.json`
+      writes, one per unit. The patterns are relative to the workspace. The warnings of each unit of a plan
+      come from this file.
+    required: false
   apply-json-files:
     description: >-
       Glob patterns, one per line, of the files that `terragrunt run --all -- apply -json-into=apply.json`
