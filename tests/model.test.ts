@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url"
 import { describe, expect, it } from "vitest"
 import { applyUnitLabel, parseApply } from "../src/apply.ts"
 import { parseLog } from "../src/log.ts"
-import { buildReport, loadSources, type RunReport, type Sources } from "../src/model.ts"
+import { buildReport, loadSources, unifyNames, type RunReport, type Sources } from "../src/model.ts"
 import { parsePlan } from "../src/plan.ts"
 import { parseReport } from "../src/report.ts"
 
@@ -519,5 +519,87 @@ describe("loadSources", () => {
     } finally {
       rmSync(dir, { recursive: true })
     }
+  })
+})
+
+describe("buildReport with unit names of different path depth", () => {
+  const createChange = { address: "a.b", change: { actions: ["create"], importing: null } }
+  const planOf = (name: string) =>
+    parsePlan(JSON.stringify({ resource_changes: [createChange] }), name)
+  const logOf = (...names: string[]) =>
+    parseLog(
+      names
+        .map(
+          (name) =>
+            `12:00:00.000 STDOUT [${name}] tofu: Plan: 1 to add, 0 to change, 0 to destroy.`,
+        )
+        .join("\n"),
+    )
+
+  it("uses the longer log name for a plan with the shorter name", () => {
+    const report = buildReport({ log: logOf("live/unit2"), plans: [planOf("unit2")] })
+    expect(report.units.map((u) => u.name)).toEqual(["live/unit2"])
+    expect(report.units[0]?.changes.map((c) => c.address)).toEqual(["a.b"])
+    expect(report.units[0]?.counts).toEqual({ add: 1, change: 0, remove: 0 })
+  })
+
+  it("uses the shorter log name for a plan with the longer name", () => {
+    const report = buildReport({ log: logOf("unit2"), plans: [planOf("live/unit2")] })
+    expect(report.units.map((u) => u.name)).toEqual(["unit2"])
+    expect(report.units[0]?.changes.map((c) => c.address)).toEqual(["a.b"])
+  })
+
+  it("keeps the plan under its own name when two log names match", () => {
+    const report = buildReport({ log: logOf("a/unit2", "b/unit2"), plans: [planOf("unit2")] })
+    expect(report.units.map((u) => u.name)).toEqual(["a/unit2", "b/unit2", "unit2"])
+    expect(report.units[2]?.changes.map((c) => c.address)).toEqual(["a.b"])
+    expect(report.units[0]?.changes).toEqual([])
+  })
+
+  it("merges a -json-into file and a report entry into one unit", () => {
+    const apply = parseApply(
+      ndjson(
+        { type: "planned_change", change: { resource: { addr: "a.b" }, action: "create" } },
+        summary("plan"),
+        summary("apply"),
+      ),
+      "unit2",
+    )
+    const entries = parseReport(
+      JSON.stringify([{ Name: "live/unit2", Result: "succeeded", Cmd: "apply" }]),
+    )
+    const report = buildReport({ applies: [apply], report: entries })
+    expect(report.units.map((u) => u.name)).toEqual(["live/unit2"])
+    expect(report.units[0]?.result).toBe("succeeded")
+    expect(report.units[0]?.changes.map((c) => c.address)).toEqual(["a.b"])
+  })
+
+  it("does not match the label of a file directly under the working directory", () => {
+    const report = buildReport({ log: logOf("live/unit2"), applies: [parseApply("", ".")] })
+    expect(report.units.map((u) => u.name)).toEqual([".", "live/unit2"])
+  })
+})
+
+describe("unifyNames", () => {
+  it("maps each name to the canonical name of the highest rank", () => {
+    const mapping = unifyNames([
+      ["live/unit2", "live/unit3"],
+      ["unit2", "other"],
+      ["live/unit3", "x/unit3"],
+      ["."],
+    ])
+    expect([...mapping]).toEqual([
+      ["live/unit2", "live/unit2"],
+      ["live/unit3", "live/unit3"],
+      ["unit2", "live/unit2"],
+      ["other", "other"],
+      ["x/unit3", "x/unit3"],
+      [".", "."],
+    ])
+  })
+
+  it("keeps a name with more than one match", () => {
+    const mapping = unifyNames([["a/u", "b/u"], ["u"]])
+    expect(mapping.get("u")).toBe("u")
   })
 })

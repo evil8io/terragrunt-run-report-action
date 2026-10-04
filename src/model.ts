@@ -440,13 +440,49 @@ export function hasCounts(unit: UnitReport): boolean {
   return unit.counts !== undefined || unit.appliedCounts !== undefined
 }
 
+function pathSuffixMatch(name: string, other: string): boolean {
+  return name.endsWith(`/${other}`) || other.endsWith(`/${name}`)
+}
+
+/**
+ * Terragrunt can name a unit with a longer path in one source than in another,
+ * see https://github.com/gruntwork-io/terragrunt/issues/6602. The sources come
+ * in rank order. A name that matches exactly one canonical name of a higher
+ * rank by path suffix gets that name. Any other name stays as it is.
+ */
+export function unifyNames(ranked: readonly Iterable<string>[]): Map<string, string> {
+  const mapping = new Map<string, string>()
+  const canonical = new Set<string>()
+  for (const source of ranked) {
+    const names = [...source]
+    const higher = [...canonical]
+    for (const name of names) {
+      if (mapping.has(name)) continue
+      const matches = canonical.has(name) ? [name] : higher.filter((n) => pathSuffixMatch(name, n))
+      const [only] = matches
+      mapping.set(name, matches.length === 1 && only !== undefined ? only : name)
+    }
+    for (const name of names) canonical.add(mapping.get(name) ?? name)
+  }
+  return mapping
+}
+
 export function buildReport(sources: Sources): RunReport {
-  const outputs = sources.log ? linesByUnit(sources.log) : new Map<string, UnitOutput>()
-  const plans = new Map((sources.plans ?? []).map((plan) => [plan.unit, plan]))
-  const applies = new Map((sources.applies ?? []).map((apply) => [apply.unit, apply]))
+  const logOutputs = sources.log ? linesByUnit(sources.log) : new Map<string, UnitOutput>()
+  const mapping = unifyNames([
+    logOutputs.keys(),
+    (sources.report ?? []).map((entry) => entry.name),
+    (sources.plans ?? []).map((plan) => plan.unit),
+    (sources.applies ?? []).map((apply) => apply.unit),
+  ])
+  const canonical = (name: string) => mapping.get(name) ?? name
+  const outputs = new Map([...logOutputs].map(([name, output]) => [canonical(name), output]))
+  const plans = new Map((sources.plans ?? []).map((plan) => [canonical(plan.unit), plan]))
+  const applies = new Map((sources.applies ?? []).map((apply) => [canonical(apply.unit), apply]))
   const entries = new Map<string, ReportEntry[]>()
   for (const entry of sources.report ?? []) {
-    entries.set(entry.name, [...(entries.get(entry.name) ?? []), entry])
+    const name = canonical(entry.name)
+    entries.set(name, [...(entries.get(name) ?? []), entry])
   }
   const kind = runKind(sources, outputs)
   const names = [
