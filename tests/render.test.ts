@@ -654,6 +654,14 @@ describe("diagnostics", () => {
     expect(md).toContain("Warning: T (2)\n  with p.q (2)\n")
   })
 
+  it("does not merge two occurrences whose place text is equal but whose location and address differ", () => {
+    const md = renderWarnings([
+      warn("S", { location: "p:1 with q:3" }),
+      warn("S", { location: "p:1", address: "q:3" }),
+    ])
+    expect(md).toContain("Warning: S (2)\n  on p:1 with q:3\n  on p:1 with q:3\n")
+  })
+
   it("renders no occurrence line without location and address", () => {
     const md = renderWarnings([warn("X"), warn("X")])
     expect(md).toContain("```\nWarning: X (2)\n```")

@@ -337,14 +337,19 @@ function placeOf(warning: Diagnostic): string {
     .join(" ")
 }
 
+function samePlace(a: Diagnostic, b: Diagnostic): boolean {
+  return a.location === b.location && a.address === b.address
+}
+
 function warningGroup(group: WarningGroup): string {
   const [first] = group
   const lines = [`Warning: ${first.summary}${group.length > 1 ? ` (${group.length})` : ""}`]
   let index = 0
   while (index < group.length) {
-    const place = placeOf(group[index]!)
+    const head = group[index]!
+    const place = placeOf(head)
     let end = index + 1
-    while (end < group.length && placeOf(group[end]!) === place) end++
+    while (end < group.length && samePlace(head, group[end]!)) end++
     const count = end - index
     if (place !== "") lines.push(`  ${place}${count > 1 ? ` (${count})` : ""}`)
     index = end
