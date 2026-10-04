@@ -1,18 +1,33 @@
 <!-- terragrunt-run-report: Terragrunt run report -->
 ## Terragrunt run report
 
-**Plan: 6 units, 3 with changes, 2 unchanged, 1 failed.** 6 to add, 0 to change, 6 to destroy.
+**Plan: 6 units, 3 with changes, 2 unchanged, 1 failed.** 6 to add, 0 to change, 6 to destroy. ⚠️ 18 warnings in 6 units.
 
 | Unit | Result | Add | Change | Destroy | Duration |
 | --- | --- | ---: | ---: | ---: | ---: |
 | [`.terragrunt-stack/alpha`](#user-content-trr-terragrunt-run-report-terragrunt-stack-alpha) | ✅ succeeded | 2 | 0 | 3 | 1s |
 | [`.terragrunt-stack/beta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-beta) | ✅ succeeded | 1 | 0 | 1 | 1s |
 | [`.terragrunt-stack/delta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-delta) | ✅ succeeded | 2 | 0 | 1 | 1s |
-| `.terragrunt-stack/epsilon` | ✅ no changes | 0 | 0 | 0 | 1s |
-| `.terragrunt-stack/gamma` | ✅ no changes | 0 | 0 | 0 | 1s |
+| [`.terragrunt-stack/epsilon`](#user-content-trr-terragrunt-run-report-terragrunt-stack-epsilon) | ✅ no changes | 0 | 0 | 0 | 1s |
+| [`.terragrunt-stack/gamma`](#user-content-trr-terragrunt-run-report-terragrunt-stack-gamma) | ✅ no changes | 0 | 0 | 0 | 1s |
 | [`.terragrunt-stack/zeta`](#user-content-trr-terragrunt-run-report-terragrunt-stack-zeta) | ❌ failed (run error) | 1 | 0 | 1 | 1s |
 
 ### <a id="trr-terragrunt-run-report-terragrunt-stack-alpha"></a>`.terragrunt-stack/alpha`
+
+<details><summary>⚠️ 3 warnings</summary>
+
+```
+Warning: Redundant ignore_changes element (3)
+  on main.tf:38
+  on main.tf:51
+  on main.tf:70
+
+Adding an attribute name to ignore_changes tells OpenTofu to ignore future changes to the argument in configuration after the object has been created, retaining the value originally configured.
+
+The attribute id is decided by the provider alone and therefore there can be no configured value to compare with. Including this attribute in ignore_changes has no effect. Remove the attribute from ignore_changes to quiet this warning.
+```
+
+</details>
 
 Plan: 2 to add, 0 to change, 3 to destroy.
 
@@ -23,15 +38,15 @@ Plan: 2 to add, 0 to change, 3 to destroy.
 ```diff
 ! content              = <<-EOT # forces replacement
       alpha phase 2
-      replace=6a365a60-6fe4-d957-6d62-fc566cc0924e
+      replace=494d04b3-caa4-b131-a9c4-66155c6e0491
   EOT -> (known after apply) # forces replacement
-! content_base64sha256 = "HN7KIqlReJITX66McTFr3JLEMmyGkb9lzkGCMwTZ1gc=" -> (known after apply)
-! content_base64sha512 = "H2ArmVxHN9lZKhN8vIhYF2++GRHe50B/8wHddMgy6K4vOd8pH36EWzrw4RX67ZDNAaaXYZ4Tyma2MIwq1VdcHQ==" -> (known after apply)
-! content_md5          = "0c47e5d00bd02ae167d4b10637e51587" -> (known after apply)
-! content_sha1         = "5fc26f27ab73af27411444cc1dbc4ce2d01ad06c" -> (known after apply)
-! content_sha256       = "1cdeca22a9517892135fae8c71316bdc92c4326c8691bf65ce41823304d9d607" -> (known after apply)
-! content_sha512       = "1f602b995c4737d9592a137cbc8858176fbe1911dee7407ff301dd74c832e8ae2f39df291f7e845b3af0e115faed90cd01a697619e13ca66b6308c2ad5575c1d" -> (known after apply)
-! id                   = "5fc26f27ab73af27411444cc1dbc4ce2d01ad06c" -> (known after apply)
+! content_base64sha256 = "UT4AfilfFTHgq6/2ngj6AVzQ+Ua6GdQkAzTNaczg4UE=" -> (known after apply)
+! content_base64sha512 = "4OxF8zC33B9RqWYPwxZPeWbfrWr0A/vwEbZty9Cvme+mlmSg6j2j7SqKHxZn/DVHOZrr1bu18TUEEHygsN15Rw==" -> (known after apply)
+! content_md5          = "174ea7357be92179f35347dd70211225" -> (known after apply)
+! content_sha1         = "f8e68636bd9340836dd9e4e535e48bb6805567c7" -> (known after apply)
+! content_sha256       = "513e007e295f1531e0abaff69e08fa015cd0f946ba19d4240334cd69cce0e141" -> (known after apply)
+! content_sha512       = "e0ec45f330b7dc1f51a9660fc3164f7966dfad6af403fbf011b66dcbd0af99efa69664a0ea3da3ed2a8a1f1667fc3547399aebd5bbb5f13504107ca0b0dd7947" -> (known after apply)
+! id                   = "f8e68636bd9340836dd9e4e535e48bb6805567c7" -> (known after apply)
   # (3 unchanged attributes hidden)
 ```
 
@@ -40,7 +55,7 @@ Plan: 2 to add, 0 to change, 3 to destroy.
 <details><summary><code>terraform_data.replace</code></summary>
 
 ```diff
-! id               = "6a365a60-6fe4-d957-6d62-fc566cc0924e" -> (known after apply)
+! id               = "494d04b3-caa4-b131-a9c4-66155c6e0491" -> (known after apply)
 ! triggers_replace = "phase-2" -> "phase-3"
 ```
 
@@ -78,12 +93,27 @@ _→ because index [0] is out of range for count_
 
 ```diff
 ! content    = "alpha phase 2" -> "alpha phase 3"
-! replace_id = "6a365a60-6fe4-d957-6d62-fc566cc0924e" -> (known after apply)
+! replace_id = "494d04b3-caa4-b131-a9c4-66155c6e0491" -> (known after apply)
 ```
 
 </details>
 
 ### <a id="trr-terragrunt-run-report-terragrunt-stack-beta"></a>`.terragrunt-stack/beta`
+
+<details><summary>⚠️ 3 warnings</summary>
+
+```
+Warning: Redundant ignore_changes element (3)
+  on main.tf:38
+  on main.tf:51
+  on main.tf:70
+
+Adding an attribute name to ignore_changes tells OpenTofu to ignore future changes to the argument in configuration after the object has been created, retaining the value originally configured.
+
+The attribute id is decided by the provider alone and therefore there can be no configured value to compare with. Including this attribute in ignore_changes has no effect. Remove the attribute from ignore_changes to quiet this warning.
+```
+
+</details>
 
 Plan: 1 to add, 0 to change, 1 to destroy.
 
@@ -95,15 +125,15 @@ Plan: 1 to add, 0 to change, 1 to destroy.
 ! content              = <<-EOT # forces replacement
 -     beta after alpha, phase 2
 +     beta after alpha, phase 3
-      replace=fd98a5eb-06ae-4bbd-958b-0ee57ac1e3c5
+      replace=6e9cb995-1623-16cd-b6e5-00d1988e8976
   EOT
-! content_base64sha256 = "b6NRKfbuWc541TGwuKSZ/goaOyDoQqzSJYiKE6I1040=" -> (known after apply)
-! content_base64sha512 = "JsyoLJ7yz+VcnJl45rlqf86ehAZ51YJ9k/288y6W8Jur4vo3IGVljVkpCTrV4hKP35p7yxEuaRKTlyO5rIjglg==" -> (known after apply)
-! content_md5          = "5c41495a892fbd33a205db80324a2d1c" -> (known after apply)
-! content_sha1         = "43ab2c5bc9a1d8b433420322601c6492acbe7392" -> (known after apply)
-! content_sha256       = "6fa35129f6ee59ce78d531b0b8a499fe0a1a3b20e842acd225888a13a235d38d" -> (known after apply)
-! content_sha512       = "26cca82c9ef2cfe55c9c9978e6b96a7fce9e840679d5827d93fdbcf32e96f09babe2fa372065658d5929093ad5e2128fdf9a7bcb112e6912939723b9ac88e096" -> (known after apply)
-! id                   = "43ab2c5bc9a1d8b433420322601c6492acbe7392" -> (known after apply)
+! content_base64sha256 = "GnHbTj69KN9Vr3USyh6xWr6k9Rt2diarGZVG2Yp857M=" -> (known after apply)
+! content_base64sha512 = "bxLYH1HED5jEVVFfdOYlKH2RIfvrFbZU2t3Y8DXeg/QzEyZpJO4i7GRauYMgB7sP69GwpCPKyspqgF35OvDdNw==" -> (known after apply)
+! content_md5          = "0b88da56920f38f8a8701444798f5a4f" -> (known after apply)
+! content_sha1         = "fddb3371a81239886a188f546ae73af3de88c4af" -> (known after apply)
+! content_sha256       = "1a71db4e3ebd28df55af7512ca1eb15abea4f51b767626ab199546d98a7ce7b3" -> (known after apply)
+! content_sha512       = "6f12d81f51c40f98c455515f74e625287d9121fbeb15b654daddd8f035de83f43313266924ee22ec645ab9832007bb0febd1b0a423cacaca6a805df93af0dd37" -> (known after apply)
+! id                   = "fddb3371a81239886a188f546ae73af3de88c4af" -> (known after apply)
   # (3 unchanged attributes hidden)
 ```
 
@@ -120,6 +150,21 @@ Plan: 1 to add, 0 to change, 1 to destroy.
 </details>
 
 ### <a id="trr-terragrunt-run-report-terragrunt-stack-delta"></a>`.terragrunt-stack/delta`
+
+<details><summary>⚠️ 3 warnings</summary>
+
+```
+Warning: Redundant ignore_changes element (3)
+  on main.tf:38
+  on main.tf:51
+  on main.tf:70
+
+Adding an attribute name to ignore_changes tells OpenTofu to ignore future changes to the argument in configuration after the object has been created, retaining the value originally configured.
+
+The attribute id is decided by the provider alone and therefore there can be no configured value to compare with. Including this attribute in ignore_changes has no effect. Remove the attribute from ignore_changes to quiet this warning.
+```
+
+</details>
 
 Plan: 2 to add, 0 to change, 1 to destroy.
 
@@ -145,15 +190,15 @@ Plan: 2 to add, 0 to change, 1 to destroy.
 ! content              = <<-EOT # forces replacement
 -     delta phase 2
 +     delta phase 3
-      replace=3b06cc70-90e0-1315-cb65-6d655943a066
+      replace=ccd28744-083a-c82c-3da0-710f1799fd0c
   EOT
-! content_base64sha256 = "xUDc/9de7DrGaQOzoRUfDyAmMR7ygzPTrQFzjoQZERk=" -> (known after apply)
-! content_base64sha512 = "mU/u4l+kJqlzZDBw/amnp9IWb1D7MX/d+An/TSdqmpVJ7ZAjfF+VgQAOM/Ti/x34x2jCaf/IMVobY3VYdQMEaQ==" -> (known after apply)
-! content_md5          = "d528ca582c6eac87381bbbe74491c090" -> (known after apply)
-! content_sha1         = "0c6137175ceb6f27cae6ef43ab292d93a9bdf077" -> (known after apply)
-! content_sha256       = "c540dcffd75eec3ac66903b3a1151f0f2026311ef28333d3ad01738e84191119" -> (known after apply)
-! content_sha512       = "994feee25fa426a973643070fda9a7a7d2166f50fb317fddf809ff4d276a9a9549ed90237c5f9581000e33f4e2ff1df8c768c269ffc8315a1b63755875030469" -> (known after apply)
-! id                   = "0c6137175ceb6f27cae6ef43ab292d93a9bdf077" -> (known after apply)
+! content_base64sha256 = "JXOV6MH21xci0RiH3mxHM9yT2ORCReWg2GqOC1JqZ8U=" -> (known after apply)
+! content_base64sha512 = "DAwHrIzho23mU4anYSRzi2AudLnBV/QItOzRNy0eefN0EfCjrKLtN94CANcnYVguq0tfo8b0dYIP9MzDyV4jiA==" -> (known after apply)
+! content_md5          = "dcf955a53348be417e28482e1147e893" -> (known after apply)
+! content_sha1         = "55125d82b32874f57f1cfc7ee0cb62a68b2c60c6" -> (known after apply)
+! content_sha256       = "257395e8c1f6d71722d11887de6c4733dc93d8e44245e5a0d86a8e0b526a67c5" -> (known after apply)
+! content_sha512       = "0c0c07ac8ce1a36de65386a76124738b602e74b9c157f408b4ecd1372d1e79f37411f0a3aca2ed37de0200d72761582eab4b5fa3c6f475820ff4ccc3c95e2388" -> (known after apply)
+! id                   = "55125d82b32874f57f1cfc7ee0cb62a68b2c60c6" -> (known after apply)
   # (3 unchanged attributes hidden)
 ```
 
@@ -169,6 +214,44 @@ Plan: 2 to add, 0 to change, 1 to destroy.
 
 </details>
 
+### <a id="trr-terragrunt-run-report-terragrunt-stack-epsilon"></a>`.terragrunt-stack/epsilon`
+
+<details><summary>⚠️ 3 warnings</summary>
+
+```
+Warning: Redundant ignore_changes element (3)
+  on main.tf:38
+  on main.tf:51
+  on main.tf:70
+
+Adding an attribute name to ignore_changes tells OpenTofu to ignore future changes to the argument in configuration after the object has been created, retaining the value originally configured.
+
+The attribute id is decided by the provider alone and therefore there can be no configured value to compare with. Including this attribute in ignore_changes has no effect. Remove the attribute from ignore_changes to quiet this warning.
+```
+
+</details>
+
+No changes. Your infrastructure matches the configuration.
+
+### <a id="trr-terragrunt-run-report-terragrunt-stack-gamma"></a>`.terragrunt-stack/gamma`
+
+<details><summary>⚠️ 3 warnings</summary>
+
+```
+Warning: Redundant ignore_changes element (3)
+  on main.tf:38
+  on main.tf:51
+  on main.tf:70
+
+Adding an attribute name to ignore_changes tells OpenTofu to ignore future changes to the argument in configuration after the object has been created, retaining the value originally configured.
+
+The attribute id is decided by the provider alone and therefore there can be no configured value to compare with. Including this attribute in ignore_changes has no effect. Remove the attribute from ignore_changes to quiet this warning.
+```
+
+</details>
+
+No changes. Your infrastructure matches the configuration.
+
 ### <a id="trr-terragrunt-run-report-terragrunt-stack-zeta"></a>`.terragrunt-stack/zeta`
 
 ❌ failed (run error)
@@ -182,6 +265,21 @@ Error: Resource precondition failed
 The unit zeta is configured to fail at plan time.
 ```
 
+<details><summary>⚠️ 3 warnings</summary>
+
+```
+Warning: Redundant ignore_changes element (3)
+  on main.tf:38
+  on main.tf:51
+  on main.tf:70
+
+Adding an attribute name to ignore_changes tells OpenTofu to ignore future changes to the argument in configuration after the object has been created, retaining the value originally configured.
+
+The attribute id is decided by the provider alone and therefore there can be no configured value to compare with. Including this attribute in ignore_changes has no effect. Remove the attribute from ignore_changes to quiet this warning.
+```
+
+</details>
+
 Plan: 1 to add, 0 to change, 1 to destroy.
 
 <details><summary>⚙️ Replace (1)</summary>
@@ -192,15 +290,15 @@ Plan: 1 to add, 0 to change, 1 to destroy.
 ! content              = <<-EOT # forces replacement
 -     zeta phase 2
 +     zeta phase 3
-      replace=5517f486-d950-f570-4fe7-baf2e9d46234
+      replace=2b99c17b-4ce0-effd-d4d1-13fcbb5dd989
   EOT
-! content_base64sha256 = "RSOG4UP26gkIoEaJr6WZDp817+wL/lucFydOwDmOmM0=" -> (known after apply)
-! content_base64sha512 = "EXs7QupP6N8ZgMwPOQBfkIUBRMmMcLFkh1uVItqqR4EwDRDB1oVBqgPyp3i77ifIv6UjF2GEUgHlDqOJEO92oA==" -> (known after apply)
-! content_md5          = "7a9cdee3dacd3635d6df6ae653340e2d" -> (known after apply)
-! content_sha1         = "95198e5fb6c7a6d29cec70f09c1c8828df325fe8" -> (known after apply)
-! content_sha256       = "452386e143f6ea0908a04689afa5990e9f35efec0bfe5b9c17274ec0398e98cd" -> (known after apply)
-! content_sha512       = "117b3b42ea4fe8df1980cc0f39005f90850144c98c70b164875b9522daaa4781300d10c1d68541aa03f2a778bbee27c8bfa5231761845201e50ea38910ef76a0" -> (known after apply)
-! id                   = "95198e5fb6c7a6d29cec70f09c1c8828df325fe8" -> (known after apply)
+! content_base64sha256 = "gTZJCGiDKxNiCrSUJqJYzYB2ICb3IyfMWIaWqVN9Wsk=" -> (known after apply)
+! content_base64sha512 = "DkVC60IA79dMbHFR7DgHNA8dhFygQ/XrkLb9CR7YGVKmC6gKWy+hR1dMI02Q4M2MO3ins7wtm4Jl25WCKIghZw==" -> (known after apply)
+! content_md5          = "1ee3abb56d8324038e8f329e8705f865" -> (known after apply)
+! content_sha1         = "d7139e64879a1d465ba5e02e500dac0b4dc480a5" -> (known after apply)
+! content_sha256       = "8136490868832b13620ab49426a258cd80762026f72327cc588696a9537d5ac9" -> (known after apply)
+! content_sha512       = "0e4542eb4200efd74c6c7151ec3807340f1d845ca043f5eb90b6fd091ed81952a60ba80a5b2fa147574c234d90e0cd8c3b78a7b3bc2d9b8265db958228882167" -> (known after apply)
+! id                   = "d7139e64879a1d465ba5e02e500dac0b4dc480a5" -> (known after apply)
   # (3 unchanged attributes hidden)
 ```
 

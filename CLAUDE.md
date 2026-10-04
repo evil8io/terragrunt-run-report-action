@@ -34,6 +34,7 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 - The status line names the kind of run: `Plan`, `Apply`, `Destroy`, or `Run` when the kind is unknown. The kind comes from the report file, else from the log, else from the inputs.
 - When the run has warnings, end the status line with one sentence outside the bold part, for example `⚠️ 52 warnings in 2 units.` Count every warning diagnostic of every unit, and count the units with at least one warning. The table has no warnings column, so without the sentence the top of the report does not show that the run has warnings. Write no sentence at zero warnings, so that a plan report and the `summary` output of a run without warnings do not change.
 - When the log has a run error and no unit failed, the text of that error follows the status line.
+- Take the changes and the counts of a plan from the `tfplan.json` files, and only the diagnostics from the `-json-into` files of the plan. The `tfplan.json` file has the deposed key and the action reason of each change, and the `-json-into` file has neither.
 - The table has one row for each unit, sorted by name. In an apply report, a count cell shows `applied of planned` when the two differ.
 - A unit gets a section only with changes, diagnostics, or a failure. A section has the result line (when not succeeded), the error fence, the warnings element, the tofu summary line, the groups in this order: create, update, replace, destroy, read, import, forget, move, ephemeral, and then the changes to outputs.
 - Put the warnings of a unit in one closed `<details>` element, grouped by summary and detail, with the detail once per group. Keep the errors in the open fence above it, also for a failed unit. A unit can have 50 equal warnings, and an open block of that size hides the error and the diff.
@@ -70,7 +71,7 @@ These facts were verified on terragrunt 1.1.6 and OpenTofu 1.13.1. The code or t
 - A failed plan writes no `tfplan.json` file. Terragrunt does not clear `--json-out-dir`, so the `tfplan.json` file of an earlier run stays.
 - The `timestamp` of a `tfplan.json` file has whole seconds. So it can be up to 1 second earlier than the `Started` time of its unit.
 - An early-exit unit writes no `-json-into` file.
-- The first message of a `-json-into` file is `version`, and its `@timestamp` is later than the `Started` time of the unit in the report file. A unit that does not run keeps the file of an earlier run.
+- The first message of a `-json-into` file is `version`, and its `@timestamp` is later than the `Started` time of the unit in the report file. A unit that does not run keeps the file of an earlier run. This is true for a plan and for an apply.
 - A `-json-into` file has no `apply_start` or `apply_complete` hook for an import or a forget.
 - The `tfplan.json` file has the key of a deposed object in the field `deposed`, next to the live `address`. A `-json-into` file has no deposed key, so the messages and the hooks of a deposed object use the address of its live object. One address can then have more than one `apply_start` message.
 - For a failed destroy of a deposed object, tofu writes no `apply_errored` message. The `-json-into` file has an `apply_start` message without an `apply_complete` message, and a diagnostic without an address.
@@ -82,7 +83,7 @@ These facts were verified on terragrunt 1.1.6 and OpenTofu 1.13.1. The code or t
 - After a configuration error, terragrunt writes the report file `[]` and no `--json-out-dir` directory. The log then has top-level `ERROR` entries, but no `Run failed` entry.
 - The `Cause` of an early exit in the report file is the base name of the failed ancestor, not its path.
 - The `outputs` message of a `-json-into` file has the values of the outputs. Do not render these values, because they can be sensitive.
-- Tofu writes a warning to STDOUT and an error to STDERR. The stderr fence of a unit thus has no warning, and the warnings element shows each warning of the `-json-into` file once. A `tfplan.json` file has no diagnostics, so a plan report has no warnings element.
+- Tofu writes a warning to STDOUT and an error to STDERR. The stderr fence of a unit thus has no warning, and the warnings element shows each warning of the `-json-into` file once. A `tfplan.json` file has no diagnostics. The `-json-into` file of a plan has the diagnostics of the plan, so a plan report has a warnings element only with `plan-json-files`.
 
 ## Docs
 

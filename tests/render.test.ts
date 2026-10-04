@@ -31,6 +31,8 @@ function sources(scenario: string, kind: "plan" | "apply" | "destroy"): Sources 
   return loadSources({
     logFile: path.join(dir, `${kind}.log`),
     planJsonDir: kind === "plan" ? path.join(dir, "plans") : undefined,
+    planJsonFiles:
+      kind === "plan" ? applyFiles(path.join(dir, "json-into"), "plan.json") : undefined,
     applyJsonFiles:
       kind === "plan" ? undefined : applyFiles(path.join(dir, "apply-json"), `${kind}.json`),
     reportFile: path.join(dir, "report.json"),
@@ -674,7 +676,7 @@ describe("statusLine", () => {
       "Apply: 6 units, 2 with changes, 1 unchanged, 2 failed, 1 early exit. 4 added, 0 changed, 5 destroyed. ⚠️ 15 warnings in 5 units.",
     )
     expect(statusLine(buildReport(sources("changes", "plan")))).toBe(
-      "Plan: 6 units, 4 with changes, 2 unchanged. 6 to add, 0 to change, 6 to destroy.",
+      "Plan: 6 units, 4 with changes, 2 unchanged. 6 to add, 0 to change, 6 to destroy. ⚠️ 18 warnings in 6 units.",
     )
   })
 

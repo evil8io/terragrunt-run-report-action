@@ -60,7 +60,7 @@ jobs:
         continue-on-error: true
         run: |
           terragrunt run --all --json-out-dir plans-2 --report-file report-plan-2.json --report-format json \
-            -- plan -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-concise' || '' }} 2>&1 | tee plan-2.log; exit ${PIPESTATUS[0]}
+            -- plan -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-concise -json-into=plan.json' || '' }} 2>&1 | tee plan-2.log; exit ${PIPESTATUS[0]}
 
       - name: Phase 2, plan report
         id: plan-2
@@ -70,6 +70,7 @@ jobs:
           header: "Plan (changes)"
           log-file: tests/e2e/stack/plan-2.log
           plan-json-dir: tests/e2e/stack/plans-2
+          plan-json-files: ${{ matrix.tf == 'opentofu' && 'tests/e2e/stack/.terragrunt-stack/**/.terragrunt-cache/**/plan.json' || '' }}
           report-file: tests/e2e/stack/report-plan-2.json
           working-directory: tests/e2e/stack
           comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
@@ -102,7 +103,7 @@ jobs:
         continue-on-error: true
         run: |
           terragrunt run --all --json-out-dir plans-3 --report-file report-plan-3.json --report-format json \
-            -- plan -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-concise' || '' }} 2>&1 | tee plan-3.log; exit ${PIPESTATUS[0]}
+            -- plan -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-concise -json-into=plan.json' || '' }} 2>&1 | tee plan-3.log; exit ${PIPESTATUS[0]}
 
       - name: Phase 3, plan report
         id: plan-3
@@ -112,6 +113,7 @@ jobs:
           header: "Plan (failures)"
           log-file: tests/e2e/stack/plan-3.log
           plan-json-dir: tests/e2e/stack/plans-3
+          plan-json-files: ${{ matrix.tf == 'opentofu' && 'tests/e2e/stack/.terragrunt-stack/**/.terragrunt-cache/**/plan.json' || '' }}
           report-file: tests/e2e/stack/report-plan-3.json
           working-directory: tests/e2e/stack
           comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}
@@ -123,7 +125,7 @@ jobs:
         continue-on-error: true
         run: |
           terragrunt run --all --log-format=json --json-out-dir plans-3-json --report-file report-plan-3-json.json --report-format json \
-            -- plan -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-concise' || '' }} 2>&1 | tee plan-3-json.log; exit ${PIPESTATUS[0]}
+            -- plan -no-color -compact-warnings ${{ matrix.tf == 'opentofu' && '-concise -json-into=plan.json' || '' }} 2>&1 | tee plan-3-json.log; exit ${PIPESTATUS[0]}
 
       - name: Phase 3, plan report of the JSON log format
         id: plan-3-json
@@ -133,6 +135,7 @@ jobs:
           header: "Plan (failures, JSON log)"
           log-file: tests/e2e/stack/plan-3-json.log
           plan-json-dir: tests/e2e/stack/plans-3-json
+          plan-json-files: ${{ matrix.tf == 'opentofu' && 'tests/e2e/stack/.terragrunt-stack/**/.terragrunt-cache/**/plan.json' || '' }}
           report-file: tests/e2e/stack/report-plan-3-json.json
           working-directory: tests/e2e/stack
           comment: ${{ matrix.tf == 'opentofu' && github.event.pull_request.head.repo.full_name == github.repository }}

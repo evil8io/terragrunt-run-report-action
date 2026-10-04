@@ -37,6 +37,7 @@ function sources(
     return loadSources({
       logFile: path.join(dir, "plan.log"),
       planJsonDir: path.join(dir, "plans"),
+      planJsonFiles: applyFiles(path.join(dir, "json-into"), "plan.json"),
       reportFile: path.join(dir, "report.json"),
     })
   }
@@ -79,7 +80,7 @@ describe("buildReport for changes/plan", () => {
     ])
     const replace = unit(report, "alpha").changes[2]
     expect(replace?.diff).toBe(
-      '! id               = "05faebba-2b8e-0d00-1a9e-7a8cc76e8a69" -> (known after apply)\n! triggers_replace = "phase-1" -> "phase-2"',
+      '! id               = "8ecce4d8-5014-09f3-fdaf-bb93a9df3581" -> (known after apply)\n! triggers_replace = "phase-1" -> "phase-2"',
     )
     expect(replace?.reason).toBeUndefined()
     expect(replace?.outcome).toBeUndefined()
@@ -120,6 +121,65 @@ describe("buildReport for changes/plan", () => {
       empty: false,
       failed: false,
     })
+  })
+})
+
+describe("buildReport with the -json-into files of a plan", () => {
+  const dir = path.join(FIXTURES, "changes", "plan")
+  const alone = buildReport(
+    loadSources({
+      logFile: path.join(dir, "plan.log"),
+      planJsonDir: path.join(dir, "plans"),
+      reportFile: path.join(dir, "report.json"),
+    }),
+  )
+  const withFiles = buildReport(sources("changes", "plan"))
+
+  it("takes the warnings of each unit from the files and keeps the changes", () => {
+    expect(withFiles.kind).toBe("plan")
+    for (const u of withFiles.units) {
+      expect(u.diagnostics).toHaveLength(3)
+      expect(u.diagnostics.every((d) => d.severity === "warning")).toBe(true)
+    }
+    expect(withFiles.units.map((u) => [u.name, u.changes, u.counts, u.summaryLine])).toEqual(
+      alone.units.map((u) => [u.name, u.changes, u.counts, u.summaryLine]),
+    )
+    expect(alone.units.every((u) => u.diagnostics.length === 0)).toBe(true)
+  })
+
+  it("gives the kind plan for the files alone", () => {
+    const planJson = sources("changes", "plan").planJson
+    expect(buildReport({ planJson }).kind).toBe("plan")
+  })
+
+  it("warns about patterns that match no file", () => {
+    expect(loadSources({ planJsonFiles: [] }).warnings).toEqual([
+      "The patterns of the input plan-json-files match no file.",
+    ])
+  })
+
+  it("ignores a file of an earlier run and warns about it", () => {
+    const tmp = mkdtempSync(path.join(tmpdir(), "sources-"))
+    try {
+      const cache = path.join(tmp, "a", ".terragrunt-cache", "x", "y")
+      mkdirSync(cache, { recursive: true })
+      const file = path.join(cache, "plan.json")
+      writeFileSync(file, created("a.stale", "2026-01-01T00:00:00Z"))
+      const reportFile = path.join(tmp, "report.json")
+      writeFileSync(
+        reportFile,
+        JSON.stringify([
+          { Name: "a", Result: "failed", Cmd: "plan", Started: "2026-01-01T00:05:00Z" },
+        ]),
+      )
+      const loaded = loadSources({ planJsonFiles: applyFiles(tmp, "plan.json"), reportFile })
+      expect(loaded.warnings).toEqual([
+        `The -json-into file of the unit a is from an earlier run, so the action ignored it: ${file}`,
+      ])
+      expect(loaded.planJson).toEqual([])
+    } finally {
+      rmSync(tmp, { recursive: true })
+    }
   })
 })
 

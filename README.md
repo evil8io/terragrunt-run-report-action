@@ -14,7 +14,7 @@
 
 ## Report
 
-The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes, warnings, or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error. In an apply, the warnings of a unit follow the error in one collapsed element, grouped by message, with the location of each warning. When the run has warnings, the status line ends with the count of the warnings and the count of the units with warnings. A unit without changes or warnings, a unit that exited early, and an excluded unit have a table row only.
+The report starts with the `header` as a heading, then a status line, then a table with one row for each unit. After the table, the report has one section for each unit with changes, warnings, or a failure. A section has one collapsed diff for each resource, in groups by the kind of change. After the groups, the section has the changes to the outputs. The section of a failed unit starts with the error. In a plan with `plan-json-files` and in an apply, the warnings of a unit follow the error in one collapsed element, grouped by message, with the location of each warning. When the run has warnings, the status line ends with the count of the warnings and the count of the units with warnings. A unit without changes or warnings, a unit that exited early, and an excluded unit have a table row only.
 
 An apply with one failed unit looks like this:
 
@@ -81,20 +81,21 @@ jobs:
         working-directory: live
         run: |
           terragrunt run --all --json-out-dir plans --report-file report.json --report-format json \
-            -- plan -no-color -compact-warnings -concise 2>&1 | tee plan.log; exit ${PIPESTATUS[0]}
+            -- plan -no-color -compact-warnings -concise -json-into=plan.json 2>&1 | tee plan.log; exit ${PIPESTATUS[0]}
 
       - uses: evil8io/terragrunt-run-report-action@v0
         if: always()
         with:
           log-file: live/plan.log
           plan-json-dir: live/plans
+          plan-json-files: live/**/.terragrunt-cache/**/plan.json
           report-file: live/report.json
           working-directory: live
           comment: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
           pr-number: ${{ github.event.pull_request.number }}
 ```
 
-The plan step writes three files. `tee` writes the log to `plan.log`, and each log line has the name of its unit. With `--json-out-dir`, terragrunt writes the plan of each unit as JSON. With `--report-file`, terragrunt writes the result of each unit. The `exit` command returns the exit code of terragrunt, so the step fails when a unit fails. The action still runs, because of `if: always()`.
+The plan step writes four files. `tee` writes the log to `plan.log`, and each log line has the name of its unit. With `--json-out-dir`, terragrunt writes the plan of each unit as JSON. With `--report-file`, terragrunt writes the result of each unit. With `-json-into`, tofu writes a file for each unit with the warnings of the plan. Tofu writes that file in the working directory of the unit, under `.terragrunt-cache/`, and one glob pattern matches all of these files. The `exit` command returns the exit code of terragrunt, so the step fails when a unit fails. The action still runs, because of `if: always()`.
 
 The token of a pull request from a fork has no write permission. So the example posts a comment only for a branch of the repository. A workflow that sets `comment: true` on every pull request, also on a pull request from a fork, can set `comment-failure: warn`. The `warn` value does not cover a `pr-number` that is not set, because the inputs check fails before the action makes the report.
 
@@ -134,7 +135,7 @@ jobs:
           working-directory: live
 ```
 
-The apply step writes the log and the result of each unit, as the plan step does. In place of the plan JSON, tofu writes a `-json-into` file for each unit, with the applied changes. Tofu writes that file in the working directory of the unit, under `.terragrunt-cache/`. One glob pattern matches all of these files. A push event has no pull request number, so the example writes the job summary only.
+The apply step writes the log and the result of each unit, as the plan step does. Its `-json-into` file has the applied changes and the warnings. A push event has no pull request number, so the example writes the job summary only.
 
 ### Versions
 
@@ -159,37 +160,39 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 
 ## Inputs
 
-Set the three file inputs of the run, as in the examples:
+Set the file inputs of the run, as in the examples:
 
-| Run   | Inputs                                            |
-| ----- | ------------------------------------------------- |
-| plan  | `log-file`, `plan-json-dir`, and `report-file`    |
-| apply | `log-file`, `apply-json-files`, and `report-file` |
+| Run   | Inputs                                                            |
+| ----- | ----------------------------------------------------------------- |
+| plan  | `log-file`, `plan-json-dir`, `plan-json-files`, and `report-file` |
+| apply | `log-file`, `apply-json-files`, and `report-file`                 |
 
 Each file adds a part of the report. The action needs at least one of them. The report then has the parts that these files give:
 
 - `log-file` contains the diff of each resource, the error text of a failed unit, and the text of a run error. Without it, the report has the list of changes, but no diff.
 - `plan-json-dir` or `apply-json-files` contains the exact list of changes, with the kind of each change and the counts. In an apply, it also contains the outcome of each resource and the warnings of each unit. Without it, the action reads the list of changes from the log.
+- `plan-json-files` contains the warnings of each unit of a plan. Without it, a plan report has no warnings.
 - `report-file` contains the result of each unit: succeeded, failed, early exit, or excluded, with the reason. Without it, the report does not contain a unit that did not run.
 
-| Input               | Required | Default                                                                               | Description                                                                                                                                                                                     |
-| ------------------- | -------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `log-file`          | no       |                                                                                       | The stdout and stderr of `terragrunt run --all`, in the default log format or with `--log-format=json`. The Usage examples write it with `tee`. The diff of each resource comes from this file. |
-| `plan-json-dir`     | no       |                                                                                       | The directory of the `--json-out-dir` option of `terragrunt run --all -- plan`. It has one `tfplan.json` file per unit.                                                                         |
-| `apply-json-files`  | no       |                                                                                       | Glob patterns, one per line, of the files that `terragrunt run --all -- apply -json-into=apply.json` writes, one per unit. The patterns are relative to the workspace.                          |
-| `report-file`       | no       |                                                                                       | The file of the `--report-file` option of `terragrunt run --all`, written with `--report-format json`.                                                                                          |
-| `working-directory` | no       | `.`                                                                                   | The directory where `terragrunt run --all` ran. The action reads the unit name of each `-json-into` file from its path relative to this directory.                                              |
-| `header`            | no       | `Terragrunt run report`                                                               | The title of the report. It is also the key of the sticky comment.                                                                                                                              |
-| `summary`           | no       | `true`                                                                                | Write the report to the job summary.                                                                                                                                                            |
-| `raw-log`           | no       | `true`                                                                                | Add the log file to the job summary in a collapsed section.                                                                                                                                     |
-| `comment`           | no       | `false`                                                                               | Post the report as a sticky pull request comment.                                                                                                                                               |
-| `comment-failure`   | no       | `fail`                                                                                | What the action does when it cannot post the comment, for example on a pull request from a fork: `fail` fails the step, and `warn` writes a warning and continues.                              |
-| `repository`        | no       | `${{ github.repository }}`                                                            | The `owner/name` of the repository of the pull request.                                                                                                                                         |
-| `pr-number`         | no       |                                                                                       | The number of the pull request. This input is required when `comment` is `true`.                                                                                                                |
-| `token`             | no       | `${{ github.token }}`                                                                 | The token for the comment requests. It needs `pull-requests: write`.                                                                                                                            |
-| `skip-empty`        | no       | `false`                                                                               | When the output `empty` is `true`, the action deletes the sticky comment and posts no comment.                                                                                                  |
-| `expand`            | no       | `false`                                                                               | Open every collapsed section of the report.                                                                                                                                                     |
-| `run-url`           | no       | `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}` | A link to the workflow run or job that produced the report. The pull request comment ends with this link. Set an empty value for no link.                                                       |
+| Input               | Required | Default                                                                               | Description                                                                                                                                                                                                                   |
+| ------------------- | -------- | ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `log-file`          | no       |                                                                                       | The stdout and stderr of `terragrunt run --all`, in the default log format or with `--log-format=json`. The Usage examples write it with `tee`. The diff of each resource comes from this file.                               |
+| `plan-json-dir`     | no       |                                                                                       | The directory of the `--json-out-dir` option of `terragrunt run --all -- plan`. It has one `tfplan.json` file per unit.                                                                                                       |
+| `plan-json-files`   | no       |                                                                                       | Glob patterns, one per line, of the files that `terragrunt run --all -- plan -json-into=plan.json` writes, one per unit. The patterns are relative to the workspace. The warnings of each unit of a plan come from this file. |
+| `apply-json-files`  | no       |                                                                                       | Glob patterns, one per line, of the files that `terragrunt run --all -- apply -json-into=apply.json` writes, one per unit. The patterns are relative to the workspace.                                                        |
+| `report-file`       | no       |                                                                                       | The file of the `--report-file` option of `terragrunt run --all`, written with `--report-format json`.                                                                                                                        |
+| `working-directory` | no       | `.`                                                                                   | The directory where `terragrunt run --all` ran. The action reads the unit name of each `-json-into` file from its path relative to this directory.                                                                            |
+| `header`            | no       | `Terragrunt run report`                                                               | The title of the report. It is also the key of the sticky comment.                                                                                                                                                            |
+| `summary`           | no       | `true`                                                                                | Write the report to the job summary.                                                                                                                                                                                          |
+| `raw-log`           | no       | `true`                                                                                | Add the log file to the job summary in a collapsed section.                                                                                                                                                                   |
+| `comment`           | no       | `false`                                                                               | Post the report as a sticky pull request comment.                                                                                                                                                                             |
+| `comment-failure`   | no       | `fail`                                                                                | What the action does when it cannot post the comment, for example on a pull request from a fork: `fail` fails the step, and `warn` writes a warning and continues.                                                            |
+| `repository`        | no       | `${{ github.repository }}`                                                            | The `owner/name` of the repository of the pull request.                                                                                                                                                                       |
+| `pr-number`         | no       |                                                                                       | The number of the pull request. This input is required when `comment` is `true`.                                                                                                                                              |
+| `token`             | no       | `${{ github.token }}`                                                                 | The token for the comment requests. It needs `pull-requests: write`.                                                                                                                                                          |
+| `skip-empty`        | no       | `false`                                                                               | When the output `empty` is `true`, the action deletes the sticky comment and posts no comment.                                                                                                                                |
+| `expand`            | no       | `false`                                                                               | Open every collapsed section of the report.                                                                                                                                                                                   |
+| `run-url`           | no       | `${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}` | A link to the workflow run or job that produced the report. The pull request comment ends with this link. Set an empty value for no link.                                                                                     |
 
 ## Outputs
 

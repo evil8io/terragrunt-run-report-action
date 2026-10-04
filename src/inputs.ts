@@ -7,6 +7,7 @@ export type Inputs = {
   logFile: string | undefined
   planJsonDir: string | undefined
   /** The glob patterns, one for each line of the input. */
+  planJsonFiles: string[]
   applyJsonFiles: string[]
   reportFile: string | undefined
   workingDirectory: string
@@ -27,6 +28,14 @@ export type Inputs = {
 function optional(name: string): string | undefined {
   const value = core.getInput(name)
   return value === "" ? undefined : value
+}
+
+function patterns(name: string): string[] {
+  return core
+    .getInput(name)
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line !== "")
 }
 
 function flag(name: string, fallback: boolean): boolean {
@@ -58,11 +67,8 @@ export function readInputs(): Inputs {
   const inputs: Inputs = {
     logFile: optional("log-file"),
     planJsonDir: optional("plan-json-dir"),
-    applyJsonFiles: core
-      .getInput("apply-json-files")
-      .split("\n")
-      .map((line) => line.trim())
-      .filter((line) => line !== ""),
+    planJsonFiles: patterns("plan-json-files"),
+    applyJsonFiles: patterns("apply-json-files"),
     reportFile: optional("report-file"),
     workingDirectory: optional("working-directory") ?? ".",
     header: optional("header") ?? "Terragrunt run report",
@@ -84,11 +90,12 @@ export function readInputs(): Inputs {
   if (
     inputs.logFile === undefined &&
     inputs.planJsonDir === undefined &&
+    inputs.planJsonFiles.length === 0 &&
     inputs.applyJsonFiles.length === 0 &&
     inputs.reportFile === undefined
   ) {
     throw new Error(
-      "Set at least one of the inputs log-file, plan-json-dir, apply-json-files, or report-file.",
+      "Set at least one of the inputs log-file, plan-json-dir, plan-json-files, apply-json-files, or report-file.",
     )
   }
   if (inputs.comment && (owner === undefined || prNumber === undefined || !inputs.token)) {
@@ -97,7 +104,7 @@ export function readInputs(): Inputs {
   return inputs
 }
 
-export async function resolveApplyFiles(
+export async function resolveJsonIntoFiles(
   patterns: readonly string[],
   workingDirectory: string,
 ): Promise<ApplyFile[]> {

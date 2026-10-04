@@ -1,5 +1,7 @@
-import { readFileSync, rmSync, writeFileSync } from "node:fs"
+import { readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs"
+import path from "node:path"
 import { describe, expect, it } from "vitest"
+import { applyUnitLabel } from "../src/apply.ts"
 import { parseLog, linesByUnit } from "../src/log.ts"
 import { buildReport, loadSources } from "../src/model.ts"
 import { renderMarkdown } from "../src/render.ts"
@@ -34,6 +36,15 @@ function interleave(log: string): string {
   return [...out, ...rest].join("\n")
 }
 
+function jsonIntoFiles(dir: string) {
+  return readdirSync(dir, { recursive: true, encoding: "utf8" })
+    .filter((file) => path.basename(file) === "plan.json")
+    .map((file) => ({
+      unit: applyUnitLabel(path.join(dir, file), dir),
+      path: path.join(dir, file),
+    }))
+}
+
 function report(logFile: string, extra: Parameters<typeof loadSources>[0]): string {
   const sources = loadSources({ logFile, ...extra })
   return renderMarkdown(buildReport(sources), { header: "Parallel", expand: false })
@@ -53,7 +64,11 @@ describe("a log with interleaved units", () => {
 
   it("renders the same plan report", () => {
     const mixed = `${plan}/plan.interleaved.log`
-    const extra = { planJsonDir: `${plan}/plans`, reportFile: `${plan}/report.json` }
+    const extra = {
+      planJsonDir: `${plan}/plans`,
+      planJsonFiles: jsonIntoFiles(`${plan}/json-into`),
+      reportFile: `${plan}/report.json`,
+    }
     const expected = report(`${plan}/plan.log`, extra)
     writeFileSync(mixed, interleave(planLog))
     try {

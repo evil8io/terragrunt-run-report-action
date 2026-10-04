@@ -49,14 +49,15 @@ collect_plans() {
 }
 
 # run_plan <out> <log> [<terragrunt option>...]
-# Only the run that writes plan.log keeps its report file and its tfplan.json files.
+# Only the run that writes plan.log keeps its report file, its tfplan.json files, and its -json-into files.
 run_plan() {
   local out=$1 log=$2 tmp
   shift 2
   tmp=$(mktemp -d)
+  find "$STACK/.terragrunt-stack" -name plan.json -path '*/.terragrunt-cache/*' -delete
   set +e
   terragrunt run --all "$@" --json-out-dir "$tmp/plans" --report-file "$tmp/report.json" --report-format json \
-    -- plan -no-color -compact-warnings -concise > "$tmp/$log" 2>&1
+    -- plan -no-color -compact-warnings -concise -json-into=plan.json > "$tmp/$log" 2>&1
   echo "plan exit code: $?"
   set -e
   mkdir -p "$out"
@@ -64,6 +65,7 @@ run_plan() {
   if [ "$log" = plan.log ]; then
     normalize_report "$tmp/report.json" "$out/report.json"
     collect_plans "$tmp/plans" "$out/plans"
+    collect_json_into plan.json "$out/json-into"
   fi
   rm -rf "$tmp"
 }
@@ -89,7 +91,7 @@ run_apply() {
 
 rm -rf "$E2E/.state" "$STACK/.terragrunt-stack" "$E2E/modules/demo/.out"
 for scenario in "$FIXTURES"/{changes,failures}/{plan,apply} "$FIXTURES/destroy/destroy"; do
-  rm -rf "$scenario"/{plan.log,plan.jsonl,apply.log,destroy.log,report.json,plans,apply-json}
+  rm -rf "$scenario"/{plan.log,plan.jsonl,apply.log,destroy.log,report.json,plans,json-into,apply-json}
 done
 cd "$STACK"
 terragrunt stack generate > /dev/null 2>&1
