@@ -75,9 +75,11 @@ outputs:
   summary:
     description: One line with the kind of run, the unit counts, and the resource totals.
   empty:
-    description: The value is `true` when no unit has a change, no unit failed, and no unit exited early.
+    description: >-
+      The value is `true` when the run changed nothing: no unit has a change, no unit failed, and no unit
+      exited early.
   failed:
-    description: The value is `true` when a unit failed or exited early.
+    description: The value is `true` when a unit failed, a unit exited early, or the run failed.
 runs:
   using: node24
   main: dist/index.cjs
