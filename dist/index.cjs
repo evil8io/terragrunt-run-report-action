@@ -45293,6 +45293,13 @@ function renderMarkdown(report, options) {
   return `${parts.join("\n\n")}
 `;
 }
+function renderRunLink(markdown2, runUrl) {
+  if (runUrl === void 0) return markdown2;
+  return `${markdown2.trimEnd()}
+
+[Workflow run](${runUrl})
+`;
+}
 
 // src/comment.ts
 var CONTINUATION = "\n\n*(The report continues in the next comment.)*";
@@ -48006,8 +48013,12 @@ function readInputs() {
     prNumber,
     token: optional2("token"),
     skipEmpty: flag("skip-empty", false),
-    expand: flag("expand", false)
+    expand: flag("expand", false),
+    runUrl: optional2("run-url")
   };
+  if (inputs.runUrl !== void 0 && !/^https?:\/\/\S+$/.test(inputs.runUrl)) {
+    throw new Error(`The input run-url must be an http or https URL: ${inputs.runUrl}`);
+  }
   if (inputs.logFile === void 0 && inputs.planJsonDir === void 0 && inputs.applyJsonFiles.length === 0 && inputs.reportFile === void 0) {
     throw new Error(
       "Set at least one of the inputs log-file, plan-json-dir, apply-json-files, or report-file."
@@ -48142,7 +48153,8 @@ async function run() {
         `The run has no changes, no failed unit, and no early exit. The action deleted ${deleted} comments.`
       );
     } else {
-      const result = await createOrUpdateComment({ ...target, content: markdown2 });
+      const content = renderRunLink(markdown2, inputs.runUrl);
+      const result = await createOrUpdateComment({ ...target, content });
       info(
         `The report has ${result.chunks} comments. The action updated ${result.updated}, created ${result.created}, and deleted ${result.deleted} comments.`
       );
