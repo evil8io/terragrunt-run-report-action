@@ -47148,21 +47148,48 @@ function changeBlocks2(changes, expand3) {
   flush();
   return blocks;
 }
-function diagnosticsText(unit) {
+function errorBlock(diagnostic) {
+  const lines = [`Error: ${diagnostic.summary}`];
+  if (diagnostic.address) lines.push(`  with ${diagnostic.address}`);
+  if (diagnostic.location) lines.push(`  on ${diagnostic.location}`);
+  if (diagnostic.detail) lines.push(diagnostic.detail);
+  return lines.join("\n");
+}
+function errorText(unit) {
   if (unit.stderr !== void 0) return unit.stderr;
-  if (unit.diagnostics.length > 0) {
-    return unit.diagnostics.map((diagnostic) => {
-      const lines = [
-        `${diagnostic.severity === "error" ? "Error" : "Warning"}: ${diagnostic.summary}`
-      ];
-      if (diagnostic.address) lines.push(`  with ${diagnostic.address}`);
-      if (diagnostic.location) lines.push(`  on ${diagnostic.location}`);
-      if (diagnostic.detail) lines.push(diagnostic.detail);
-      return lines.join("\n");
-    }).join("\n\n");
-  }
+  const errors = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "error");
+  if (errors.length > 0) return errors.map(errorBlock).join("\n\n");
   if (unit.result === "failed" && unit.cause) return unit.cause.trimEnd();
   return void 0;
+}
+function warningGroup(group2) {
+  const [first] = group2;
+  const lines = [`Warning: ${first.summary}${group2.length > 1 ? ` (${group2.length})` : ""}`];
+  for (const warning2 of group2) {
+    const place = [
+      warning2.location ? `on ${warning2.location}` : void 0,
+      warning2.address ? `with ${warning2.address}` : void 0
+    ].filter((part) => part !== void 0);
+    if (place.length > 0) lines.push(`  ${place.join(" ")}`);
+  }
+  if (first.detail) lines.push("", first.detail);
+  return lines.join("\n");
+}
+function warningsText(warnings) {
+  const groups = /* @__PURE__ */ new Map();
+  for (const warning2 of warnings) {
+    const key = JSON.stringify([warning2.summary, warning2.detail]);
+    const group2 = groups.get(key);
+    if (group2) group2.push(warning2);
+    else groups.set(key, [warning2]);
+  }
+  return [...groups.values()].map(warningGroup).join("\n\n");
+}
+function warningsBlock(unit, expand3) {
+  const warnings = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
+  if (warnings.length === 0) return void 0;
+  const summary2 = `\u26A0\uFE0F ${plural2(warnings.length, "warning")}`;
+  return details(summary2, [fence(warningsText(warnings))], expand3);
 }
 function hasSection(unit) {
   if (unit.result === "early exit" || unit.result === "excluded") return false;
@@ -47184,8 +47211,10 @@ function groupBlocks(unit, expand3) {
 function section(unit, { id, expand: expand3, collapse }) {
   const parts = [`### <a id="${id}"></a>${code(unit.name)}`];
   if (unit.result !== "succeeded") parts.push(resultText(unit));
-  const diagnostics = diagnosticsText(unit);
-  if (diagnostics !== void 0) parts.push(fence(diagnostics));
+  const errors = errorText(unit);
+  if (errors !== void 0) parts.push(fence(errors));
+  const warnings = warningsBlock(unit, expand3);
+  if (warnings !== void 0) parts.push(warnings);
   const blocks = groupBlocks(unit, expand3);
   if (collapse && blocks.length > 0) {
     const summary2 = unit.summaryLine === void 0 ? "Changes" : html(unit.summaryLine);
