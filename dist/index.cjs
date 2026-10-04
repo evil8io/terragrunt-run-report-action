@@ -47035,8 +47035,23 @@ function totalsPhrase(report) {
   if (forget > 0) parts.push(`${forget} to forget`);
   return `${parts.join(", ")}.`;
 }
+function warningsPhrase(report) {
+  let warnings = 0;
+  let units = 0;
+  for (const unit of report.units) {
+    const count = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length;
+    warnings += count;
+    if (count > 0) units++;
+  }
+  if (warnings === 0) return void 0;
+  return `\u26A0\uFE0F ${plural2(warnings, "warning")} in ${plural2(units, "unit")}.`;
+}
+function statusTail(report) {
+  const phrase = warningsPhrase(report);
+  return phrase === void 0 ? totalsPhrase(report) : `${totalsPhrase(report)} ${phrase}`;
+}
 function statusLine(report) {
-  return `${unitsPhrase(report)} ${totalsPhrase(report)}`;
+  return `${unitsPhrase(report)} ${statusTail(report)}`;
 }
 function resultText(unit) {
   const reason = unit.reason ? markdown(unit.reason) : void 0;
@@ -47162,15 +47177,48 @@ function errorText(unit) {
   if (unit.result === "failed" && unit.cause) return unit.cause.trimEnd();
   return void 0;
 }
+var LOCATION = /^(.*):(\d+)$/;
+function compareOptional(a, b) {
+  if (a === void 0 || b === void 0) return a === b ? 0 : a === void 0 ? -1 : 1;
+  return compare(a, b);
+}
+function compareLocation(a, b) {
+  if (a === void 0 || b === void 0) return compareOptional(a, b);
+  const [, pathA = a, lineA] = LOCATION.exec(a) ?? [];
+  const [, pathB = b, lineB] = LOCATION.exec(b) ?? [];
+  const byPath = compare(pathA, pathB);
+  if (byPath !== 0) return byPath;
+  if (lineA === void 0 || lineB === void 0)
+    return lineA === lineB ? 0 : lineA === void 0 ? -1 : 1;
+  return Number(lineA) - Number(lineB);
+}
+function compareOccurrence(a, b) {
+  return compareLocation(a.location, b.location) || compareOptional(a.address, b.address);
+}
+function compareGroup(a, b) {
+  return compare(a[0].summary, b[0].summary) || compareOccurrence(a[0], b[0]) || compareOptional(a[0].detail, b[0].detail);
+}
+function placeOf(warning2) {
+  return [
+    warning2.location ? `on ${warning2.location}` : void 0,
+    warning2.address ? `with ${warning2.address}` : void 0
+  ].filter((part) => part !== void 0).join(" ");
+}
+function samePlace(a, b) {
+  return a.location === b.location && a.address === b.address;
+}
 function warningGroup(group2) {
   const [first] = group2;
   const lines = [`Warning: ${first.summary}${group2.length > 1 ? ` (${group2.length})` : ""}`];
-  for (const warning2 of group2) {
-    const place = [
-      warning2.location ? `on ${warning2.location}` : void 0,
-      warning2.address ? `with ${warning2.address}` : void 0
-    ].filter((part) => part !== void 0);
-    if (place.length > 0) lines.push(`  ${place.join(" ")}`);
+  let index = 0;
+  while (index < group2.length) {
+    const head = group2[index];
+    const place = placeOf(head);
+    let end = index + 1;
+    while (end < group2.length && samePlace(head, group2[end])) end++;
+    const count = end - index;
+    if (place !== "") lines.push(`  ${place}${count > 1 ? ` (${count})` : ""}`);
+    index = end;
   }
   if (first.detail) lines.push("", first.detail);
   return lines.join("\n");
@@ -47183,7 +47231,10 @@ function warningsText(warnings) {
     if (group2) group2.push(warning2);
     else groups.set(key, [warning2]);
   }
-  return [...groups.values()].map(warningGroup).join("\n\n");
+  const sorted = [...groups.values()].map((group2) => {
+    return [...group2].sort(compareOccurrence);
+  });
+  return sorted.sort(compareGroup).map(warningGroup).join("\n\n");
 }
 function warningsBlock(unit, expand3) {
   const warnings = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
@@ -47229,7 +47280,7 @@ function renderMarkdown(report, options) {
   const parts = [
     `${markerLine(options.header)}
 ## ${options.header}`,
-    `**${unitsPhrase(report)}** ${totalsPhrase(report)}`
+    `**${unitsPhrase(report)}** ${statusTail(report)}`
   ];
   if (report.runError !== void 0 && report.failedUnits === 0) {
     parts.push("\u274C Run failed", fence(report.runError));
