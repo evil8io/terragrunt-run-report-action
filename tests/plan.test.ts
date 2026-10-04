@@ -7,7 +7,9 @@ const dir = (scenario: string) =>
 
 describe("readPlanDir", () => {
   it("labels each tfplan.json file with its parent directory", () => {
-    expect(readPlanDir(dir("changes")).map((plan) => plan.unit)).toEqual([
+    const plans = readPlanDir(dir("changes"))
+    expect(plans[0]?.path).toBe(`${dir("changes")}/.terragrunt-stack/alpha/tfplan.json`)
+    expect(plans.map((plan) => plan.unit)).toEqual([
       ".terragrunt-stack/alpha",
       ".terragrunt-stack/beta",
       ".terragrunt-stack/delta",
@@ -80,6 +82,12 @@ describe("parsePlan", () => {
     expect(plan.resourceChanges.map((change) => change.address)).toEqual([
       "a.b (deposed object 1a2b3c4d)",
     ])
+  })
+
+  it("reads the timestamp as the start time", () => {
+    const plan = parsePlan(JSON.stringify({ timestamp: "2026-01-01T00:05:00Z" }), "u")
+    expect(plan.startedAt).toBe(Date.UTC(2026, 0, 1, 0, 5))
+    expect(parsePlan("{}", "u").startedAt).toBeUndefined()
   })
 
   it("throws with the source for invalid JSON", () => {

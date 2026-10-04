@@ -94,8 +94,8 @@ outputs:
     description: The value is `true` when a unit failed, a unit exited early, or the run failed.
   markdown-file:
     description: >-
-      The path of a file with the report in markdown, the same text as the job summary without the log. A
-      later step can read it, for example to send a message after a failed apply.
+      The path of a file with the report in markdown, without the log. A later step can read it, for
+      example to send a message after a failed apply.
 runs:
   using: node24
   main: dist/index.cjs

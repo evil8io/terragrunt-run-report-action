@@ -38,13 +38,13 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 - In an apply report, each resource has its outcome: `✅` with the duration, `❌ failed`, or `⏳ not applied`.
 - Put the anchor of a unit section on its heading line as `<a id="ID"></a>`, before the code span. GitHub gives a markdown heading in a comment no `id`, but it keeps an explicit `<a id>` and renders it as `id="user-content-ID"`.
 - Link a table row to `#user-content-ID`, not to `#ID`. GitHub's own footnote links use this form, so the link works without the script of the page.
-- Make the ID from `trr-`, the slug of the `header`, and the slug of the unit name. One page can show more than one report, for example two reports on one pull request, or the plan and the apply summaries of one job.
-- Above 10 unit sections, put the groups and the outputs diff of each section in one `<details>` element, so that the table is the index. Keep the heading, the result line, and the diagnostics above that element, so that the error of a failed unit is readable without a click.
+- Make the ID from `trr-`, the slug of the `header`, and the slug of the unit name. One page can show more than one report, for example two reports on one pull request, or the plan and apply summaries of one job.
+- Above 10 unit sections, put the groups and the outputs diff of each section in one `<details>` element. The table is then the index. Keep the heading, the result line, and the diagnostics above that element. The reader then sees the error of a failed unit without a click.
 - Escape the text of a `<summary>` element as HTML, not as markdown. GitHub renders an HTML block without markdown, so a markdown escape shows as a backslash.
-- Open a failed resource, its group, and the collapsed section of a failed unit, also without `expand`, because the reader of a failed run looks for the error first.
+- Open a failed resource, its group, and the collapsed section of a failed unit, also without `expand`. The reader of a failed run looks for the error first.
 - Show the Duration column only when at least one unit has a duration. Only the report file gives a duration, and a report without that file must not have an empty column.
 - The unit name of a `-json-into` file is its path relative to `working-directory`, cut before `/.terragrunt-cache/`. The unit name of a `tfplan.json` file is its directory relative to `plan-json-dir`. The unit name in the log is the terragrunt prefix. The three must be equal for one unit, so the README tells the user to pass the directory of the run as `working-directory`.
-- Match a unit name by its path suffix across the sources. Terragrunt gives a longer path in some runs, for example `live/unit2` and `unit2`, see [terragrunt issue 6602](https://github.com/gruntwork-io/terragrunt/issues/6602). The rank is the log, the report file, the plan files, and the `-json-into` files. A name takes the one matching name of a higher rank.
+- Match a unit name by its path suffix across the sources. The name of a `-json-into` file is relative to `working-directory`, and the log name is relative to the `--working-dir` of terragrunt. When the two directories differ, the names differ, for example `live/unit2` and `unit2`. The rank is the log, the report file, the plan files, and the `-json-into` files. A name gets the one name of a higher rank that matches. Do not map a name to a name of its own source, because an early-exit unit has no log name. Without this rule, the action maps the report name `app` of an early-exit unit to the log name `team/app`. [Terragrunt issue 6602](https://github.com/gruntwork-io/terragrunt/issues/6602) describes a related case.
 - `empty` is `false` when the counts of a unit are unknown, for example with a report file alone, because a deleted comment must not hide a change.
 
 ## Releases
@@ -53,8 +53,8 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 
 - Change `dist/` only through the release workflow, for two reasons. A dependency update without a rebuild has no effect at runtime. If every pull request needs a rebuild, CI fails on every Renovate pull request, because Renovate does not rebuild `dist/`. The workflow adds the build with `git add -f`, because `dist/` is in `.gitignore`.
 - Keep the release branch exempt from the `dist/` check in `ci.yml`, because the release workflow commits the build there.
-- Merge the release pull request with `gh pr merge --admin`. The checks do not run on it, because release-please and the `dist/` commit step use the default token, and GitHub starts no workflow run for an event from that token. The ruleset on `main` requires the checks, and the admin role has a bypass for pull requests. The ci run on `main` after the merge must pass.
-- Keep the `-json-into` files of phase 2 in `e2e.yml` for phase 3. The e2e run then covers the rule of the action to ignore a `-json-into` file that is older than the run.
+- Merge the release pull request with `gh pr merge --admin`. The checks do not run on it, because release-please and the `dist/` commit step use the default token. GitHub starts no workflow run for an event from that token. The ruleset on `main` requires the checks, and the admin role has a bypass for pull requests. The ci run on `main` after the merge must pass.
+- Keep the `-json-into` files of phase 2 in `e2e.yml` for phase 3. The early-exit unit of phase 3 then keeps its file of phase 2, and the action writes the stale-file warning for that unit.
 
 ## Facts about terragrunt and OpenTofu
 
@@ -63,13 +63,18 @@ These facts were verified on terragrunt 1.1.6 and OpenTofu 1.13.1. The code or t
 - The default log line is `HH:MM:SS.mmm LEVEL [unit] tofu: msg`. The `tofu:` token is the base name of the `--tf-path` binary, for example `opentofu:`. Terragrunt does not escape a `]` in the unit name, for example `[brkt[1]]`.
 - In the default log format, terragrunt drops the empty lines of the tofu output. With `--log-format=json`, terragrunt keeps the empty lines in `msg`. The parser drops them, so that both formats give one report.
 - With `--log-level=error`, the log still contains the STDOUT and STDERR lines of tofu.
-- A failed plan writes no `tfplan.json` file.
+- A failed plan writes no `tfplan.json` file. Terragrunt does not clear `--json-out-dir`, so the `tfplan.json` file of an earlier run stays.
+- The `timestamp` of a `tfplan.json` file has whole seconds. So it can be up to 1 second earlier than the `Started` time of its unit.
 - An early-exit unit writes no `-json-into` file.
 - The first message of a `-json-into` file is `version`, and its `@timestamp` is later than the `Started` time of the unit in the report file. A unit that does not run keeps the file of an earlier run.
 - A `-json-into` file has no `apply_start` or `apply_complete` hook for an import or a forget.
-- The `tfplan.json` file has the key of a deposed object in the field `deposed`, next to the live `address`. A `-json-into` file has no deposed key, so the messages and the hooks of a deposed object use the address of its live object.
+- The `tfplan.json` file has the key of a deposed object in the field `deposed`, next to the live `address`. A `-json-into` file has no deposed key, so the messages and the hooks of a deposed object use the address of its live object. One address can then have more than one `apply_start` message.
+- For a failed destroy of a deposed object, tofu writes no `apply_errored` message. The `-json-into` file has an `apply_start` message without an `apply_complete` message, and a diagnostic without an address.
+- Two deposed objects of one address get one `apply_complete` message, and the `change_summary` counts the destroy once.
+- A destroy-time provisioner does not run for a deposed object.
+- The `tfplan.json` file has no `action_reason` for a deposed object, so only the log has the reason text.
 - For a `removed` block, the `planned_change` action is `remove`, and the `tfplan.json` file has the actions `["forget"]`. The resource line of the diff block has the marker `.`.
-- After a failed unit, terragrunt logs a top-level `ERROR` entry that starts with `Run failed`, and a last one that starts with `error occurred`.
+- After a failed unit, terragrunt logs a top-level `ERROR` entry that starts with `Run failed`. The last entry starts with `error occurred`, or with `N errors occurred` after more than one error. The code takes the last entry that starts with `Run failed` or `error occurred`. After more than one error, that entry is the `Run failed` entry.
 - After a configuration error, terragrunt writes the report file `[]` and no `--json-out-dir` directory. The log then has top-level `ERROR` entries, but no `Run failed` entry.
 - The `Cause` of an early exit in the report file is the base name of the failed ancestor, not its path.
 - The `outputs` message of a `-json-into` file has the values of the outputs. Do not render these values, because they can be sensitive.
