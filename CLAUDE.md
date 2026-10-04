@@ -24,6 +24,19 @@ This rule applies to code, comments, fixtures, commit messages, branch names, an
 - Read no event payload in the action. Take the repository, the pull request number, and the token from inputs. A `push` or `issue_comment` event has no pull request in its payload.
 - Do not fail the step for a failed unit. Set the output `failed`, because the workflow decides what a failed unit means for the job.
 
+## Report layout
+
+`README.md` describes the report in one paragraph. The full layout is the specification of `src/render.ts`, and the `expected.md` snapshots show it. Keep these rules when you change the renderer:
+
+- The first line is the marker comment with the `header`. The sticky comment logic finds its comments by that line.
+- The status line names the kind of run: `Plan`, `Apply`, `Destroy`, or `Run` when the kind is unknown. The kind comes from the report file, else from the log, else from the inputs.
+- When the log has a run error and no unit failed, the text of that error follows the status line.
+- The table has one row for each unit, sorted by name. In an apply report, a count cell shows `applied of planned` when the two differ.
+- A unit gets a section only with changes, diagnostics, or a failure. A section has the result line (when not succeeded), the diagnostics, the tofu summary line, the groups in this order: create, update, replace, destroy, read, import, forget, move, ephemeral, and then the changes to outputs.
+- In an apply report, each resource has its outcome: `✅` with the duration, `❌ failed`, or `⏳ not applied`.
+- The unit name of a `-json-into` file is its path relative to `working-directory`, cut before `/.terragrunt-cache/`. The unit name of a `tfplan.json` file is its directory relative to `plan-json-dir`. The unit name in the log is the terragrunt prefix. The three must be equal for one unit, so the README tells the user to pass the directory of the run as `working-directory`.
+- `empty` is `false` when the counts of a unit are unknown, for example with a report file alone, because a deleted comment must not hide a change.
+
 ## Releases
 
 `CONTRIBUTING.md` describes the release flow. These rules add to it.
