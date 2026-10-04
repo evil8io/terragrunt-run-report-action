@@ -6,7 +6,7 @@
   "license": "Apache-2.0",
   "repository": "github:evil8io/terragrunt-run-report-action",
   "engines": {
-    "node": ">=24"
+    "node": "v26.10.0"
   },
   "packageManager": "pnpm@12.9.0",
   "scripts": {
