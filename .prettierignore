@@ -5,3 +5,4 @@ tests/fixtures/
 tests/e2e/
 CHANGELOG.md
 .claude/
+.release-please-manifest.json
