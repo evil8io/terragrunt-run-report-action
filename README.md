@@ -159,7 +159,18 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 
 ## Inputs
 
-Set at least one of `log-file`, `plan-json-dir`, `apply-json-files`, and `report-file`.
+Set the three file inputs of the run, as in the examples:
+
+| Run   | Inputs                                            |
+| ----- | ------------------------------------------------- |
+| plan  | `log-file`, `plan-json-dir`, and `report-file`    |
+| apply | `log-file`, `apply-json-files`, and `report-file` |
+
+Each file adds a part of the report. The action needs at least one of them, and it renders what the given files contain:
+
+- `log-file` gives the diff of each resource, the error text of a failed unit, and the text of a run error. Without it, the report has the list of changes, but no diff.
+- `plan-json-dir` or `apply-json-files` gives the exact list of changes, the kind of each change, the counts, and the outcome of each resource in an apply. Without it, the action reads the list of changes from the log.
+- `report-file` gives the result of each unit: succeeded, failed, early exit, or excluded, with the reason. Without it, a unit that did not run is missing from the report.
 
 | Input               | Required | Default                    | Description                                                                                                                                                                                                           |
 | ------------------- | -------- | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
