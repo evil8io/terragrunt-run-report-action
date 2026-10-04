@@ -9,24 +9,29 @@ branding:
 inputs:
   log-file:
     description: >-
-      The log of the run: stdout and stderr of `terragrunt run --all`, in the default terragrunt log format
-      or in `--log-format=json`. The diff of each resource comes from this file.
+      The log of the run: stdout and stderr of `terragrunt run --all`, captured with `2>&1                
+      | tee plan.log`, in the default log format or with `--log-format=json`. The diff of each resource
+      comes from this file.
     required: false
   plan-json-dir:
-    description: The `--json-out-dir` of a plan run. It has one `tfplan.json` file per unit.
+    description: >-
+      The directory of the `--json-out-dir` option of `terragrunt run --all -- plan`. It has one
+      `tfplan.json` file per unit.
     required: false
   apply-json-files:
     description: >-
-      Glob patterns, one per line, of the `-json-into` files of an apply run. The patterns are relative to
-      the workspace.
+      Glob patterns, one per line, of the files that `terragrunt run --all -- apply -json-into=apply.json`
+      writes, one per unit. The patterns are relative to the workspace.
     required: false
   report-file:
-    description: The `--report-file` of the run, in JSON format.
+    description: >-
+      The file of the `--report-file` option of `terragrunt run --all`, written with `--report-format
+      json`.
     required: false
   working-directory:
     description: >-
-      The base directory of the `-json-into` file paths. The unit label is the name of a unit in the report.
-      The unit label of a file is its path relative to this directory, cut before `.terragrunt-cache`.
+      The directory where `terragrunt run --all` ran. The action takes the unit name of each `-json-into`
+      file from its path relative to this directory.
     required: false
     default: .
   header:
@@ -53,13 +58,13 @@ inputs:
     description: The number of the pull request. This input is required when `comment` is `true`.
     required: false
   token:
-    description: "The token for the comment requests. It needs `pull-requests: write`."
+    description: >-
+      The token for the comment requests. It needs `pull-requests: write`.
     required: false
     default: ${{ github.token }}
   skip-empty:
     description: >-
-      When no unit has a change, no unit failed, and no unit exited early, the action deletes the sticky
-      comment and posts no comment.
+      When the output `empty` is `true`, the action deletes the sticky comment and posts no comment.
     required: false
     default: "false"
   expand:
