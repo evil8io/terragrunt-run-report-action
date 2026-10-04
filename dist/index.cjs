@@ -30012,8 +30012,8 @@ var $ZodUnion = /* @__PURE__ */ $constructor("$ZodUnion", (inst, def) => {
   });
   defineLazyInternal(inst, "pattern", (zod) => {
     if (zod.def.options.every((o) => o._zod.pattern)) {
-      const patterns = zod.def.options.map((o) => o._zod.pattern);
-      return new RegExp(`^(${patterns.map((p) => cleanRegex(p.source)).join("|")})$`);
+      const patterns2 = zod.def.options.map((o) => o._zod.pattern);
+      return new RegExp(`^(${patterns2.map((p) => cleanRegex(p.source)).join("|")})$`);
     }
     return void 0;
   });
@@ -42481,7 +42481,7 @@ var exactPattern = (p) => exactPatterns.get(p) ?? p;
 var stringProcessor = (schema, ctx, _json, _params) => {
   const json2 = _json;
   json2.type = "string";
-  const { minimum, maximum, format, patterns, contentEncoding, laxFormat } = aggregateChecks(schema);
+  const { minimum, maximum, format, patterns: patterns2, contentEncoding, laxFormat } = aggregateChecks(schema);
   if (typeof minimum === "number")
     json2.minLength = minimum;
   if (typeof maximum === "number")
@@ -42496,8 +42496,8 @@ var stringProcessor = (schema, ctx, _json, _params) => {
   }
   if (contentEncoding)
     json2.contentEncoding = contentEncoding;
-  if (patterns && patterns.size > 0) {
-    const patternList = [...patterns].map(exactPattern);
+  if (patterns2 && patterns2.size > 0) {
+    const patternList = [...patterns2].map(exactPattern);
     if (patternList.length === 1)
       json2.pattern = patternList[0].source;
     else if (patternList.length > 1) {
@@ -42912,14 +42912,14 @@ var recordProcessor = (schema, ctx, _json, params) => {
   const def = schema._zod.def;
   json2.type = "object";
   const keyType = def.keyType;
-  const patterns = aggregateChecks(keyType).patterns;
-  if (def.mode === "loose" && patterns && patterns.size > 0) {
+  const patterns2 = aggregateChecks(keyType).patterns;
+  if (def.mode === "loose" && patterns2 && patterns2.size > 0) {
     const valueSchema = processSchema(def.valueType, ctx, {
       ...params,
       path: [...params.path, "patternProperties", "*"]
     });
     json2.patternProperties = {};
-    for (const pattern of patterns) {
+    for (const pattern of patterns2) {
       assignProp(json2.patternProperties, exactPattern(pattern).source, valueSchema);
     }
   } else {
@@ -45523,7 +45523,7 @@ function convertBaseSchema(schema, ctx) {
         }
         if (schema.additionalProperties === false) {
           const propertyKeys = Object.keys(shape);
-          const patterns = patternKeys.map((p) => new RegExp(p));
+          const patterns2 = patternKeys.map((p) => new RegExp(p));
           const basePatternSchema = zodSchema;
           zodSchema = zodSchema.check((payload) => {
             if (!isPlainObject3(payload.value))
@@ -45532,7 +45532,7 @@ function convertBaseSchema(schema, ctx) {
             for (const key of Object.keys(payload.value)) {
               if (propertyKeys.includes(key))
                 continue;
-              if (patterns.some((regex) => regex.test(key)))
+              if (patterns2.some((regex) => regex.test(key)))
                 continue;
               unrecognized.push(key);
             }
@@ -46569,7 +46569,8 @@ function readInput(input2, file2) {
 function freshSources(items, report, precision = 1) {
   const starts = (report ?? []).flatMap((entry) => entry.startedAt ?? []);
   const runStart = starts.length > 0 ? Math.floor(Math.min(...starts) / precision) * precision : void 0;
-  const isStale = (item) => runStart !== void 0 && item.startedAt !== void 0 && item.startedAt < runStart;
+  const noUnitRan = report !== void 0 && report.length === 0;
+  const isStale = (item) => noUnitRan || runStart !== void 0 && item.startedAt !== void 0 && item.startedAt < runStart;
   return {
     fresh: items.filter((item) => !isStale(item)),
     stale: items.filter(isStale)
@@ -46583,7 +46584,7 @@ function loadSources(files) {
   if (files.reportFile !== void 0) {
     sources.report = parseReport(readInput("report-file", files.reportFile), files.reportFile);
   }
-  const { planJsonDir, applyJsonFiles } = files;
+  const { planJsonDir, planJsonFiles, applyJsonFiles } = files;
   if (planJsonDir !== void 0 && (0, import_node_fs4.existsSync)(planJsonDir)) {
     const plans = readPlanDir(planJsonDir);
     const { fresh, stale } = freshSources(plans, sources.report, PLAN_TIME_PRECISION);
@@ -46595,6 +46596,17 @@ function loadSources(files) {
     }
   } else if (planJsonDir !== void 0) {
     warnings.push(`The directory of the input plan-json-dir does not exist: ${planJsonDir}`);
+  }
+  if (planJsonFiles !== void 0 && planJsonFiles.length > 0) {
+    const { fresh, stale } = freshSources(readApplyFiles(planJsonFiles), sources.report);
+    sources.planJson = fresh;
+    for (const file2 of stale) {
+      warnings.push(
+        `The -json-into file of the unit ${file2.unit} is from an earlier run, so the action ignored it: ${file2.path}`
+      );
+    }
+  } else if (planJsonFiles !== void 0) {
+    warnings.push("The patterns of the input plan-json-files match no file.");
   }
   if (applyJsonFiles !== void 0 && applyJsonFiles.length > 0) {
     const { fresh, stale } = freshSources(readApplyFiles(applyJsonFiles), sources.report);
@@ -46791,10 +46803,10 @@ function outputNamesDiff(actions) {
 }
 function buildUnit(name, kind, given) {
   const entry = given.entries.find((candidate) => candidate.result === "failed") ?? given.entries.at(-1);
-  const sources = entry && SKIPPED_RESULTS.has(entry.result) ? { ...given, plan: void 0, apply: void 0 } : given;
+  const sources = entry && SKIPPED_RESULTS.has(entry.result) ? { ...given, plan: void 0, apply: void 0, planJson: void 0 } : given;
   const stdout = sources.output?.stdout ?? [];
   const stderr = stderrText(sources.output?.stderr ?? []);
-  const diagnostics = sources.apply?.diagnostics ?? [];
+  const diagnostics = sources.apply?.diagnostics ?? sources.planJson?.diagnostics ?? [];
   const errored = diagnostics.some((diagnostic) => diagnostic.severity === "error") || stderr !== void 0 && /^(?:│ )?Error: /m.test(stderr);
   const failed = entry?.result === "failed" || errored;
   const found = jsonChanges(kind, sources);
@@ -46832,14 +46844,15 @@ function buildUnit(name, kind, given) {
   return unit;
 }
 function runKind(sources, outputs) {
-  const cmd = sources.report?.find((entry) => entry.cmd !== void 0)?.cmd;
-  if (cmd === "plan" || cmd === "apply" || cmd === "destroy") return cmd;
-  if (sources.plans) return "plan";
-  if (sources.applies) return "apply";
+  const cmd = sources.report?.find((entry) => entry.cmd)?.cmd;
+  if (cmd === "plan" || cmd === "apply" || cmd === "destroy") return { kind: cmd };
+  if (cmd) return { kind: "other", cmd };
+  if (sources.plans || sources.planJson) return { kind: "plan" };
+  if (sources.applies) return { kind: "apply" };
   const stdout = [...outputs.values()].flatMap((output2) => output2.stdout);
-  if (stdout.some((line) => line.startsWith("Destroy complete! "))) return "destroy";
-  if (stdout.some((line) => line.startsWith("Apply complete! "))) return "apply";
-  return "run";
+  if (stdout.some((line) => line.startsWith("Destroy complete! "))) return { kind: "destroy" };
+  if (stdout.some((line) => line.startsWith("Apply complete! "))) return { kind: "apply" };
+  return { kind: "run" };
 }
 function runError(log, noUnits) {
   const errors = (log ?? []).filter((entry2) => entry2.unit === null && entry2.level === "ERROR");
@@ -46875,32 +46888,51 @@ function unifyNames(ranked) {
   }
   return mapping;
 }
+function countWarnings(report) {
+  let warnings = 0;
+  let units = 0;
+  for (const unit of report.units) {
+    const count = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length;
+    warnings += count;
+    if (count > 0) units++;
+  }
+  return { warnings, units };
+}
 function buildReport(sources) {
   const logOutputs = sources.log ? linesByUnit(sources.log) : /* @__PURE__ */ new Map();
   const mapping = unifyNames([
     logOutputs.keys(),
     (sources.report ?? []).map((entry) => entry.name),
     (sources.plans ?? []).map((plan) => plan.unit),
-    (sources.applies ?? []).map((apply) => apply.unit)
+    (sources.applies ?? []).map((apply) => apply.unit),
+    (sources.planJson ?? []).map((file2) => file2.unit)
   ]);
   const canonical = (name) => mapping.get(name) ?? name;
   const outputs = new Map([...logOutputs].map(([name, output2]) => [canonical(name), output2]));
   const plans = new Map((sources.plans ?? []).map((plan) => [canonical(plan.unit), plan]));
   const applies = new Map((sources.applies ?? []).map((apply) => [canonical(apply.unit), apply]));
+  const planJsons = new Map((sources.planJson ?? []).map((file2) => [canonical(file2.unit), file2]));
   const entries = /* @__PURE__ */ new Map();
   for (const entry of sources.report ?? []) {
     const name = canonical(entry.name);
     entries.set(name, [...entries.get(name) ?? [], entry]);
   }
-  const kind = runKind(sources, outputs);
+  const { kind, cmd } = runKind(sources, outputs);
   const names = [
-    .../* @__PURE__ */ new Set([...entries.keys(), ...plans.keys(), ...applies.keys(), ...outputs.keys()])
+    .../* @__PURE__ */ new Set([
+      ...entries.keys(),
+      ...plans.keys(),
+      ...applies.keys(),
+      ...planJsons.keys(),
+      ...outputs.keys()
+    ])
   ].sort(compare);
   const units = names.map(
     (name) => buildUnit(name, kind, {
       output: outputs.get(name),
       plan: plans.get(name),
       apply: applies.get(name),
+      planJson: planJsons.get(name),
       entries: entries.get(name) ?? []
     })
   );
@@ -46931,9 +46963,10 @@ function buildReport(sources) {
     changedUnits: count((unit) => nonTerminal(unit) && hasChanges(unit)),
     unchangedUnits: count((unit) => nonTerminal(unit) && !hasChanges(unit) && hasCounts(unit)),
     uncountedUnits,
-    empty: !failed && uncountedUnits === 0 && !units.some(hasChanges),
+    empty: kind === "other" ? !failed : !failed && uncountedUnits === 0 && !units.some(hasChanges),
     failed
   };
+  if (kind === "other" && cmd !== void 0) report.cmd = cmd;
   if (error63 !== void 0) report.runError = error63;
   return report;
 }
@@ -47011,15 +47044,25 @@ function details(summary2, body, open3) {
 function plural2(count, word, suffix = "s") {
   return `${count} ${word}${count === 1 ? "" : suffix}`;
 }
+function kindLabel(report) {
+  if (report.kind !== "other") return KIND_LABELS[report.kind];
+  const cmd = report.cmd ?? "run";
+  return `${cmd.charAt(0).toUpperCase()}${cmd.slice(1)}`;
+}
 function unitsPhrase(report) {
   const parts = [plural2(report.units.length, "unit")];
-  if (report.changedUnits > 0) parts.push(`${report.changedUnits} with changes`);
-  if (report.unchangedUnits > 0) parts.push(`${report.unchangedUnits} unchanged`);
-  if (report.uncountedUnits > 0) parts.push(`${report.uncountedUnits} without counts`);
+  if (report.kind === "other") {
+    const succeeded = report.units.filter((unit) => unit.result === "succeeded").length;
+    if (succeeded > 0) parts.push(`${succeeded} succeeded`);
+  } else {
+    if (report.changedUnits > 0) parts.push(`${report.changedUnits} with changes`);
+    if (report.unchangedUnits > 0) parts.push(`${report.unchangedUnits} unchanged`);
+    if (report.uncountedUnits > 0) parts.push(`${report.uncountedUnits} without counts`);
+  }
   if (report.failedUnits > 0) parts.push(`${report.failedUnits} failed`);
   if (report.earlyExitUnits > 0) parts.push(plural2(report.earlyExitUnits, "early exit", "s"));
   if (report.excludedUnits > 0) parts.push(`${report.excludedUnits} excluded`);
-  return `${KIND_LABELS[report.kind]}: ${parts.join(", ")}.`;
+  return `${kindLabel(report)}: ${parts.join(", ")}.`;
 }
 function totalsPhrase(report) {
   const { add, change, remove, import: imports, forget } = report.totals;
@@ -47036,22 +47079,17 @@ function totalsPhrase(report) {
   return `${parts.join(", ")}.`;
 }
 function warningsPhrase(report) {
-  let warnings = 0;
-  let units = 0;
-  for (const unit of report.units) {
-    const count = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "warning").length;
-    warnings += count;
-    if (count > 0) units++;
-  }
+  const { warnings, units } = countWarnings(report);
   if (warnings === 0) return void 0;
   return `\u26A0\uFE0F ${plural2(warnings, "warning")} in ${plural2(units, "unit")}.`;
 }
 function statusTail(report) {
   const phrase = warningsPhrase(report);
+  if (report.kind === "other") return phrase ?? "";
   return phrase === void 0 ? totalsPhrase(report) : `${totalsPhrase(report)} ${phrase}`;
 }
 function statusLine(report) {
-  return `${unitsPhrase(report)} ${statusTail(report)}`;
+  return `${unitsPhrase(report)} ${statusTail(report)}`.trimEnd();
 }
 function resultText(unit) {
   const reason = unit.reason ? markdown(unit.reason) : void 0;
@@ -47100,22 +47138,28 @@ function durationCell(unit) {
 }
 function table(report, ids) {
   const apply = report.kind === "apply" || report.kind === "destroy";
+  const counts = report.kind !== "other";
   const duration3 = report.units.some((unit) => unit.durationSeconds !== void 0);
   const rows = report.units.map((unit) => {
     const id = ids.get(unit);
     const name = id === void 0 ? code(unit.name) : `[${code(unit.name)}](#user-content-${id})`;
-    const cells = [
-      cell(name),
-      resultText(unit),
-      countCell(unit, "add", apply),
-      countCell(unit, "change", apply),
-      countCell(unit, "remove", apply)
-    ];
+    const cells = [cell(name), resultText(unit)];
+    if (counts) {
+      cells.push(
+        countCell(unit, "add", apply),
+        countCell(unit, "change", apply),
+        countCell(unit, "remove", apply)
+      );
+    }
     if (duration3) cells.push(durationCell(unit));
     return `| ${cells.join(" | ")} |`;
   });
-  const titles = ["Unit", "Result", "Add", "Change", "Destroy"];
-  const aligns = ["---", "---", "---:", "---:", "---:"];
+  const titles = ["Unit", "Result"];
+  const aligns = ["---", "---"];
+  if (counts) {
+    titles.push("Add", "Change", "Destroy");
+    aligns.push("---:", "---:", "---:");
+  }
   if (duration3) {
     titles.push("Duration");
     aligns.push("---:");
@@ -47195,8 +47239,8 @@ function compareLocation(a, b) {
 function compareOccurrence(a, b) {
   return compareLocation(a.location, b.location) || compareOptional(a.address, b.address);
 }
-function compareGroup(a, b) {
-  return compare(a[0].summary, b[0].summary) || compareOccurrence(a[0], b[0]) || compareOptional(a[0].detail, b[0].detail);
+function compareSubgroup(a, b) {
+  return compareOccurrence(a[0], b[0]) || compareOptional(a[0].detail, b[0].detail);
 }
 function placeOf(warning2) {
   return [
@@ -47207,9 +47251,8 @@ function placeOf(warning2) {
 function samePlace(a, b) {
   return a.location === b.location && a.address === b.address;
 }
-function warningGroup(group2) {
-  const [first] = group2;
-  const lines = [`Warning: ${first.summary}${group2.length > 1 ? ` (${group2.length})` : ""}`];
+function occurrenceLines(group2) {
+  const lines = [];
   let index = 0;
   while (index < group2.length) {
     const head = group2[index];
@@ -47220,21 +47263,38 @@ function warningGroup(group2) {
     if (place !== "") lines.push(`  ${place}${count > 1 ? ` (${count})` : ""}`);
     index = end;
   }
-  if (first.detail) lines.push("", first.detail);
-  return lines.join("\n");
+  return lines;
+}
+function warningSummary(summary2, subgroups) {
+  const total = subgroups.reduce((sum, group2) => sum + group2.length, 0);
+  const header = `Warning: ${summary2}${total > 1 ? ` (${total})` : ""}`;
+  if (subgroups.length === 1) {
+    const [group2] = subgroups;
+    const lines = [header, ...occurrenceLines(group2)];
+    if (group2[0].detail) lines.push("", group2[0].detail);
+    return lines.join("\n");
+  }
+  const blocks = subgroups.map((group2) => {
+    const detail = group2[0].detail?.split("\n").map((line) => `    ${line}`) ?? [];
+    const places = occurrenceLines(group2);
+    if (places.length === 0 && detail.length > 0) places.push(`  (${group2.length})`);
+    return [...places, ...detail].join("\n");
+  }).filter((block) => block !== "");
+  return [header, blocks.join("\n\n")].filter((part) => part !== "").join("\n");
 }
 function warningsText(warnings) {
-  const groups = /* @__PURE__ */ new Map();
+  const summaries = /* @__PURE__ */ new Map();
   for (const warning2 of warnings) {
-    const key = JSON.stringify([warning2.summary, warning2.detail]);
-    const group2 = groups.get(key);
+    const subgroups = summaries.get(warning2.summary) ?? /* @__PURE__ */ new Map();
+    summaries.set(warning2.summary, subgroups);
+    const group2 = subgroups.get(warning2.detail ?? "");
     if (group2) group2.push(warning2);
-    else groups.set(key, [warning2]);
+    else subgroups.set(warning2.detail ?? "", [warning2]);
   }
-  const sorted = [...groups.values()].map((group2) => {
-    return [...group2].sort(compareOccurrence);
-  });
-  return sorted.sort(compareGroup).map(warningGroup).join("\n\n");
+  return [...summaries.entries()].sort(([a], [b]) => compare(a, b)).map(([summary2, subgroups]) => {
+    const sorted = [...subgroups.values()].map((group2) => [...group2].sort(compareOccurrence)).sort(compareSubgroup);
+    return warningSummary(summary2, sorted);
+  }).join("\n\n");
 }
 function warningsBlock(unit, expand3) {
   const warnings = unit.diagnostics.filter((diagnostic) => diagnostic.severity === "warning");
@@ -47280,7 +47340,7 @@ function renderMarkdown(report, options) {
   const parts = [
     `${markerLine(options.header)}
 ## ${options.header}`,
-    `**${unitsPhrase(report)}** ${statusTail(report)}`
+    `**${unitsPhrase(report)}** ${statusTail(report)}`.trimEnd()
   ];
   if (report.runError !== void 0 && report.failedUnits === 0) {
     parts.push("\u274C Run failed", fence(report.runError));
@@ -47570,15 +47630,15 @@ var MatchKind;
 
 // node_modules/.pnpm/@actions+glob@0.7.0/node_modules/@actions/glob/lib/internal-pattern-helper.js
 var IS_WINDOWS4 = process.platform === "win32";
-function getSearchPaths(patterns) {
-  patterns = patterns.filter((x) => !x.negate);
+function getSearchPaths(patterns2) {
+  patterns2 = patterns2.filter((x) => !x.negate);
   const searchPathMap = {};
-  for (const pattern of patterns) {
+  for (const pattern of patterns2) {
     const key = IS_WINDOWS4 ? pattern.searchPath.toUpperCase() : pattern.searchPath;
     searchPathMap[key] = "candidate";
   }
   const result = [];
-  for (const pattern of patterns) {
+  for (const pattern of patterns2) {
     const key = IS_WINDOWS4 ? pattern.searchPath.toUpperCase() : pattern.searchPath;
     if (searchPathMap[key] === "included") {
       continue;
@@ -47601,9 +47661,9 @@ function getSearchPaths(patterns) {
   }
   return result;
 }
-function match(patterns, itemPath) {
+function match(patterns2, itemPath) {
   let result = MatchKind.None;
-  for (const pattern of patterns) {
+  for (const pattern of patterns2) {
     if (pattern.negate) {
       result &= ~pattern.match(itemPath);
     } else {
@@ -47612,8 +47672,8 @@ function match(patterns, itemPath) {
   }
   return result;
 }
-function partialMatch(patterns, itemPath) {
-  return patterns.some((x) => !x.negate && x.partialMatch(itemPath));
+function partialMatch(patterns2, itemPath) {
+  return patterns2.some((x) => !x.negate && x.partialMatch(itemPath));
 }
 
 // node_modules/.pnpm/@actions+glob@0.7.0/node_modules/@actions/glob/lib/internal-pattern.js
@@ -49848,15 +49908,15 @@ var DefaultGlobber = class _DefaultGlobber {
   globGenerator() {
     return __asyncGenerator(this, arguments, function* globGenerator_1() {
       const options = getOptions(this.options);
-      const patterns = [];
+      const patterns2 = [];
       for (const pattern of this.patterns) {
-        patterns.push(pattern);
+        patterns2.push(pattern);
         if (options.implicitDescendants && (pattern.trailingSeparator || pattern.segments[pattern.segments.length - 1] !== "**")) {
-          patterns.push(new Pattern(pattern.negate, true, pattern.segments.concat("**")));
+          patterns2.push(new Pattern(pattern.negate, true, pattern.segments.concat("**")));
         }
       }
       const stack = [];
-      for (const searchPath of getSearchPaths(patterns)) {
+      for (const searchPath of getSearchPaths(patterns2)) {
         debug(`Search path '${searchPath}'`);
         try {
           yield __await(fs3.promises.lstat(searchPath));
@@ -49871,8 +49931,8 @@ var DefaultGlobber = class _DefaultGlobber {
       const traversalChain = [];
       while (stack.length) {
         const item = stack.pop();
-        const match3 = match(patterns, item.path);
-        const partialMatch2 = !!match3 || partialMatch(patterns, item.path);
+        const match3 = match(patterns2, item.path);
+        const partialMatch2 = !!match3 || partialMatch(patterns2, item.path);
         if (!match3 && !partialMatch2) {
           continue;
         }
@@ -49904,14 +49964,14 @@ var DefaultGlobber = class _DefaultGlobber {
   /**
    * Constructs a DefaultGlobber
    */
-  static create(patterns, options) {
+  static create(patterns2, options) {
     return __awaiter12(this, void 0, void 0, function* () {
       const result = new _DefaultGlobber(options);
       if (IS_WINDOWS7) {
-        patterns = patterns.replace(/\r\n/g, "\n");
-        patterns = patterns.replace(/\r/g, "\n");
+        patterns2 = patterns2.replace(/\r\n/g, "\n");
+        patterns2 = patterns2.replace(/\r/g, "\n");
       }
-      const lines = patterns.split("\n").map((x) => x.trim());
+      const lines = patterns2.split("\n").map((x) => x.trim());
       for (const line of lines) {
         if (!line || line.startsWith("#")) {
           continue;
@@ -49986,9 +50046,9 @@ var __awaiter13 = function(thisArg, _arguments, P, generator) {
     step((generator = generator.apply(thisArg, _arguments || [])).next());
   });
 };
-function create(patterns, options) {
+function create(patterns2, options) {
   return __awaiter13(this, void 0, void 0, function* () {
-    return yield DefaultGlobber.create(patterns, options);
+    return yield DefaultGlobber.create(patterns2, options);
   });
 }
 
@@ -49996,6 +50056,9 @@ function create(patterns, options) {
 function optional2(name) {
   const value = getInput(name);
   return value === "" ? void 0 : value;
+}
+function patterns(name) {
+  return getInput(name).split("\n").map((line) => line.trim()).filter((line) => line !== "");
 }
 function flag(name, fallback) {
   return getInput(name) === "" ? fallback : getBooleanInput(name);
@@ -50025,7 +50088,8 @@ function readInputs() {
   const inputs = {
     logFile: optional2("log-file"),
     planJsonDir: optional2("plan-json-dir"),
-    applyJsonFiles: getInput("apply-json-files").split("\n").map((line) => line.trim()).filter((line) => line !== ""),
+    planJsonFiles: patterns("plan-json-files"),
+    applyJsonFiles: patterns("apply-json-files"),
     reportFile: optional2("report-file"),
     workingDirectory: optional2("working-directory") ?? ".",
     header: optional2("header") ?? "Terragrunt run report",
@@ -50044,9 +50108,9 @@ function readInputs() {
   if (inputs.runUrl !== void 0 && !/^https?:\/\/\S+$/.test(inputs.runUrl)) {
     throw new Error(`The input run-url must be an http or https URL: ${inputs.runUrl}`);
   }
-  if (inputs.logFile === void 0 && inputs.planJsonDir === void 0 && inputs.applyJsonFiles.length === 0 && inputs.reportFile === void 0) {
+  if (inputs.logFile === void 0 && inputs.planJsonDir === void 0 && inputs.planJsonFiles.length === 0 && inputs.applyJsonFiles.length === 0 && inputs.reportFile === void 0) {
     throw new Error(
-      "Set at least one of the inputs log-file, plan-json-dir, apply-json-files, or report-file."
+      "Set at least one of the inputs log-file, plan-json-dir, plan-json-files, apply-json-files, or report-file."
     );
   }
   if (inputs.comment && (owner === void 0 || prNumber === void 0 || !inputs.token)) {
@@ -50054,8 +50118,8 @@ function readInputs() {
   }
   return inputs;
 }
-async function resolveApplyFiles(patterns, workingDirectory) {
-  const globber = await create(patterns.join("\n"), { matchDirectories: false });
+async function resolveJsonIntoFiles(patterns2, workingDirectory) {
+  const globber = await create(patterns2.join("\n"), { matchDirectories: false });
   const files = await globber.glob();
   return files.sort().map((file2) => ({ unit: applyUnitLabel(file2, workingDirectory), path: file2 }));
 }
@@ -50151,11 +50215,14 @@ function writeMarkdownFile(markdown2, baseDir) {
 // src/index.ts
 async function run() {
   const inputs = readInputs();
-  const applyJsonFiles = inputs.applyJsonFiles.length > 0 ? await resolveApplyFiles(inputs.applyJsonFiles, inputs.workingDirectory) : void 0;
+  const planJsonFiles = inputs.planJsonFiles.length > 0 ? await resolveJsonIntoFiles(inputs.planJsonFiles, inputs.workingDirectory) : void 0;
+  if (planJsonFiles) info(`The action found ${planJsonFiles.length} plan -json-into files.`);
+  const applyJsonFiles = inputs.applyJsonFiles.length > 0 ? await resolveJsonIntoFiles(inputs.applyJsonFiles, inputs.workingDirectory) : void 0;
   if (applyJsonFiles) info(`The action found ${applyJsonFiles.length} -json-into files.`);
   const sources = loadSources({
     logFile: inputs.logFile,
     planJsonDir: inputs.planJsonDir,
+    planJsonFiles,
     applyJsonFiles,
     reportFile: inputs.reportFile
   });
@@ -50165,6 +50232,7 @@ async function run() {
   info(status);
   const markdown2 = renderMarkdown(report, { header: inputs.header, expand: inputs.expand });
   setOutput("summary", status);
+  setOutput("warnings", String(countWarnings(report).warnings));
   setOutput("empty", String(report.empty));
   setOutput("failed", String(report.failed));
   setOutput("markdown-file", writeMarkdownFile(markdown2, process.env.RUNNER_TEMP ?? (0, import_node_os.tmpdir)()));
