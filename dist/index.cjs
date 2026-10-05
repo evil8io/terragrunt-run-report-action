@@ -46387,7 +46387,7 @@ var DEPOSED = /^ \(deposed object [0-9a-f]+\)/;
 var RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/;
 var BLOCK_END = "    }";
 var MARKER = /^(\s*)([+~-])( .*)$/;
-var HEREDOC_START = /^( *)(?:([+~-]) )?\S.*= <<-?EOT(?: #.*)?$/;
+var HEREDOC_START = /^( *)(?:([+~-]) )?(?:\S.*= )?<<-?EOT(?: #.*)?$/;
 function toHeader(before, phrase) {
   if (!phrase.startsWith(MOVED)) return { address: before, phrase };
   return { address: phrase.slice(MOVED.length), previousAddress: before, phrase };
