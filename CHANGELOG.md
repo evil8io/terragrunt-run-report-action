@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.0...v0.6.1) (2026-10-05)
+
+
+### Bug Fixes
+
+* keep the YAML list items of a heredoc in a list as context lines ([#44](https://github.com/evil8io/terragrunt-run-report-action/issues/44)) ([b14d0f4](https://github.com/evil8io/terragrunt-run-report-action/commit/b14d0f40f680af1066ed0c575aa5af67827c4ec8))
+
 ## [0.6.0](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.5.0...v0.6.0) (2026-10-04)
 
 
