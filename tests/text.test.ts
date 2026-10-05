@@ -223,6 +223,34 @@ describe("formatDiff", () => {
     ])
   })
 
+  it("keeps the YAML list items of a heredoc in a list as context lines", () => {
+    expect(
+      formatDiff([
+        "      ~ values = [",
+        "          ~ <<-EOT",
+        "                env:",
+        "                  - name: REGION",
+        "                    value: eu",
+        "              -   queueName: q",
+        "              +   queue: q",
+        "            EOT,",
+        "        ]",
+        '      ~ id     = "a" -> (known after apply)',
+      ]),
+    ).toEqual([
+      "! values = [",
+      "!     <<-EOT",
+      "          env:",
+      "            - name: REGION",
+      "              value: eu",
+      "-           queueName: q",
+      "+           queue: q",
+      "      EOT,",
+      "  ]",
+      '! id     = "a" -> (known after apply)',
+    ])
+  })
+
   it("leaves a line with less indentation in place", () => {
     expect(formatDiff(["  ~ x = 1 -> 2"])).toEqual(["!   x = 1 -> 2"])
   })

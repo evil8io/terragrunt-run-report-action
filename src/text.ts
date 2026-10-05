@@ -39,7 +39,7 @@ const DEPOSED = /^ \(deposed object [0-9a-f]+\)/
 const RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/
 const BLOCK_END = "    }"
 const MARKER = /^(\s*)([+~-])( .*)$/
-const HEREDOC_START = /^( *)(?:([+~-]) )?\S.*= <<-?EOT(?: #.*)?$/
+const HEREDOC_START = /^( *)(?:([+~-]) )?(?:\S.*= )?<<-?EOT(?: #.*)?$/
 
 type Header = { address: string; previousAddress?: string; phrase: string }
 
@@ -140,9 +140,10 @@ function moveMarker(spaces: string, marker: string, rest: string): string {
 type Heredoc = { changed: RegExp; end: RegExp }
 
 /**
- * Tofu prints the content of a heredoc at 6 columns right of the attribute
- * marker, the marker of a changed content line at 4 columns, and the
- * terminator at 2 columns.
+ * Tofu prints the content of a heredoc at 6 columns right of the marker of
+ * its first line, the marker of a changed content line at 4 columns, and the
+ * terminator at 2 columns. A heredoc in a list has `<<-EOT` on a line of its
+ * own, without an attribute name.
  */
 function heredoc(line: string): Heredoc | undefined {
   const match = HEREDOC_START.exec(line)

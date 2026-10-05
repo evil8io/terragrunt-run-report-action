@@ -79,6 +79,7 @@ These facts were verified on terragrunt 1.1.6 and OpenTofu 1.13.1. The code or t
 - Two deposed objects of one address get one `apply_complete` message, and the `change_summary` counts the destroy once.
 - A destroy-time provisioner does not run for a deposed object.
 - The `tfplan.json` file has no `action_reason` for a deposed object, so only the log has the reason text.
+- A heredoc in a list, for example a `values` entry of a `helm_release`, has `<<-EOT` on a line of its own, 4 columns right of the attribute marker, and its terminator is `EOT,`. The content lines and the markers of the changed lines have the same offsets from that line as in an attribute heredoc.
 - For a `removed` block, the `planned_change` action is `remove`, and the `tfplan.json` file has the actions `["forget"]`. The resource line of the diff block has the marker `.`.
 - After a failed unit, terragrunt logs a top-level `ERROR` entry that starts with `Run failed`. The last entry starts with `error occurred`, or with `N errors occurred` after more than one error. The code takes the last entry that starts with `Run failed` or `error occurred`. After more than one error, that entry is the `Run failed` entry.
 - After a configuration error, terragrunt writes the report file `[]` and no `--json-out-dir` directory. The log then has top-level `ERROR` entries, but no `Run failed` entry. The action then ignores every `tfplan.json` and `-json-into` file, because no unit ran and each file is from an earlier run.
