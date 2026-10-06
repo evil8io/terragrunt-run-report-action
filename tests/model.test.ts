@@ -500,6 +500,7 @@ describe("buildReport plan action kinds", () => {
     [["create"], false, "create"],
     [["delete", "create"], false, "replace"],
     [["create", "delete"], false, "replace"],
+    [["forget", "create"], false, "replace"],
     [["create", "forget"], false, "replace"],
     [["update"], false, "update"],
     [["read"], false, "read"],
@@ -617,6 +618,72 @@ describe("buildReport for changes without apply hooks", () => {
     const apply = parseApply(ndjson(...hooklessChanges, summary("plan")), "u")
     const outcomes = buildReport({ applies: [apply] }).units[0]?.changes.map((c) => c.outcome)
     expect(outcomes).toEqual(["pending", "pending", "pending"])
+  })
+})
+
+describe("buildReport for a replacement that keeps the old object", () => {
+  const reason = "older instance will not be destroyed (lifecycle.destroy = false)"
+
+  it("gives the reason from the plan actions", () => {
+    const change = {
+      address: "a.b",
+      action_reason: "replace_because_cannot_update",
+      change: { actions: ["forget", "create"] },
+    }
+    const plan = parsePlan(JSON.stringify({ resource_changes: [change] }), "u")
+    expect(buildReport({ plans: [plan] }).units[0]?.changes).toEqual([
+      { address: "a.b", kind: "replace", reason },
+    ])
+  })
+
+  it("reads the noop planned change with a reason as a replacement", () => {
+    const apply = parseApply(
+      ndjson(
+        {
+          type: "planned_change",
+          change: { resource: { addr: "a.b" }, action: "noop", reason: "cannot_update" },
+        },
+        {
+          type: "change_summary",
+          changes: { add: 1, change: 0, remove: 0, forget: 1, operation: "plan" },
+        },
+        { type: "apply_start", hook: { resource: { addr: "a.b" }, action: "create" } },
+        {
+          type: "apply_complete",
+          hook: { resource: { addr: "a.b" }, action: "create", elapsed_seconds: 1 },
+        },
+        {
+          type: "change_summary",
+          changes: { add: 1, change: 0, remove: 0, forget: 0, operation: "apply" },
+        },
+      ),
+      "u",
+    )
+    expect(buildReport({ applies: [apply] }).units[0]?.changes).toEqual([
+      { address: "a.b", kind: "replace", reason, outcome: "complete", elapsedSeconds: 1 },
+    ])
+  })
+
+  it("gives the reason from the header phrase of a log alone", () => {
+    const log = parseLog(
+      [
+        "  # terraform_data.keep must be replaced - older instance will not be destroyed (lifecycle.destroy = false)",
+        '  ./+ resource "terraform_data" "keep" {',
+        '      ~ triggers_replace = "1" -> "2"',
+        "    }",
+        "Plan: 1 to add, 0 to change, 0 to destroy, 1 to forget.",
+      ]
+        .map((text) => `12:00:00.000 STDOUT [u] tofu: ${text}`)
+        .join("\n"),
+    )
+    expect(buildReport({ log }).units[0]?.changes).toEqual([
+      {
+        address: "terraform_data.keep",
+        kind: "replace",
+        reason,
+        diff: '! triggers_replace = "1" -> "2"',
+      },
+    ])
   })
 })
 

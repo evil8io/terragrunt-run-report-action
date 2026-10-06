@@ -115,6 +115,11 @@ describe("extractBlocks", () => {
     ['a.b["k has v"]', "will be destroyed"],
     ['a.b["you must"]', "will be updated in-place"],
     ['a.b["x is y"]', "will be removed from the Terraform state but will not be destroyed"],
+    [
+      'a.b["must be"]',
+      "must be replaced - older instance will not be destroyed (lifecycle.destroy = false)",
+    ],
+    ['a.b["but"]', "must be replaced, but the existing object will not be destroyed"],
   ])("reads the address %s before the phrase %j without known addresses", (address, phrase) => {
     const lines = [`  # ${address} ${phrase}`, '  ~ resource "a" "b" {', "    }"]
     expect(extractBlocks(lines)[0]).toMatchObject({ address, phrase })
@@ -189,6 +194,67 @@ describe("extractBlocks", () => {
       "    }",
     ]
     expect(extractBlocks(lines).map((b) => b.address)).toEqual(["a.b", "a.c"])
+  })
+
+  it("reads a replacement that keeps the old object, in the OpenTofu layout", () => {
+    const lines = [
+      "  # terraform_data.keep must be replaced - older instance will not be destroyed (lifecycle.destroy = false)",
+      '  ./+ resource "terraform_data" "keep" {',
+      '      ~ id               = "a" -> (known after apply)',
+      '      ~ triggers_replace = "1" -> "2"',
+      "    }",
+      "Plan: 1 to add, 0 to change, 0 to destroy, 1 to forget.",
+    ]
+    const expected = {
+      address: "terraform_data.keep",
+      phrase: "must be replaced - older instance will not be destroyed (lifecycle.destroy = false)",
+      reasons: [],
+      body: lines.slice(2, 4),
+    }
+    expect(extractBlocks(lines)[0]).toEqual(expected)
+    expect(extractBlocks(lines, ["terraform_data.keep"])[0]).toEqual(expected)
+  })
+
+  it("reads a replacement that keeps the old object, in the Terraform layout", () => {
+    const phrase = "must be replaced, but the existing object will not be destroyed"
+    const lines = [
+      ` # terraform_data.keep ${phrase}`,
+      " # (destroy = false is set in the configuration)",
+      './+ resource "terraform_data" "keep" {',
+      '      ~ triggers_replace = "1" -> "2"',
+      "    }",
+      ` # terraform_data.keep_cbd ${phrase}`,
+      " # (destroy = false is set in the configuration)",
+      ' +/. resource "terraform_data" "keep_cbd" {',
+      '      ~ triggers_replace = "1" -> "3"',
+      "    }",
+      "Plan: 2 to add, 0 to change, 0 to destroy.",
+    ]
+    const reasons = ["destroy = false is set in the configuration"]
+    expect(extractBlocks(lines)).toEqual([
+      { address: "terraform_data.keep", phrase, reasons, body: [lines[3]] },
+      { address: "terraform_data.keep_cbd", phrase, reasons, body: [lines[8]] },
+    ])
+  })
+
+  it("reads a removed block in the Terraform layout", () => {
+    const lines = [
+      " # terraform_data.gone will no longer be managed by Terraform, but will not be destroyed",
+      " # (destroy = false is set in the configuration)",
+      ' . resource "terraform_data" "gone" {',
+      '        id     = "a"',
+      "        # (2 unchanged attributes hidden)",
+      "    }",
+      "  # terraform_data.next will be created",
+      '  + resource "terraform_data" "next" {',
+      "    }",
+    ]
+    const blocks = extractBlocks(lines)
+    expect(blocks.map((b) => [b.address, phraseKind(b.phrase)])).toEqual([
+      ["terraform_data.gone", "forget"],
+      ["terraform_data.next", "create"],
+    ])
+    expect(blocks[0]?.body).toEqual(lines.slice(3, 5))
   })
 
   it("reads the new address and the previous address of a move", () => {
@@ -371,6 +437,13 @@ describe("formatBody", () => {
       "EOT",
     ])
   })
+
+  it("removes the common indentation of a removed block in the Terraform layout", () => {
+    expect(formatBody(['        id = "a"', "        # (2 unchanged attributes hidden)"])).toEqual([
+      'id = "a"',
+      "# (2 unchanged attributes hidden)",
+    ])
+  })
 })
 
 describe("extractOutputs", () => {
@@ -446,6 +519,11 @@ describe("phraseKind", () => {
     ["must be replaced", "replace"],
     ["is tainted, so must be replaced", "replace"],
     ["is tainted, so it must be replaced", "replace"],
+    [
+      "must be replaced - older instance will not be destroyed (lifecycle.destroy = false)",
+      "replace",
+    ],
+    ["must be replaced, but the existing object will not be destroyed", "replace"],
     ["will be replaced, as requested", "replace"],
     ["will be read during apply", "read"],
     ["will be imported", "import"],

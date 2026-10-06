@@ -21,6 +21,8 @@ const PHRASES = [
   "will be destroyed",
   "will be updated in-place",
   "must be replaced",
+  "must be replaced - older instance will not be destroyed \\(lifecycle\\.destroy = false\\)",
+  "must be replaced, but the existing object will not be destroyed",
   "is tainted, so must be replaced",
   "is tainted, so it must be replaced",
   "will be replaced, as requested",
@@ -35,9 +37,11 @@ const PHRASES = [
 const PHRASE = new RegExp(`^(.+?) (${PHRASES.join("|")})$`)
 const HEADER = /^([^\s(].*?) ((?:will|must|is|has) .*)$/
 const MOVED = "has moved to "
-const COMMENT = /^ {2}# (.*)$/
+const HEADER_START = /^ {1,2}# (?!\()(.*)$/
+const COMMENT = /^ {1,2}# (.*)$/
 const DEPOSED = /^ \(deposed object [0-9a-f]+\)/
-const RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/
+const RESOURCE =
+  /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|\.\/\+|\+\/\.|<=)\s+)?(?:resource|data|ephemeral)\s/
 const BLOCK_CLOSE = /^ {0,4}\}$/
 const ROOT_CLOSE = /^\}$/
 const REMOVED = /^ {2}\. /
@@ -53,8 +57,9 @@ function toHeader(before: string, phrase: string): Header {
 }
 
 function matchHeader(line: string, known: ReadonlySet<string>): Header | undefined {
-  if (!line.startsWith("  # ") || line.startsWith("  # (")) return undefined
-  const rest = line.slice(4)
+  const start = HEADER_START.exec(line)
+  if (!start) return undefined
+  const rest = start[1] ?? ""
   let address: string | undefined
   for (let space = rest.indexOf(" "); space !== -1; space = rest.indexOf(" ", space + 1)) {
     const candidate = rest.slice(0, space)
@@ -203,10 +208,16 @@ export function formatDiff(lines: readonly string[], indent = 6): string[] {
   })
 }
 
-/** A removed block has no markers, and tofu indents its attributes by 4 spaces. */
-export function formatBody(lines: readonly string[], indent = 4): string[] {
-  const prefix = " ".repeat(indent)
-  return lines.map((line) => (line.startsWith(prefix) ? line.slice(indent) : line))
+/**
+ * A removed block has no markers. OpenTofu prints its attributes at 4 spaces
+ * and Terraform at 8, so the common indentation goes.
+ */
+export function formatBody(lines: readonly string[]): string[] {
+  const indents = lines
+    .filter((line) => line.trim() !== "" && line.startsWith(" "))
+    .map((line) => line.length - line.trimStart().length)
+  const indent = indents.length > 0 ? Math.min(...indents) : 0
+  return lines.map((line) => (line.startsWith(" ") ? line.slice(indent) : line))
 }
 
 export function extractOutputs(lines: readonly string[]): string[] | undefined {

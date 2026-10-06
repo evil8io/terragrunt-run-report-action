@@ -220,6 +220,10 @@ const IMPLIED_REASONS: ReadonlySet<string> = new Set([
   "requested",
 ])
 
+/** The header of a replacement that keeps the old object, in the words of OpenTofu and of Terraform. */
+const KEPT_REPLACE = /^must be replaced\b.* will not be destroyed\b/
+const KEEP_REASON = "older instance will not be destroyed (lifecycle.destroy = false)"
+
 /** The header phrase of a forget already states this reason. */
 const FORGET_REASON = "delete_because_no_resource_config"
 
@@ -240,6 +244,8 @@ type Draft = {
   previousAddress?: string | undefined
   kind: ChangeKind
   jsonReason?: string | undefined
+  /** The replacement keeps the old object, because of lifecycle.destroy = false. */
+  keepsOld?: boolean | undefined
 }
 
 type UnitSources = {
@@ -270,6 +276,7 @@ function planKind(
       return "read"
     case "delete,create":
     case "create,delete":
+    case "forget,create":
     case "create,forget":
       return "replace"
     case "forget":
@@ -338,13 +345,16 @@ function jsonChanges(kind: RunKind, sources: UnitSources): Draft[] | undefined {
     const changeKind = planKind(change.actions, change.importing, moved)
     if (!changeKind) return []
     const { address, previousAddress, actionReason: jsonReason } = change
-    return [{ address, previousAddress, kind: changeKind, jsonReason }]
+    const keepsOld = changeKind === "replace" && change.actions.includes("forget")
+    return [{ address, previousAddress, kind: changeKind, jsonReason, keepsOld }]
   })
   const fromApply = sources.apply?.planned.flatMap((change): Draft[] => {
-    const changeKind = APPLY_ACTIONS.get(change.action)
+    // The machine-readable UI has no action for a replacement that keeps the old object.
+    const keepsOld = change.action === "noop" && change.reason !== undefined
+    const changeKind = keepsOld ? "replace" : APPLY_ACTIONS.get(change.action)
     if (!changeKind) return []
     const { address, previousAddress, reason: jsonReason } = change
-    return [{ address, previousAddress, kind: changeKind, jsonReason }]
+    return [{ address, previousAddress, kind: changeKind, jsonReason, keepsOld }]
   })
   return isApply(kind) ? (fromApply ?? fromPlan) : (fromPlan ?? fromApply)
 }
@@ -419,10 +429,14 @@ type ChangeContext = {
 
 function toChange(draft: Draft, { block, apply, failed }: ChangeContext) {
   const change: ResourceChange = { address: draft.address, kind: draft.kind }
+  const keepsOld =
+    draft.keepsOld === true || (block !== undefined && KEPT_REPLACE.test(block.phrase))
   const reason =
     block && block.reasons.length > 0
       ? block.reasons.join("; ")
-      : humanReason(draft.jsonReason, draft.kind)
+      : keepsOld
+        ? KEEP_REASON
+        : humanReason(draft.jsonReason, draft.kind)
   if (reason) change.reason = reason
   if (draft.kind === "move") {
     const previousAddress = draft.previousAddress ?? block?.previousAddress
