@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.1...v0.6.2) (2026-10-06)
+
+
+### Bug Fixes
+
+* join a tofu line that terragrunt logs as two lines ([#47](https://github.com/evil8io/terragrunt-run-report-action/issues/47)) ([4a266da](https://github.com/evil8io/terragrunt-run-report-action/commit/4a266dad54712937ca16faf9b70b5afb41039597))
+
 ## [0.6.1](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.0...v0.6.1) (2026-10-05)
 
 
