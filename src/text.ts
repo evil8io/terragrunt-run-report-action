@@ -22,6 +22,7 @@ const PHRASES = [
   "will be updated in-place",
   "must be replaced",
   "is tainted, so must be replaced",
+  "is tainted, so it must be replaced",
   "will be replaced, as requested",
   "will be replaced due to changes in replace_triggered_by",
   "will be read during apply",

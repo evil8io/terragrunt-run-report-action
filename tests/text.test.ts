@@ -119,6 +119,21 @@ describe("extractBlocks", () => {
     expect(extractBlocks(lines)[0]).toMatchObject({ address, phrase })
   })
 
+  it.each(["is tainted, so must be replaced", "is tainted, so it must be replaced"])(
+    "reads the address before the tainted phrase %j",
+    (phrase) => {
+      const lines = [
+        `  # terraform_data.tainted ${phrase}`,
+        '-/+ resource "terraform_data" "tainted" {',
+        '      ~ id = "a" -> (known after apply)',
+        "    }",
+      ]
+      const expected = { address: "terraform_data.tainted", phrase }
+      expect(extractBlocks(lines)[0]).toMatchObject(expected)
+      expect(extractBlocks(lines, ["terraform_data.tainted"])[0]).toMatchObject(expected)
+    },
+  )
+
   it("reads a removed block with the dot marker and the closing brace in column 0", () => {
     const lines = [
       "  # terraform_data.gone[0] will be removed from the OpenTofu state but will not be destroyed",
@@ -388,6 +403,7 @@ describe("phraseKind", () => {
     ["will be updated in-place", "update"],
     ["must be replaced", "replace"],
     ["is tainted, so must be replaced", "replace"],
+    ["is tainted, so it must be replaced", "replace"],
     ["will be replaced, as requested", "replace"],
     ["will be read during apply", "read"],
     ["will be imported", "import"],
