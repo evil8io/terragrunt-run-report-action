@@ -89,6 +89,7 @@ These facts were verified on terragrunt 1.1.6 and OpenTofu 1.13.1. The code or t
 - The `outputs` message of a `-json-into` file has the values of the outputs. Do not render these values, because they can be sensitive.
 - Tofu writes a warning to STDOUT and an error to STDERR. The stderr fence of a unit thus has no warning, and the warnings element shows each warning of the `-json-into` file once. A `tfplan.json` file has no diagnostics. The `-json-into` file of a plan has the diagnostics of the plan, so a plan report has a warnings element only with `plan-json-files`.
 - Tofu prints each distinct warning summary once, with the first location and the count of the other locations: `(and 2 more similar warnings elsewhere)` in the full output, and `on main.tf line 38 (and 2 more)` with `-compact-warnings`. The `-json-into` file has every warning, so the element count is higher than the number of warnings in the log.
+- OpenTofu prints `is tainted, so it must be replaced` in the header of a tainted resource, and Terraform prints `is tainted, so must be replaced`. `PHRASES` in `src/text.ts` has both wordings, because a log-only report reads the address from the header.
 
 ## Docs
 
