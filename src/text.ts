@@ -37,7 +37,7 @@ const MOVED = "has moved to "
 const COMMENT = /^ {2}# (.*)$/
 const DEPOSED = /^ \(deposed object [0-9a-f]+\)/
 const RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/
-const BLOCK_END = "    }"
+const BLOCK_CLOSE = /^ {0,4}\}$/
 const MARKER = /^(\s*)([+~-])( .*)$/
 const HEREDOC_START = /^( *)(?:([+~-]) )?(?:\S.*= )?<<-?EOT(?: #.*)?$/
 
@@ -70,8 +70,24 @@ function matchHeader(line: string, known: ReadonlySet<string>): Header | undefin
   return match ? toHeader(match[1] ?? "", match[2] ?? "") : undefined
 }
 
+/**
+ * A removed block closes in column 0, and a nested brace has 8 or more
+ * spaces. A brace with at most 4 spaces thus closes the block, also when a
+ * split cut its indentation.
+ */
 function endsBody(line: string): boolean {
-  return line === BLOCK_END || (line !== "" && !line.startsWith(" "))
+  return BLOCK_CLOSE.test(line)
+}
+
+/**
+ * Terragrunt logs the tofu output per chunk, and a line that spans a chunk
+ * boundary becomes two log lines. Tofu closes every block with a brace, so a
+ * line in column 0 before the brace is the second half of such a line.
+ */
+function pushBodyLine(body: string[], line: string): void {
+  const previous = body.length - 1
+  if (line !== "" && !line.startsWith(" ") && previous >= 0) body[previous] += line
+  else body.push(line)
 }
 
 /**
@@ -110,11 +126,12 @@ export function extractBlocks(
     const body: string[] = []
     let k = j + 1
     while (k < lines.length && !endsBody(lines[k] ?? "")) {
-      body.push(lines[k] ?? "")
+      pushBodyLine(body, lines[k] ?? "")
       k++
     }
+    while (body.at(-1)?.trim() === "") body.pop()
     blocks.push({ ...header, reasons, body })
-    i = lines[k] === BLOCK_END ? k + 1 : k
+    i = k + 1
   }
   return blocks
 }
