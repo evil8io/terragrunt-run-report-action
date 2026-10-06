@@ -46385,7 +46385,7 @@ var MOVED = "has moved to ";
 var COMMENT = /^ {2}# (.*)$/;
 var DEPOSED = /^ \(deposed object [0-9a-f]+\)/;
 var RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/;
-var BLOCK_END = "    }";
+var BLOCK_CLOSE = /^ {0,4}\}$/;
 var MARKER = /^(\s*)([+~-])( .*)$/;
 var HEREDOC_START = /^( *)(?:([+~-]) )?(?:\S.*= )?<<-?EOT(?: #.*)?$/;
 function toHeader(before, phrase) {
@@ -46413,7 +46413,12 @@ function matchHeader(line, known) {
   return match3 ? toHeader(match3[1] ?? "", match3[2] ?? "") : void 0;
 }
 function endsBody(line) {
-  return line === BLOCK_END || line !== "" && !line.startsWith(" ");
+  return BLOCK_CLOSE.test(line);
+}
+function pushBodyLine(body, line) {
+  const previous = body.length - 1;
+  if (line !== "" && !line.startsWith(" ") && previous >= 0) body[previous] += line;
+  else body.push(line);
 }
 function extractBlocks(lines, knownAddresses = []) {
   const known = new Set(knownAddresses);
@@ -46439,11 +46444,12 @@ function extractBlocks(lines, knownAddresses = []) {
     const body = [];
     let k = j + 1;
     while (k < lines.length && !endsBody(lines[k] ?? "")) {
-      body.push(lines[k] ?? "");
+      pushBodyLine(body, lines[k] ?? "");
       k++;
     }
+    while (body.at(-1)?.trim() === "") body.pop();
     blocks.push({ ...header, reasons, body });
-    i = lines[k] === BLOCK_END ? k + 1 : k;
+    i = k + 1;
   }
   return blocks;
 }
