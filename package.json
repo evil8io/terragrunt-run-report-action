@@ -1,6 +1,6 @@
 {
   "name": "terragrunt-run-report-action",
-  "version": "0.6.2",
+  "version": "0.6.3",
   "private": true,
   "description": "GitHub action that reports the per-unit plan and apply results of terragrunt run --all",
   "license": "Apache-2.0",
