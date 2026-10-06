@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.4](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.3...v0.6.4) (2026-10-06)
+
+
+### Bug Fixes
+
+* report a replacement with lifecycle destroy = false ([#56](https://github.com/evil8io/terragrunt-run-report-action/issues/56)) ([dbddcf5](https://github.com/evil8io/terragrunt-run-report-action/commit/dbddcf52cf69fb8f96f7e56ef02a8b359e55a8c1))
+
 ## [0.6.3](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.2...v0.6.3) (2026-10-06)
 
 
