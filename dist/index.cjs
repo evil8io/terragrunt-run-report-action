@@ -46370,6 +46370,7 @@ var PHRASES = [
   "will be updated in-place",
   "must be replaced",
   "is tainted, so must be replaced",
+  "is tainted, so it must be replaced",
   "will be replaced, as requested",
   "will be replaced due to changes in replace_triggered_by",
   "will be read during apply",
@@ -46386,6 +46387,8 @@ var COMMENT = /^ {2}# (.*)$/;
 var DEPOSED = /^ \(deposed object [0-9a-f]+\)/;
 var RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/;
 var BLOCK_CLOSE = /^ {0,4}\}$/;
+var ROOT_CLOSE = /^\}$/;
+var REMOVED = /^ {2}\. /;
 var MARKER = /^(\s*)([+~-])( .*)$/;
 var HEREDOC_START = /^( *)(?:([+~-]) )?(?:\S.*= )?<<-?EOT(?: #.*)?$/;
 function toHeader(before, phrase) {
@@ -46412,8 +46415,8 @@ function matchHeader(line, known) {
   const match3 = PHRASE.exec(rest) ?? HEADER.exec(rest);
   return match3 ? toHeader(match3[1] ?? "", match3[2] ?? "") : void 0;
 }
-function endsBody(line) {
-  return BLOCK_CLOSE.test(line);
+function blockClose(resourceLine) {
+  return REMOVED.test(resourceLine) ? ROOT_CLOSE : BLOCK_CLOSE;
 }
 function pushBodyLine(body, line) {
   const previous = body.length - 1;
@@ -46441,9 +46444,10 @@ function extractBlocks(lines, knownAddresses = []) {
       i++;
       continue;
     }
+    const close = blockClose(lines[j] ?? "");
     const body = [];
     let k = j + 1;
-    while (k < lines.length && !endsBody(lines[k] ?? "")) {
+    while (k < lines.length && !close.test(lines[k] ?? "")) {
       pushBodyLine(body, lines[k] ?? "");
       k++;
     }
@@ -46496,6 +46500,10 @@ function formatDiff(lines, indent = 6) {
     const match3 = MARKER.exec(line);
     return match3 ? moveMarker(match3[1] ?? "", match3[2] ?? "", match3[3] ?? "") : line;
   });
+}
+function formatBody(lines, indent = 4) {
+  const prefix = " ".repeat(indent);
+  return lines.map((line) => line.startsWith(prefix) ? line.slice(indent) : line);
 }
 function extractOutputs(lines) {
   const start = lines.findLastIndex((line) => line.trimEnd() === "Changes to Outputs:");
@@ -46789,7 +46797,8 @@ function toChange(draft, { block, apply, failed }) {
     const previousAddress = draft.previousAddress ?? block?.previousAddress;
     if (previousAddress !== void 0) change.previousAddress = previousAddress;
   } else {
-    const diff = block ? formatDiff(block.body) : [];
+    const format = draft.kind === "forget" ? formatBody : formatDiff;
+    const diff = block ? format(block.body) : [];
     if (diff.length > 0) change.diff = diff.join("\n");
   }
   if (apply) {
