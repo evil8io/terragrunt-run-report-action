@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.6.3](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.2...v0.6.3) (2026-10-06)
+
+
+### Bug Fixes
+
+* keep the nested braces of a removed block in its diff ([#49](https://github.com/evil8io/terragrunt-run-report-action/issues/49)) ([6307932](https://github.com/evil8io/terragrunt-run-report-action/commit/630793265341c2dccb9019e6c9ae11102aecf8b7))
+* read the address before the OpenTofu wording of a tainted resource ([#51](https://github.com/evil8io/terragrunt-run-report-action/issues/51)) ([1236b05](https://github.com/evil8io/terragrunt-run-report-action/commit/1236b05b9cf82e0b37b35d2725d63f6149b2f01c))
+* render the body of a forget without diff markers ([#52](https://github.com/evil8io/terragrunt-run-report-action/issues/52)) ([4f70f4e](https://github.com/evil8io/terragrunt-run-report-action/commit/4f70f4ee0117c88232daba8773cd33d194e5d5ff))
+
 ## [0.6.2](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.1...v0.6.2) (2026-10-06)
 
 
