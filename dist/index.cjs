@@ -46369,6 +46369,8 @@ var PHRASES = [
   "will be destroyed",
   "will be updated in-place",
   "must be replaced",
+  "must be replaced - older instance will not be destroyed \\(lifecycle\\.destroy = false\\)",
+  "must be replaced, but the existing object will not be destroyed",
   "is tainted, so must be replaced",
   "is tainted, so it must be replaced",
   "will be replaced, as requested",
@@ -46383,9 +46385,10 @@ var PHRASES = [
 var PHRASE = new RegExp(`^(.+?) (${PHRASES.join("|")})$`);
 var HEADER = /^([^\s(].*?) ((?:will|must|is|has) .*)$/;
 var MOVED = "has moved to ";
-var COMMENT = /^ {2}# (.*)$/;
+var HEADER_START = /^ {1,2}# (?!\()(.*)$/;
+var COMMENT = /^ {1,2}# (.*)$/;
 var DEPOSED = /^ \(deposed object [0-9a-f]+\)/;
-var RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/;
+var RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|\.\/\+|\+\/\.|<=)\s+)?(?:resource|data|ephemeral)\s/;
 var BLOCK_CLOSE = /^ {0,4}\}$/;
 var ROOT_CLOSE = /^\}$/;
 var REMOVED = /^ {2}\. /;
@@ -46396,8 +46399,9 @@ function toHeader(before, phrase) {
   return { address: phrase.slice(MOVED.length), previousAddress: before, phrase };
 }
 function matchHeader(line, known) {
-  if (!line.startsWith("  # ") || line.startsWith("  # (")) return void 0;
-  const rest = line.slice(4);
+  const start = HEADER_START.exec(line);
+  if (!start) return void 0;
+  const rest = start[1] ?? "";
   let address;
   for (let space = rest.indexOf(" "); space !== -1; space = rest.indexOf(" ", space + 1)) {
     const candidate = rest.slice(0, space);
@@ -46501,9 +46505,10 @@ function formatDiff(lines, indent = 6) {
     return match3 ? moveMarker(match3[1] ?? "", match3[2] ?? "", match3[3] ?? "") : line;
   });
 }
-function formatBody(lines, indent = 4) {
-  const prefix = " ".repeat(indent);
-  return lines.map((line) => line.startsWith(prefix) ? line.slice(indent) : line);
+function formatBody(lines) {
+  const indents = lines.filter((line) => line.trim() !== "" && line.startsWith(" ")).map((line) => line.length - line.trimStart().length);
+  const indent = indents.length > 0 ? Math.min(...indents) : 0;
+  return lines.map((line) => line.startsWith(" ") ? line.slice(indent) : line);
 }
 function extractOutputs(lines) {
   const start = lines.findLastIndex((line) => line.trimEnd() === "Changes to Outputs:");
@@ -46655,6 +46660,8 @@ var IMPLIED_REASONS = /* @__PURE__ */ new Set([
   "replace_by_request",
   "requested"
 ]);
+var KEPT_REPLACE = /^must be replaced\b.* will not be destroyed\b/;
+var KEEP_REASON = "older instance will not be destroyed (lifecycle.destroy = false)";
 var FORGET_REASON = "delete_because_no_resource_config";
 var HOOKLESS_KINDS = /* @__PURE__ */ new Set(["import", "forget", "move"]);
 var TERMINAL_RESULTS = /* @__PURE__ */ new Set(["failed", "early exit", "excluded"]);
@@ -46676,6 +46683,7 @@ function planKind(actions, importing, moved) {
       return "read";
     case "delete,create":
     case "create,delete":
+    case "forget,create":
     case "create,forget":
       return "replace";
     case "forget":
@@ -46737,13 +46745,15 @@ function jsonChanges(kind, sources) {
     const changeKind = planKind(change.actions, change.importing, moved);
     if (!changeKind) return [];
     const { address, previousAddress, actionReason: jsonReason } = change;
-    return [{ address, previousAddress, kind: changeKind, jsonReason }];
+    const keepsOld = changeKind === "replace" && change.actions.includes("forget");
+    return [{ address, previousAddress, kind: changeKind, jsonReason, keepsOld }];
   });
   const fromApply = sources.apply?.planned.flatMap((change) => {
-    const changeKind = APPLY_ACTIONS.get(change.action);
+    const keepsOld = change.action === "noop" && change.reason !== void 0;
+    const changeKind = keepsOld ? "replace" : APPLY_ACTIONS.get(change.action);
     if (!changeKind) return [];
     const { address, previousAddress, reason: jsonReason } = change;
-    return [{ address, previousAddress, kind: changeKind, jsonReason }];
+    return [{ address, previousAddress, kind: changeKind, jsonReason, keepsOld }];
   });
   return isApply(kind) ? fromApply ?? fromPlan : fromPlan ?? fromApply;
 }
@@ -46791,7 +46801,8 @@ function applyOutcome(draft, hook2, apply, failed) {
 }
 function toChange(draft, { block, apply, failed }) {
   const change = { address: draft.address, kind: draft.kind };
-  const reason = block && block.reasons.length > 0 ? block.reasons.join("; ") : humanReason(draft.jsonReason, draft.kind);
+  const keepsOld = draft.keepsOld === true || block !== void 0 && KEPT_REPLACE.test(block.phrase);
+  const reason = block && block.reasons.length > 0 ? block.reasons.join("; ") : keepsOld ? KEEP_REASON : humanReason(draft.jsonReason, draft.kind);
   if (reason) change.reason = reason;
   if (draft.kind === "move") {
     const previousAddress = draft.previousAddress ?? block?.previousAddress;
