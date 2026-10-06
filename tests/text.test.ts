@@ -153,14 +153,49 @@ describe("extractBlocks", () => {
     expect(extractBlocks(lines, ["terraform_data.new[0]"])[0]).toMatchObject(expected)
   })
 
-  it("ends a block without a closing brace at the next line in column 0", () => {
+  it("joins a line in column 0 to the previous body line", () => {
     const lines = [
-      "  # local_file.a will be created",
-      '  + resource "local_file" "a" {',
-      '      + content = "x"',
-      "Plan: 1 to add, 0 to change, 0 to destroy.",
+      "  # helm_release.a[0] will be updated in-place",
+      '  ~ resource "helm_release" "a" {',
+      '      ~ name   = "ab',
+      'c" -> "abd"',
+      "      ~ values = [",
+      "          ~ <<-EOT",
+      "                key: value",
+      "            E",
+      "OT,",
+      "        ]",
+      "    }",
+      "Plan: 0 to add, 1 to change, 0 to destroy.",
     ]
-    expect(extractBlocks(lines)[0]?.body).toEqual(['      + content = "x"'])
+    expect(extractBlocks(lines)[0]?.body).toEqual([
+      '      ~ name   = "abc" -> "abd"',
+      "      ~ values = [",
+      "          ~ <<-EOT",
+      "                key: value",
+      "            EOT,",
+      "        ]",
+    ])
+  })
+
+  it("ends a block at a closing brace whose indentation a split cut", () => {
+    const lines = [
+      "  # a.b will be created",
+      '  + resource "a" "b" {',
+      "      + x = 1",
+      "  ",
+      "  }",
+      "Plan: 1 to add, 0 to change, 0 to destroy.",
+      "a.b: Creating...",
+    ]
+    const blocks = extractBlocks(lines)
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0]?.body).toEqual(["      + x = 1"])
+  })
+
+  it("keeps a line in column 0 as the first body line", () => {
+    const lines = ["  # a.b will be created", '  + resource "a" "b" {', "x = 1", "    }"]
+    expect(extractBlocks(lines)[0]?.body).toEqual(["x = 1"])
   })
 })
 

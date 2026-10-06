@@ -158,6 +158,7 @@ The examples use the tag `v0`, which points to the newest 0.x release. For a fix
 
 - The action puts at most 65,000 characters in one comment. It splits a longer report into more comments.
 - GitHub limits a job summary to 1 MB. Above that limit, the action removes lines from the middle of the log first, and then from the end of the report.
+- Terragrunt can write one line of the tofu output as two log lines. Inside a diff block, the action joins the two lines when the second line does not start with a space. When the split is in the header line of a block, the report has no diff for that resource.
 - With a `--filter` on a git range, terragrunt runs the units in a temporary git worktree and deletes it after the run. So the `-json-into` files of that run are lost. For such a run, use the log and the report file.
 - A unit can have a longer name in one input file than in another, for example `live/unit2` and `unit2`. This happens when the paths of the `-json-into` files are relative to a directory other than the `--working-dir` of terragrunt. The action then uses the name from the log. When more than one unit matches, the report contains the unit twice.
 
