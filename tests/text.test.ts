@@ -137,6 +137,31 @@ describe("extractBlocks", () => {
     expect(blocks[0]?.body).toEqual(['    id     = "a"'])
   })
 
+  it("keeps the nested braces of a removed block in its body", () => {
+    const lines = [
+      "  # terraform_data.gone will be removed from the OpenTofu state but will not be destroyed",
+      '  . resource "terraform_data" "gone" {',
+      '    id     = "id-gone"',
+      "    input  = {",
+      '        a = "1"',
+      "        b = {",
+      '            c = "2"',
+      "        }",
+      "    }",
+      "    output = {",
+      '        a = "1"',
+      "        b = {",
+      '            c = "2"',
+      "        }",
+      "    }",
+      "}",
+      "Plan: 0 to add, 0 to change, 0 to destroy, 1 to forget.",
+    ]
+    const blocks = extractBlocks(lines)
+    expect(blocks).toHaveLength(1)
+    expect(blocks[0]?.body).toEqual(lines.slice(2, 15))
+  })
+
   it("reads the new address and the previous address of a move", () => {
     const lines = [
       "  # terraform_data.old[0] has moved to terraform_data.new[0]",
