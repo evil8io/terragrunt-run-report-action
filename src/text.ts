@@ -40,7 +40,7 @@ const DEPOSED = /^ \(deposed object [0-9a-f]+\)/
 const RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/
 const BLOCK_CLOSE = /^ {0,4}\}$/
 const ROOT_CLOSE = /^\}$/
-const REMOVED = /^\s*\. /
+const REMOVED = /^ {2}\. /
 const MARKER = /^(\s*)([+~-])( .*)$/
 const HEREDOC_START = /^( *)(?:([+~-]) )?(?:\S.*= )?<<-?EOT(?: #.*)?$/
 

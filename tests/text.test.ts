@@ -178,6 +178,19 @@ describe("extractBlocks", () => {
     expect(blocks[0]?.body).toEqual(lines.slice(2, 15))
   })
 
+  it("ends a removed block with a one-space marker at a brace with 4 spaces", () => {
+    const lines = [
+      "  # a.b will no longer be managed by Terraform, but will not be destroyed",
+      ' . resource "a" "b" {',
+      '        id = "x"',
+      "    }",
+      "  # a.c will be created",
+      '  + resource "a" "c" {',
+      "    }",
+    ]
+    expect(extractBlocks(lines).map((b) => b.address)).toEqual(["a.b", "a.c"])
+  })
+
   it("reads the new address and the previous address of a move", () => {
     const lines = [
       "  # terraform_data.old[0] has moved to terraform_data.new[0]",
