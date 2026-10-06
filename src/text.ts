@@ -38,6 +38,8 @@ const COMMENT = /^ {2}# (.*)$/
 const DEPOSED = /^ \(deposed object [0-9a-f]+\)/
 const RESOURCE = /^\s*(?:(?:\+|-|~|\.|-\/\+|\+\/-|<=)\s+)?(?:resource|data|ephemeral)\s/
 const BLOCK_CLOSE = /^ {0,4}\}$/
+const ROOT_CLOSE = /^\}$/
+const REMOVED = /^\s*\. /
 const MARKER = /^(\s*)([+~-])( .*)$/
 const HEREDOC_START = /^( *)(?:([+~-]) )?(?:\S.*= )?<<-?EOT(?: #.*)?$/
 
@@ -71,12 +73,13 @@ function matchHeader(line: string, known: ReadonlySet<string>): Header | undefin
 }
 
 /**
- * A removed block closes in column 0, and a nested brace has 8 or more
- * spaces. A brace with at most 4 spaces thus closes the block, also when a
- * split cut its indentation.
+ * A block closes at 4 spaces, and a nested brace has 8 or more spaces. A brace
+ * with at most 4 spaces thus closes the block, also when a split cut its
+ * indentation. A removed block has its body at 4 spaces and closes in column
+ * 0, so only a brace in column 0 closes it.
  */
-function endsBody(line: string): boolean {
-  return BLOCK_CLOSE.test(line)
+function blockClose(resourceLine: string): RegExp {
+  return REMOVED.test(resourceLine) ? ROOT_CLOSE : BLOCK_CLOSE
 }
 
 /**
@@ -123,9 +126,10 @@ export function extractBlocks(
       i++
       continue
     }
+    const close = blockClose(lines[j] ?? "")
     const body: string[] = []
     let k = j + 1
-    while (k < lines.length && !endsBody(lines[k] ?? "")) {
+    while (k < lines.length && !close.test(lines[k] ?? "")) {
       pushBodyLine(body, lines[k] ?? "")
       k++
     }
