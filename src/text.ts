@@ -203,6 +203,12 @@ export function formatDiff(lines: readonly string[], indent = 6): string[] {
   })
 }
 
+/** A removed block has no markers, and tofu indents its attributes by 4 spaces. */
+export function formatBody(lines: readonly string[], indent = 4): string[] {
+  const prefix = " ".repeat(indent)
+  return lines.map((line) => (line.startsWith(prefix) ? line.slice(indent) : line))
+}
+
 export function extractOutputs(lines: readonly string[]): string[] | undefined {
   const start = lines.findLastIndex((line) => line.trimEnd() === "Changes to Outputs:")
   if (start === -1) return undefined

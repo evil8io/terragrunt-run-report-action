@@ -545,6 +545,31 @@ describe("buildReport plan action kinds", () => {
     ])
   })
 
+  it("renders the body of a forget without markers", () => {
+    const log = parseLog(
+      [
+        "  # terraform_data.gone will be removed from the OpenTofu state but will not be destroyed",
+        '  . resource "terraform_data" "gone" {',
+        '    id     = "a"',
+        "    input  = <<-EOT",
+        "        list:",
+        "            - item",
+        "    EOT",
+        "}",
+        "Plan: 0 to add, 0 to change, 0 to destroy, 1 to forget.",
+      ]
+        .map((text) => `12:00:00.000 STDOUT [u] tofu: ${text}`)
+        .join("\n"),
+    )
+    expect(buildReport({ log }).units[0]?.changes).toEqual([
+      {
+        address: "terraform_data.gone",
+        kind: "forget",
+        diff: 'id     = "a"\ninput  = <<-EOT\n    list:\n        - item\nEOT',
+      },
+    ])
+  })
+
   it("leaves out a no-op change", () => {
     const change = { address: "a.b", change: { actions: ["no-op"] } }
     const plan = parsePlan(JSON.stringify({ resource_changes: [change] }), "u")

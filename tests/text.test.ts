@@ -6,6 +6,7 @@ import {
   extractBlocks,
   extractOutputs,
   findSummaries,
+  formatBody,
   formatDiff,
   phraseKind,
   stderrText,
@@ -328,6 +329,34 @@ describe("formatDiff", () => {
 
   it("leaves a line with less indentation in place", () => {
     expect(formatDiff(["  ~ x = 1 -> 2"])).toEqual(["!   x = 1 -> 2"])
+  })
+})
+
+describe("formatBody", () => {
+  it("removes the indentation of a removed block and keeps the lines without markers", () => {
+    expect(
+      formatBody([
+        '    id               = "a"',
+        "    input            = {",
+        "        replicas = 2",
+        "    }",
+        "    triggers_replace = <<-EOT",
+        "        list:",
+        "            - item",
+        "            + plus",
+        "    EOT",
+      ]),
+    ).toEqual([
+      'id               = "a"',
+      "input            = {",
+      "    replicas = 2",
+      "}",
+      "triggers_replace = <<-EOT",
+      "    list:",
+      "        - item",
+      "        + plus",
+      "EOT",
+    ])
   })
 })
 

@@ -7,6 +7,7 @@ import {
   extractBlocks,
   extractOutputs,
   findSummaries,
+  formatBody,
   formatDiff,
   phraseKind,
   stderrText,
@@ -427,7 +428,8 @@ function toChange(draft: Draft, { block, apply, failed }: ChangeContext) {
     const previousAddress = draft.previousAddress ?? block?.previousAddress
     if (previousAddress !== undefined) change.previousAddress = previousAddress
   } else {
-    const diff = block ? formatDiff(block.body) : []
+    const format = draft.kind === "forget" ? formatBody : formatDiff
+    const diff = block ? format(block.body) : []
     if (diff.length > 0) change.diff = diff.join("\n")
   }
   if (apply) {
