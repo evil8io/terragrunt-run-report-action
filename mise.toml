@@ -1,6 +1,6 @@
 [tools]
 node = "24.21.0"
-pnpm = "12.9.1"
+pnpm = "12.10.1"
 opentofu = "1.13.1"
 terraform = "1.16.5"
 terragrunt = "1.1.6"
