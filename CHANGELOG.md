@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.5](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.4...v0.6.5) (2026-10-27)
+
+
+### Bug Fixes
+
+* **deps:** update all non-major dependencies ([#59](https://github.com/evil8io/terragrunt-run-report-action/issues/59)) ([abb450e](https://github.com/evil8io/terragrunt-run-report-action/commit/abb450e774c682a37be6390a4e870582d6621809))
+
 ## [0.6.4](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.3...v0.6.4) (2026-10-06)
 
 
