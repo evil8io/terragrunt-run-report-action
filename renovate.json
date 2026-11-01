@@ -24,6 +24,11 @@
       "rangeStrategy": "pin"
     },
     {
+      "description": "Wait 1 day after an npm release before the update. At install time, pnpm rejects a lockfile entry that is younger than its default minimumReleaseAge of 1 day. The install step in CI then fails.",
+      "matchDatasources": ["npm"],
+      "minimumReleaseAge": "1 day"
+    },
+    {
       "description": "Leave the Node range in engines alone. The action runtime is node24, and the range is a statement, not a dependency.",
       "enabled": false,
       "matchDepTypes": ["engines"],
