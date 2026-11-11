@@ -2,8 +2,8 @@
 node = "26.13.0"
 pnpm = "12.18.0"
 opentofu = "1.13.9"
-terraform = "1.17.1"
-terragrunt = "1.2.1"
+terraform = "1.17.2"
+terragrunt = "1.2.2"
 jq = "1.8.2"
 
 [env]
