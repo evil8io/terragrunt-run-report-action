@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.6](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.5...v0.6.6) (2026-11-25)
+
+
+### Miscellaneous Chores
+
+* **deps:** update all non-major dependencies ([#72](https://github.com/evil8io/terragrunt-run-report-action/issues/72)) ([028f630](https://github.com/evil8io/terragrunt-run-report-action/commit/028f6303b792407ba0de0e61ff78cf736e79a8de))
+* **deps:** update all non-major dependencies ([#73](https://github.com/evil8io/terragrunt-run-report-action/issues/73)) ([c7a6026](https://github.com/evil8io/terragrunt-run-report-action/commit/c7a60263b8fa41fb23fc0e49d55749bfea6086b8))
+* **deps:** update all non-major dependencies ([#75](https://github.com/evil8io/terragrunt-run-report-action/issues/75)) ([07cc93a](https://github.com/evil8io/terragrunt-run-report-action/commit/07cc93af7036559bcda631afa6753a0edd4d5e96))
+* **deps:** update all non-major dependencies ([#79](https://github.com/evil8io/terragrunt-run-report-action/issues/79)) ([1080cac](https://github.com/evil8io/terragrunt-run-report-action/commit/1080cace8f6ad36ed2fa0732b0a7f733e14c4a86))
+* **deps:** update all non-major dependencies ([#80](https://github.com/evil8io/terragrunt-run-report-action/issues/80)) ([d6a4950](https://github.com/evil8io/terragrunt-run-report-action/commit/d6a4950568d608b8dab5be7f1d33f5fbe3e8b456))
+* **deps:** update dependency jdx/mise to v2026.10.25 ([#71](https://github.com/evil8io/terragrunt-run-report-action/issues/71)) ([46864f4](https://github.com/evil8io/terragrunt-run-report-action/commit/46864f4cf9e76002d60470059ecca7b342a75840))
+* **deps:** update dependency jdx/mise to v2026.11.12 ([#81](https://github.com/evil8io/terragrunt-run-report-action/issues/81)) ([1dcbf80](https://github.com/evil8io/terragrunt-run-report-action/commit/1dcbf803ab2cd0b7644fa3792ce122b3b2480ee2))
+* **deps:** update dependency jdx/mise to v2026.11.4 ([#74](https://github.com/evil8io/terragrunt-run-report-action/issues/74)) ([8101ca0](https://github.com/evil8io/terragrunt-run-report-action/commit/8101ca0fd47d544441c66c6f51d29136f03e6d6a))
+* **deps:** update dependency jdx/mise to v2026.11.7 ([#78](https://github.com/evil8io/terragrunt-run-report-action/issues/78)) ([0d1ecb4](https://github.com/evil8io/terragrunt-run-report-action/commit/0d1ecb40c94c532d1b894ef5ec30f48e5803f1f4))
+
 ## [0.6.5](https://github.com/evil8io/terragrunt-run-report-action/compare/v0.6.4...v0.6.5) (2026-11-01)
 
 
